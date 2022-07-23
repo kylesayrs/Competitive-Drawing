@@ -1,0 +1,5 @@
+canvas#draw {
+    border: 5px solid #000000;
+    width: 75%;
+    height: 75%;
+}

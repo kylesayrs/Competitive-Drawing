@@ -1,44 +1,66 @@
 // initialize canvas and drawing
-const canvas = document.getElementById("paint");
+const canvas = document.getElementById("draw");
 const canvasContext = canvas.getContext("2d");
-canvasContext.lineWidth = 15;
-canvasContext.imageSmoothingEnabled = true;
-canvasContext.imageSmoothingQuality = "high";
+canvasContext.lineWidth = 10;
+canvasContext.lineCap = "round";
+//canvasContext.filter = "blur(0.5px)"
 var mouseHolding = false;
 
 // scale
 canvasContext.scale(
-    imageShape[0] / canvasShape[0],
-    imageShape[1] / canvasShape[1],
+    canvas.width / canvas.getBoundingClientRect().width,
+    canvas.height / canvas.getBoundingClientRect().height
 )
 
 function getMousePosition(mouseEvent, canvas) {
-    mouseX = event.clientX - canvas.offsetLeft;
-    mouseY = event.clientY - canvas.offsetTop;
+    mouseX = event.clientX - canvas.offsetLeft + 0.5;
+    mouseY = event.clientY - canvas.offsetTop + 0.5;
     return { mouseX, mouseY };
 }
 
-canvas.onmousedown = function(mouseEvent) {
+function inferImage() {
+    canvasImageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height)
+    response = fetch(
+        inferenceUrl,
+        {
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify({"imageData": canvasImageData})
+        }
+    )
+    // TODO on response success, update some prediction element
+}
+
+canvas.onmousedown = (mouseEvent) => {
     mouseHolding = true;
 
     let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
     canvasContext.beginPath();
     canvasContext.moveTo(mouseX, mouseY);
-    console.log(canvasContext.getImageData(0, 0, canvas.width, canvas.height))
 }
 
-canvas.onmouseup = function(_mouseEvent) {
+canvas.onmouseup = (_mouseEvent) => {
+    if (mouseHolding) {
+        inferImage()
+    }
     mouseHolding = false;
 }
 
-canvas.onmouseout = function(_mouseEvent){
+canvas.onmouseout = (_mouseEvent) => {
+    if (mouseHolding) {
+        inferImage()
+    }
     mouseHolding = false;
 }
 
-canvas.onmousemove = function(mouseEvent) {
+canvas.onmousemove = (mouseEvent) => {
     if (mouseHolding) {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
         canvasContext.lineTo(mouseX, mouseY);
         canvasContext.stroke();
     }
 };
+
+//TODO: window.onresize = () =>

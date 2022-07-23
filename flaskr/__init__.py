@@ -1,11 +1,14 @@
 import os
+import json
 
-from flask import Flask, render_template
+from flask import Flask, request, render_template
 
+from .inference import infer_image
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
+    api_root = os.environ.get("API_ROOT", "http://localhost:5000") # TODO launch with this root too
 
     # create instance folder
     try:
@@ -14,14 +17,22 @@ def create_app(test_config=None):
         raise ValueError("Could not create instance folder")
 
     # a simple page that says hello
-    @app.route('/')
+    @app.route("/")
     def home():
-        image_shape = (28, 28)
-        canvas_shape = tuple(size * 25 for size in image_shape)
         return render_template(
             "base.html",
-            image_shape=image_shape,
-            canvas_shape=canvas_shape
+            inference_url="/".join((api_root, "infer")),
+        )
+
+    @app.route("/infer", methods=["POST"])
+    def infer():
+        print("TODO: infer image")
+        image_data = request.json["imageData"]
+        confidences = infer_image(image_data)
+        return app.response_class(
+            response=json.dumps({"confidences": confidences}),
+            status=200,
+            mimetype='application/json'
         )
 
     return app
