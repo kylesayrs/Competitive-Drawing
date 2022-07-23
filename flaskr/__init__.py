@@ -16,7 +16,12 @@ def create_app(test_config=None):
     # a simple page that says hello
     @app.route('/')
     def home():
-        return render_template("base.html")
-        #return 'Hello, World!'
+        image_shape = (28, 28)
+        canvas_shape = tuple(size * 25 for size in image_shape)
+        return render_template(
+            "base.html",
+            image_shape=image_shape,
+            canvas_shape=canvas_shape
+        )
 
     return app

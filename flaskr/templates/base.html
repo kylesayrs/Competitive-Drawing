@@ -8,13 +8,17 @@
     <body>
         <canvas
             id="paint"
-            width="750"
-            height="450"
-            style="border: 5px solid #000000;"
+            width="{{ image_shape[0] }}"
+            height="{{ image_shape[1] }}"
+            style="border: 5px solid #000000; width: {{ canvas_shape[0] }}px; height: {{ canvas_shape[0] }}px"
         >
             Update your browser to support HTML5 Canvas
         </canvas>
 
+        <script type="text/javascript">
+            imageShape = {{ image_shape | tojson }}
+            canvasShape = {{ canvas_shape | tojson }}
+        </script>
         <script type="text/javascript" src="{{url_for('static', filename='scripts/base.js')}}"></script>
     </body>
 </html>
