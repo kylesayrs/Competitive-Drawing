@@ -10,9 +10,16 @@
         <canvas id="draw" width="500%" height="500%">
             Update your browser to support HTML5 Canvas
         </canvas>
+        <canvas id="preview" width=28 height=28>
+            Update your browser to support HTML5 Canvas
+        </canvas>
 
+        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
         <script type="text/javascript">
+            inferenceMode = "client"
             inferenceUrl = {{ inference_url | tojson }}
+            modelPath = "{{ url_for('static', filename='models/model.onnx') }}"
         </script>
         <script type="text/javascript" src="{{url_for('static', filename='scripts/base.js')}}"></script>
     </body>

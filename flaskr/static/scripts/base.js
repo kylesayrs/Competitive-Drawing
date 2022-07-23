@@ -1,10 +1,20 @@
+// libraries
+pica = pica({ features: ["js"] })
+
 // initialize canvas and drawing
 const canvas = document.getElementById("draw");
 const canvasContext = canvas.getContext("2d");
-canvasContext.lineWidth = 10;
+canvasContext.lineWidth = 20;
 canvasContext.lineCap = "round";
-//canvasContext.filter = "blur(0.5px)"
+const previewCanvas = document.getElementById("preview")
+const previewCanvasContext = previewCanvas.getContext("2d")
+//previewCanvasContext.filter = "blur(0.5px)"
 var mouseHolding = false;
+
+// initialize model inference session
+const inferenceSessionPromise = ort.InferenceSession.create(
+    modelPath
+);
 
 // scale
 canvasContext.scale(
@@ -18,18 +28,53 @@ function getMousePosition(mouseEvent, canvas) {
     return { mouseX, mouseY };
 }
 
-function inferImage() {
-    canvasImageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height)
-    response = fetch(
-        inferenceUrl,
-        {
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": JSON.stringify({"imageData": canvasImageData})
-        }
-    )
+async function processCanvasImage(canvasImage) {
+    await pica.resize(canvas, previewCanvas)
+    resizedImageData = previewCanvasContext.getImageData(0, 0, previewCanvas.width, previewCanvas.height).data
+
+    redChannelBuffer = []
+    for (i = 0; i < resizedImageData.length; i += 4) {
+        redChannelBuffer.push(resizedImageData[i + 3]);//resizedImageData[i + 2])
+    }
+
+    return new Float32Array(redChannelBuffer)
+}
+
+function softmax(arr) {
+    return arr.map(function(value, index) {
+      return Math.exp(value) / arr.map( function(y){ return Math.exp(y) } ).reduce( function(a,b){ return a+b })
+    })
+}
+
+async function inferImage() {
+    canvasImage = canvasContext.getImageData(0, 0, 28, 28)//canvas.width, canvas.height)
+
+    if (inferenceMode == "client") {
+        processedImageData = await processCanvasImage(canvasImage)
+        const model_input = new ort.Tensor(
+            processedImageData,
+            [1, 1, 28, 28]
+        );
+
+        inferenceSession = await inferenceSessionPromise
+        const model_outputs = await inferenceSession.run({ "input": model_input })
+        console.log(model_outputs.output.data)
+        const model_confidences = softmax(model_outputs.output.data)
+        //['sheep', 'dragon', 'mona_lisa', 'guitar', 'pig', 'tree', 'clock', 'squirrel', 'duck', 'jail']
+    }
+
+    if (inferenceMode == "server") {
+        response = fetch(
+            inferenceUrl,
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({"imageData": canvasImageData})
+            }
+        )
+    }
     // TODO on response success, update some prediction element
 }
 
@@ -41,7 +86,7 @@ canvas.onmousedown = (mouseEvent) => {
     canvasContext.moveTo(mouseX, mouseY);
 }
 
-canvas.onmouseup = (_mouseEvent) => {
+canvas.onmouseup = async (_mouseEvent) => {
     if (mouseHolding) {
         inferImage()
     }
@@ -60,6 +105,7 @@ canvas.onmousemove = (mouseEvent) => {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
         canvasContext.lineTo(mouseX, mouseY);
         canvasContext.stroke();
+        //inferImage()
     }
 };
 
