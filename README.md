@@ -2,8 +2,7 @@
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
 TODO
-* proper image cropping
-    * crop exactly to 27x27, add a white 1 pixel padding
+* retrain with slight crop perturbations
 * server side inference
-* better drawing that matches how it was generated
+* investigate exactly how data was created so we can match
 * better ui

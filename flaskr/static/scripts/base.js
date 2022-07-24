@@ -9,8 +9,8 @@ canvasContext.lineCap = "round";
 canvasContext.miterLimit = 1;
 const previewCanvas = document.getElementById("preview")
 const previewCanvasContext = previewCanvas.getContext("2d")
-//previewCanvasContext.filter = "blur(0.5px)"
 var mouseHolding = false;
+let inferenceMutex = false;
 
 // set up prediction chart
 allLabels = ['sheep', 'dragon', 'mona_lisa', 'guitar', 'pig', 'tree', 'clock', 'squirrel', 'duck', 'jail']
@@ -84,40 +84,90 @@ function updatePredictionChart(chartData) {
         .attr("fill", "#69b3a2")
 }
 
-function cropImageData(imageData) {
-    /*
-    min_width = 0;
-    max_width = previewCanvas.width;
-    min_height = 0;
-    max_height = previewCanvas.width;
-    width = 0;
-    height = 0;
-    for (i = 0; i < canvasContext.length; i += 4) {
-
-        //redChannelBuffer.push(canvasContext[i + 3]);//resizedImageData[i + 2])
+function cropCanvasImage(canvasImage) {
+    const canvasImageWidth = canvasImage.getWidth();
+    const canvasImageHeight = canvasImage.getHeight();
+    let bounds = {
+        "min_width": canvasImageWidth,
+        "max_width": 0,
+        "min_height": canvasImageHeight,
+        "max_height": 0,
     }
-    */
+    let foundAnyPixels = false
+    for (let y = 0; y < canvasImageHeight; y++) {
+        for (let x = 0; x < canvasImageWidth; x++) {
+        	let alpha = canvasImage.getAlphaComponent(x, y);
+            if (alpha > 0) {
+                bounds["min_width"] = Math.min(bounds["min_width"], x);
+                bounds["max_width"] = Math.max(bounds["max_width"], x);
+                bounds["min_height"] = Math.min(bounds["min_height"], y);
+                bounds["max_height"] = Math.max(bounds["max_height"], y);
+                foundAnyPixels = true
+            }
+        }
+    }
 
-    return imageData
+    if (foundAnyPixels) {
+        const cropMidpoint = [(bounds["max_width"] + bounds["min_width"]) / 2,
+                              (bounds["max_height"] + bounds["min_height"]) / 2]
+        const cropDiameter = Math.floor(Math.max(bounds["max_width"] - bounds["min_width"],
+                                                 bounds["max_height"] - bounds["min_height"]))
+        const cropRadius = cropDiameter / 2
+
+        const cropX = Math.floor(Math.max(cropMidpoint[0] - cropRadius, 0))
+        const cropY = Math.floor(Math.min(cropMidpoint[1] - cropRadius, canvasImageWidth))
+
+        croppedCanvasImage = new MarvinImage(cropDiameter, cropDiameter, MarvinImage.COLOR_MODEL_BINARY)
+        Marvin.crop(
+            canvasImage,
+            croppedCanvasImage,
+            cropX,
+            cropY,
+            cropDiameter,
+            cropDiameter,
+        );
+        return croppedCanvasImage
+    } else {
+        console.log("WARNING: did not find any pixels when cropping canvas image")
+        return canvasImage
+    }
 }
 
-async function updatePreview(canvasContext) {
-    //canvasImage = getCroppedImageData(canvasContext)
-    //console.log(canvasImage)
-    canvasImageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height)
-    croppedImageData = cropImageData(canvasImageData)
-    canvasImageBitmap = await createImageBitmap(croppedImageData)
-    console.log(canvasImageBitmap)
 
-    await pica.resize(canvasImageBitmap, previewCanvas)
-    previewImageData = previewCanvasContext.getImageData(0, 0, previewCanvas.width, previewCanvas.height).data
-
-    redChannelBuffer = []
-    for (i = 0; i < previewImageData.length; i += 4) {
-        redChannelBuffer.push(previewImageData[i + 3]);//resizedImageData[i + 2])
+function imageData2BWData(imageData) {
+    alphaChannelBuffer = []
+    for (i = 0; i < imageData.data.length; i += 4) {
+        alphaChannelBuffer.push(imageData.data[i + 3]);//resizedImageData[i + 2])
     }
 
-    return new Float32Array(redChannelBuffer)
+    return new Float32Array(alphaChannelBuffer)
+}
+
+async function updatePreview(canvasContext, callbackFn) {
+    canvas.toBlob((blob) => {
+        canvasBlobUrl = URL.createObjectURL(blob)
+        canvasImage = new MarvinImage(canvas.width, canvas.height, MarvinImage.COLOR_MODEL_BINARY)
+        canvasImage.load(canvasBlobUrl, async () => {
+            // crop canvas image to exactly bounds
+            cropedCanvasImage = cropCanvasImage(canvasImage)
+
+            // scale to 26x26 using pica (marvinj's rescaling sucks)
+            let image26Data = await pica.resizeBuffer({
+                "src": cropedCanvasImage.imageData.data,
+                "width": cropedCanvasImage.imageData.width,
+                "height": cropedCanvasImage.imageData.height,
+                "toWidth": 26,
+                "toHeight": 26
+            })
+            image26Data = new Uint8ClampedArray(image26Data)
+            const image26ImageData = new ImageData(image26Data, 26, 26)
+
+            // place onto 28x28 with 1x1 padding
+            previewCanvasContext.putImageData(image26ImageData, 1, 1)
+            const previewCanvasImageData = previewCanvasContext.getImageData(0, 0, previewCanvas.width, previewCanvas.height)
+            callbackFn(previewCanvasImageData)
+        })
+    })
 }
 
 function normalize(arr) {
@@ -137,35 +187,39 @@ function softmax(arr, factor = 1) {
     return exponents.map((exp) => exp / total);
 }
 
-async function inferImage() {
+async function inferImage(callbackFn) {
     if (inferenceMode == "client") {
-        processedImageData = await updatePreview(canvasContext)
-        const model_input = new ort.Tensor(
-            processedImageData,
-            [1, 1, 28, 28]
-        );
+        updatePreview(canvasContext, async (previewImageData) => {
+            const imageDataBuffer = imageData2BWData(previewImageData)
 
-        inferenceSession = await inferenceSessionPromise
-        const model_outputs = await inferenceSession.run({ "input": model_input })
-        const model_outputs_normalized = normalize(model_outputs.output.data)
+            const model_input = new ort.Tensor(
+                imageDataBuffer,
+                [1, 1, 28, 28]
+            );
 
-        // filter to relevant outputs
-        targetLabels = ["clock", "sheep"]
-        filteredLabels = []
-        filteredOutputs = []
-        for (let i = 0; i < allLabels.length; i++) {
-            if (targetLabels.includes(allLabels[i])) {
-                filteredLabels.push(allLabels[i])
-                filteredOutputs.push(model_outputs_normalized[i])
+            inferenceSession = await inferenceSessionPromise
+            const model_outputs = await inferenceSession.run({ "input": model_input })
+            const model_outputs_normalized = normalize(model_outputs.output.data)
+
+            // filter to relevant outputs
+            targetLabels = ["clock", "sheep"]
+            filteredLabels = []
+            filteredOutputs = []
+            for (let i = 0; i < allLabels.length; i++) {
+                if (targetLabels.includes(allLabels[i])) {
+                    filteredLabels.push(allLabels[i])
+                    filteredOutputs.push(model_outputs_normalized[i])
+                }
             }
-        }
 
-        const model_confidences = softmax(filteredOutputs, factor=7)
-        chartData = []
-        for (i = 0; i < filteredLabels.length; i++) {
-            chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
-        }
-        updatePredictionChart(chartData)
+            const model_confidences = softmax(filteredOutputs, factor=7)
+            chartData = []
+            for (i = 0; i < filteredLabels.length; i++) {
+                chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
+            }
+            updatePredictionChart(chartData)
+            callbackFn()
+        })
     }
 
     if (inferenceMode == "server") {
@@ -191,25 +245,25 @@ canvas.onmousedown = (mouseEvent) => {
     canvasContext.moveTo(mouseX, mouseY);
 }
 
-canvas.onmouseup = async (_mouseEvent) => {
-    if (mouseHolding) {
-        inferImage()
-    }
+canvas.onmouseup = (_mouseEvent) => {
     mouseHolding = false;
 }
 
 canvas.onmouseout = (_mouseEvent) => {
-    if (mouseHolding) {
-        inferImage()
-    }
     mouseHolding = false;
 }
 
-canvas.onmousemove = (mouseEvent) => {
+canvas.onmousemove = async (mouseEvent) => {
     if (mouseHolding) {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
         canvasContext.lineTo(mouseX, mouseY);
         canvasContext.stroke();
+        if (!inferenceMutex) {
+            inferenceMutex = true;
+            await inferImage(() => {
+                inferenceMutex = false;
+            })
+        }
     }
 };
 
