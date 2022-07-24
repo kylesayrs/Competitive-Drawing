@@ -1,8 +1,9 @@
 # Competitive-Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
-Roadmap
-* implement ui
-* inference
-    * investigate web runtimes that support sparsity
-    * otherwise do requests and run with deepsparse
+TODO
+* proper image cropping
+    * crop exactly to 27x27, add a white 1 pixel padding
+* server side inference
+* better drawing that matches how it was generated
+* better ui

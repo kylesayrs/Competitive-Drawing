@@ -84,13 +84,37 @@ function updatePredictionChart(chartData) {
         .attr("fill", "#69b3a2")
 }
 
-async function processCanvasImage(canvasImage) {
-    await pica.resize(canvas, previewCanvas)
-    resizedImageData = previewCanvasContext.getImageData(0, 0, previewCanvas.width, previewCanvas.height).data
+function cropImageData(imageData) {
+    /*
+    min_width = 0;
+    max_width = previewCanvas.width;
+    min_height = 0;
+    max_height = previewCanvas.width;
+    width = 0;
+    height = 0;
+    for (i = 0; i < canvasContext.length; i += 4) {
+
+        //redChannelBuffer.push(canvasContext[i + 3]);//resizedImageData[i + 2])
+    }
+    */
+
+    return imageData
+}
+
+async function updatePreview(canvasContext) {
+    //canvasImage = getCroppedImageData(canvasContext)
+    //console.log(canvasImage)
+    canvasImageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height)
+    croppedImageData = cropImageData(canvasImageData)
+    canvasImageBitmap = await createImageBitmap(croppedImageData)
+    console.log(canvasImageBitmap)
+
+    await pica.resize(canvasImageBitmap, previewCanvas)
+    previewImageData = previewCanvasContext.getImageData(0, 0, previewCanvas.width, previewCanvas.height).data
 
     redChannelBuffer = []
-    for (i = 0; i < resizedImageData.length; i += 4) {
-        redChannelBuffer.push(resizedImageData[i + 3]);//resizedImageData[i + 2])
+    for (i = 0; i < previewImageData.length; i += 4) {
+        redChannelBuffer.push(previewImageData[i + 3]);//resizedImageData[i + 2])
     }
 
     return new Float32Array(redChannelBuffer)
@@ -114,10 +138,8 @@ function softmax(arr, factor = 1) {
 }
 
 async function inferImage() {
-    canvasImage = canvasContext.getImageData(0, 0, 28, 28)//canvas.width, canvas.height)
-
     if (inferenceMode == "client") {
-        processedImageData = await processCanvasImage(canvasImage)
+        processedImageData = await updatePreview(canvasContext)
         const model_input = new ort.Tensor(
             processedImageData,
             [1, 1, 28, 28]
