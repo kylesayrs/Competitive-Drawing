@@ -17,7 +17,7 @@ var inferenceMutex = false;
 var lastMouseX = 0;
 var lastMouseY = 0;
 var totalMouseDistance = 0;
-var mouseDistanceLimit = 100; // TODO: needs to be proportional to canvas size
+var mouseDistanceLimit = 200; // TODO: needs to be proportional to canvas size
                               // also the count needs to update on resize
 
 canvasContext.lineWidth = 20; // TODO: Proportional to canvas size
@@ -64,15 +64,15 @@ canvasContext.scale(
 )
 
 // update mouse distance indicator
+// TODO: watch for totalMouseDistance update
 function updateDistanceIndicator() {
     document.getElementById("distanceIndicator")
-        .innerHTML = "Distance remaining: " + (mouseDistanceLimit - totalMouseDistance).toString();
+        .innerHTML = "Distance remaining: " + Math.round(mouseDistanceLimit - totalMouseDistance).toString();
 }
 updateDistanceIndicator()
 
 function getMousePosition(mouseEvent, canvas) {
     const canvasBoundingRect = canvas.getBoundingClientRect();
-    console.log(canvasBoundingRect)
     mouseX = event.clientX - canvasBoundingRect.left - canvas.offsetLeft + 0.5;
     mouseY = event.clientY - canvasBoundingRect.top - canvas.offsetTop + 0.5;
     return { mouseX, mouseY };
@@ -281,36 +281,52 @@ canvas.onmousedown = (mouseEvent) => {
     }
 }
 
-canvas.onmouseup = (_mouseEvent) => {
+function onMouseEnd(_mouseEvent) {
     mouseHolding = false;
     sumPixelsChanged = 0;
+
+    // TODO: await on mutex
+    if (!inferenceMutex) {
+        inferenceMutex = true;
+        clientInferImage(() => {
+            inferenceMutex = false;
+        })
+    }
+
     serverInferImage()
 }
 
-canvas.onmouseout = (_mouseEvent) => {
-    mouseHolding = false;
-    sumPixelsChanged = 0;
-    serverInferImage()
-}
+canvas.onmouseup = onMouseEnd
+canvas.onmouseout = onMouseEnd
 
 canvas.onmousemove = async (mouseEvent) => {
     if (mouseHolding) {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
+        let strokeDistance = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY)
 
-        const strokeDistance = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY)
+        // if overreach, interpolate on line to match remaining distance
+        if (totalMouseDistance + strokeDistance > mouseDistanceLimit) {
+            const distanceRemaining = mouseDistanceLimit - totalMouseDistance
+            const theta = Math.asin((mouseY - lastMouseY) / strokeDistance)
 
-        // TODO: Some sort of lerp. If would go over limit, draw along that line
-        // such that the line exactly matches the limit
-        if (totalMouseDistance + strokeDistance <= mouseDistanceLimit) {
-            canvasContext.lineTo(mouseX, mouseY);
-            canvasContext.stroke();
+            mouseX = Math.cos(theta) * distanceRemaining + lastMouseX
+            mouseY = Math.sin(theta) * distanceRemaining + lastMouseY
 
-            totalMouseDistance += strokeDistance
-            updateDistanceIndicator()
+            // theoretically this should match perfectly
+            strokeDistance = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY)
+            //strokeDistance = distanceRemaining
 
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
+            mouseHolding = false;
         }
+
+        canvasContext.lineTo(mouseX, mouseY);
+        canvasContext.stroke();
+
+        totalMouseDistance += strokeDistance
+        updateDistanceIndicator()
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
 
         if (!inferenceMutex) {
             inferenceMutex = true;

@@ -1,6 +1,8 @@
 # Competitive-Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
+![Competitive Drawing Logo](flaskr/static/assets/logo.png)
+
 TODO
 * name?
 * retrain model
@@ -12,6 +14,7 @@ TODO
     * at the end mouse out to validate data and correct results
 * game mechanics
     * multiplayer sockets
+    * distance limits slowly get smaller
     * hide opponent target
     * erasing turn for loser if winning by more than 30%
 * better ui
