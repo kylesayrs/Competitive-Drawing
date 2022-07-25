@@ -29,8 +29,12 @@ def create_app(test_config=None):
         print("TODO: infer image")
         image_data = request.json["imageData"]
         confidences = infer_image(image_data)
+        # TODO cheat detection
         return app.response_class(
-            response=json.dumps({"confidences": confidences}),
+            response=json.dumps({
+                "confidences": confidences,
+                "isCheater": False,
+            }),
             status=200,
             mimetype='application/json'
         )

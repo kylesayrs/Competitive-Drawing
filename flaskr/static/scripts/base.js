@@ -1,23 +1,32 @@
 // libraries
 pica = pica({ features: ["js"] })
 
+// global state
+var sumPixelsChanged = 0;
+var mouseHolding = false;
+var inferenceMutex = false;
+var lastMouseX = 0;
+var lastMouseY = 0;
+var totalMouseDistance = 0;
+var mouseDistanceLimit = 100; // TODO: needs to be proportional to canvas size
+                              // also the count needs to update on resize
+
 // initialize canvas and drawing
 const canvas = document.getElementById("draw");
 const canvasContext = canvas.getContext("2d");
-canvasContext.lineWidth = 20;
+canvasContext.lineWidth = 20; // TODO: Proportional to canvas size
 canvasContext.lineCap = "round";
 canvasContext.miterLimit = 1;
 const previewCanvas = document.getElementById("preview")
 const previewCanvasContext = previewCanvas.getContext("2d")
-var mouseHolding = false;
-let inferenceMutex = false;
+distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
 
 // set up prediction chart
 allLabels = ['sheep', 'dragon', 'mona_lisa', 'guitar', 'pig', 'tree', 'clock', 'squirrel', 'duck', 'jail']
 confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
 confidenceChartWidth = 460 - confidenceChartMargin.left - confidenceChartMargin.right
 confidenceChartHeight = 400 - confidenceChartMargin.top - confidenceChartMargin.bottom;
-var confidenceChartSvg = d3.select("#confidence-chart")
+var confidenceChartSvg = d3.select("#confidenceChart")
     .append("svg")
         .attr("width", confidenceChartWidth + confidenceChartMargin.left + confidenceChartMargin.right)
         .attr("height", confidenceChartHeight + confidenceChartMargin.top + confidenceChartMargin.bottom)
@@ -42,6 +51,7 @@ confidenceChartSvg.append("g")
     .call(d3.axisLeft(y_scale))
 
 // initialize model inference session
+// TODO: wrap this in a promise and have game wait until model is initialized
 const inferenceSessionPromise = ort.InferenceSession.create(
     modelPath
 );
@@ -52,16 +62,17 @@ canvasContext.scale(
     canvas.height / canvas.getBoundingClientRect().height
 )
 
+// update mouse distance indicator
+function updateDistanceIndicator() {
+    document.getElementById("distanceIndicator")
+        .innerHTML = "Distance remaining: " + (mouseDistanceLimit - totalMouseDistance).toString();
+}
+updateDistanceIndicator()
+
 function getMousePosition(mouseEvent, canvas) {
     mouseX = event.clientX - canvas.offsetLeft + 0.5;
     mouseY = event.clientY - canvas.offsetTop + 0.5;
     return { mouseX, mouseY };
-}
-
-function removeAllChildNodes(parent) {
-    while (parent.firstChild) {
-        parent.removeChild(parent.firstChild);
-    }
 }
 
 function updatePredictionChart(chartData) {
@@ -135,6 +146,7 @@ function cropCanvasImage(canvasImage) {
 
 
 function imageData2BWData(imageData) {
+    // need to get alpha channel because MarvinJ's getColorComponent is broken
     alphaChannelBuffer = []
     for (i = 0; i < imageData.data.length; i += 4) {
         alphaChannelBuffer.push(imageData.data[i + 3]);//resizedImageData[i + 2])
@@ -170,10 +182,11 @@ async function updatePreview(canvasContext, callbackFn) {
     })
 }
 
-function normalize(arr) {
-    const minimum = Math.min.apply(Math, arr)
-    arr = arr.map((v) => v - minimum)
-    const ratio = Math.max.apply(Math, arr)
+function normalize(arr, minNorm=0, maxNorm=1) {
+    const minimumValue = Math.min.apply(Math, arr)
+    arr = arr.map((value) => value - minimumValue, minNorm)
+    const maxValue = Math.max.apply(Math, arr)
+    const ratio = maxValue * maxNorm
 
     for ( i = 0; i < arr.length; i++ ) {
         arr[i] /= ratio;
@@ -187,84 +200,125 @@ function softmax(arr, factor = 1) {
     return exponents.map((exp) => exp / total);
 }
 
-async function inferImage(callbackFn) {
-    if (inferenceMode == "client") {
-        updatePreview(canvasContext, async (previewImageData) => {
-            const imageDataBuffer = imageData2BWData(previewImageData)
+async function clientInferImage(callbackFn=null) {
+    updatePreview(canvasContext, async (previewImageData) => {
+        // grab data from preview canvas
+        const imageDataBuffer = imageData2BWData(previewImageData)
 
-            const model_input = new ort.Tensor(
-                imageDataBuffer,
-                [1, 1, 28, 28]
-            );
+        // create input
+        const model_input = new ort.Tensor(
+            imageDataBuffer,
+            [1, 1, 28, 28]
+        );
 
-            inferenceSession = await inferenceSessionPromise
-            const model_outputs = await inferenceSession.run({ "input": model_input })
-            const model_outputs_normalized = normalize(model_outputs.output.data)
+        // perform inference
+        // TODO: remove promise when
+        inferenceSession = await inferenceSessionPromise
+        const model_outputs = await inferenceSession.run({ "input": model_input })
 
-            // filter to relevant outputs
-            targetLabels = ["clock", "sheep"]
-            filteredLabels = []
-            filteredOutputs = []
-            for (let i = 0; i < allLabels.length; i++) {
-                if (targetLabels.includes(allLabels[i])) {
-                    filteredLabels.push(allLabels[i])
-                    filteredOutputs.push(model_outputs_normalized[i])
-                }
+        // normalize scores
+        const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
+
+        // filter to relevant outputs
+        targetLabels = allLabels;//["squirrel", "jail"]
+        filteredLabels = []
+        filteredOutputs = []
+        for (let i = 0; i < allLabels.length; i++) {
+            if (targetLabels.includes(allLabels[i])) {
+                filteredLabels.push(allLabels[i])
+                filteredOutputs.push(model_outputs_normalized[i])
             }
+        }
 
-            const model_confidences = softmax(filteredOutputs, factor=7)
-            chartData = []
-            for (i = 0; i < filteredLabels.length; i++) {
-                chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
-            }
-            updatePredictionChart(chartData)
+        // apply softmax
+        const model_confidences = softmax(filteredOutputs, factor=7)
+
+        // update chart
+        chartData = []
+        for (i = 0; i < filteredLabels.length; i++) {
+            chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
+        }
+        updatePredictionChart(chartData)
+
+        if (callbackFn) {
             callbackFn()
-        })
-    }
+        }
+    })
+}
 
-    if (inferenceMode == "server") {
-        response = fetch(
-            inferenceUrl,
-            {
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": JSON.stringify({"imageData": canvasImageData})
-            }
-        )
+async function serverInferImage(callbackFn=null) {
+    return; // TODO: implement
+
+    response = await fetch(
+        inferenceUrl,
+        {
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify({"imageData": canvasImageData})
+        }
+    )
+    if (callbackFn) {
+        callbackFn()
     }
     // TODO on response success, update some prediction element
 }
 
 canvas.onmousedown = (mouseEvent) => {
-    mouseHolding = true;
+    if (mouseDistanceLimit - totalMouseDistance > 1) {
+        let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
 
-    let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
-    canvasContext.beginPath();
-    canvasContext.moveTo(mouseX, mouseY);
+        canvasContext.beginPath();
+        canvasContext.moveTo(mouseX, mouseY);
+
+        mouseHolding = true;
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+    }
 }
 
 canvas.onmouseup = (_mouseEvent) => {
     mouseHolding = false;
+    sumPixelsChanged = 0;
+    serverInferImage()
 }
 
 canvas.onmouseout = (_mouseEvent) => {
     mouseHolding = false;
+    sumPixelsChanged = 0;
+    serverInferImage()
 }
 
 canvas.onmousemove = async (mouseEvent) => {
     if (mouseHolding) {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
-        canvasContext.lineTo(mouseX, mouseY);
-        canvasContext.stroke();
+
+        const strokeDistance = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY)
+
+        if (totalMouseDistance + strokeDistance <= mouseDistanceLimit) {
+            canvasContext.lineTo(mouseX, mouseY);
+            canvasContext.stroke();
+
+            totalMouseDistance += strokeDistance
+            updateDistanceIndicator()
+
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+        }
+
         if (!inferenceMutex) {
             inferenceMutex = true;
-            await inferImage(() => {
+            await clientInferImage(() => {
                 inferenceMutex = false;
             })
         }
     }
 };
+
+distanceIndicatorButton.onclick = (_event) => {
+    totalMouseDistance = 0;
+    updateDistanceIndicator()
+}
 
 //TODO: window.onresize = () =>
