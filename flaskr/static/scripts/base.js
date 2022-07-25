@@ -1,6 +1,15 @@
 // libraries
 pica = pica({ features: ["js"] })
 
+// get html elements
+const canvas = document.getElementById("draw");
+const canvasContext = canvas.getContext("2d");
+canvasContext.lineCap = "round";
+canvasContext.miterLimit = 1;
+const previewCanvas = document.getElementById("preview")
+const previewCanvasContext = previewCanvas.getContext("2d")
+distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
+
 // global state
 var sumPixelsChanged = 0;
 var mouseHolding = false;
@@ -11,15 +20,7 @@ var totalMouseDistance = 0;
 var mouseDistanceLimit = 100; // TODO: needs to be proportional to canvas size
                               // also the count needs to update on resize
 
-// initialize canvas and drawing
-const canvas = document.getElementById("draw");
-const canvasContext = canvas.getContext("2d");
 canvasContext.lineWidth = 20; // TODO: Proportional to canvas size
-canvasContext.lineCap = "round";
-canvasContext.miterLimit = 1;
-const previewCanvas = document.getElementById("preview")
-const previewCanvasContext = previewCanvas.getContext("2d")
-distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
 
 // set up prediction chart
 allLabels = ['sheep', 'dragon', 'mona_lisa', 'guitar', 'pig', 'tree', 'clock', 'squirrel', 'duck', 'jail']
@@ -70,8 +71,10 @@ function updateDistanceIndicator() {
 updateDistanceIndicator()
 
 function getMousePosition(mouseEvent, canvas) {
-    mouseX = event.clientX - canvas.offsetLeft + 0.5;
-    mouseY = event.clientY - canvas.offsetTop + 0.5;
+    const canvasBoundingRect = canvas.getBoundingClientRect();
+    console.log(canvasBoundingRect)
+    mouseX = event.clientX - canvasBoundingRect.left - canvas.offsetLeft + 0.5;
+    mouseY = event.clientY - canvasBoundingRect.top - canvas.offsetTop + 0.5;
     return { mouseX, mouseY };
 }
 
@@ -296,6 +299,8 @@ canvas.onmousemove = async (mouseEvent) => {
 
         const strokeDistance = Math.hypot(mouseX - lastMouseX, mouseY - lastMouseY)
 
+        // TODO: Some sort of lerp. If would go over limit, draw along that line
+        // such that the line exactly matches the limit
         if (totalMouseDistance + strokeDistance <= mouseDistanceLimit) {
             canvasContext.lineTo(mouseX, mouseY);
             canvasContext.stroke();

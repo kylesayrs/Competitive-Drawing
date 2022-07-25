@@ -11,8 +11,8 @@ TODO
 * server side inference
     * at the end mouse out to validate data and correct results
 * game mechanics
-    * count pixels changed / stroke length
     * multiplayer sockets
+    * hide opponent target
     * erasing turn for loser if winning by more than 30%
 * better ui
     * canvas on left
@@ -21,4 +21,7 @@ TODO
     * only show relevant classes
         * me is on left, opponent is on right
 * bug fixing
-    * canvas when scrolled
+    * update on resize
+        * stroke length
+        * mouse distance
+    * code cleanup, split up javascript files
