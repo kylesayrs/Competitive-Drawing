@@ -1,7 +1,7 @@
 // libraries
 pica = pica({ features: ["js"] })
 
-// get html elements
+// get canvas elements
 const canvas = document.getElementById("draw");
 const canvasContext = canvas.getContext("2d");
 canvasContext.lineCap = "round";
@@ -11,19 +11,21 @@ const previewCanvasContext = previewCanvas.getContext("2d")
 distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
 
 // global state
+allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
+             "tree", "clock", "squirrel", "duck", "jail"]
+var targetLabels = allLabels;
 var sumPixelsChanged = 0;
 var mouseHolding = false;
 var inferenceMutex = false;
 var lastMouseX = 0;
 var lastMouseY = 0;
 var totalMouseDistance = 0;
-var mouseDistanceLimit = 200; // TODO: needs to be proportional to canvas size
-                              // also the count needs to update on resize
+var mouseDistanceLimit = 2000000; // TODO: needs to be proportional to canvas size
+                                  // also the count needs to update on resize
 
-canvasContext.lineWidth = 20; // TODO: Proportional to canvas size
+canvasContext.lineWidth = 15; // TODO: Proportional to canvas size
 
 // set up prediction chart
-allLabels = ['sheep', 'dragon', 'mona_lisa', 'guitar', 'pig', 'tree', 'clock', 'squirrel', 'duck', 'jail']
 confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
 confidenceChartWidth = 460 - confidenceChartMargin.left - confidenceChartMargin.right
 confidenceChartHeight = 400 - confidenceChartMargin.top - confidenceChartMargin.bottom;
@@ -215,15 +217,14 @@ async function clientInferImage(callbackFn=null) {
         );
 
         // perform inference
-        // TODO: remove promise when
+        // TODO: remove promise when game loads after inference session is loaded
         inferenceSession = await inferenceSessionPromise
         const model_outputs = await inferenceSession.run({ "input": model_input })
 
         // normalize scores
         const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
 
-        // filter to relevant outputs
-        targetLabels = allLabels;//["squirrel", "jail"]
+        // filter to target outputs
         filteredLabels = []
         filteredOutputs = []
         for (let i = 0; i < allLabels.length; i++) {
