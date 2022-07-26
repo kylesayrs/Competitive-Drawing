@@ -11,7 +11,7 @@ TODO
     * move training code to repo
 * ai opponent
     * stroke loss?
-    * static graident descent with a few random initializations
+    * static gradient descent with a few random initializations
     * gan
     * self-play reinforcement learning
 * server side inference
@@ -23,6 +23,8 @@ TODO
     * erasing turn for loser if winning by more than 30%
         * the loser always has hope, the winner has to continue to draw to avoid relying on one feature
     * cheat detection
+    * grad cam
+    * optional coloring for opponent vs your strokes
 * better ui
     * canvas on left
     * preview bottom right

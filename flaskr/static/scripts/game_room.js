@@ -1,5 +1,6 @@
 // libraries
 pica = pica({ features: ["js"] })
+import { ConfidenceChart } from "/static/scripts/confidence_chart.js";
 
 // Some sort of "ready to play" message
 var socket = io();
@@ -15,10 +16,10 @@ canvasContext.lineCap = "round";
 canvasContext.miterLimit = 1;
 const previewCanvas = document.getElementById("preview")
 const previewCanvasContext = previewCanvas.getContext("2d")
-distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
+const distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
 
 // global state
-allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
+const allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
              "tree", "clock", "squirrel", "duck", "jail"]
 var targetLabels = ["pig", "duck"];
 var mouseHolding = false;
@@ -26,36 +27,10 @@ var inferenceMutex = false;
 var lastMouseX = 0;
 var lastMouseY = 0;
 var totalMouseDistance = 0;
-var mouseDistanceLimit = 200;
+var mouseDistanceLimit = 150;
 canvasContext.lineWidth = 15;
 
-// set up prediction chart
-confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
-confidenceChartWidth = 460 - confidenceChartMargin.left - confidenceChartMargin.right
-confidenceChartHeight = 400 - confidenceChartMargin.top - confidenceChartMargin.bottom;
-var confidenceChartSvg = d3.select("#confidenceChart")
-    .append("svg")
-        .attr("width", confidenceChartWidth + confidenceChartMargin.left + confidenceChartMargin.right)
-        .attr("height", confidenceChartHeight + confidenceChartMargin.top + confidenceChartMargin.bottom)
-    .append("g")
-        .attr("transform", "translate(" + confidenceChartMargin.left + "," + confidenceChartMargin.top + ")");
-
-var x_scale = d3.scaleLinear()
-    .domain([0, 1])
-    .range([0, confidenceChartWidth]);
-confidenceChartSvg.append("g")
-    .attr("transform", "translate(0," + confidenceChartHeight + ")")
-    .call(d3.axisBottom(x_scale))
-    .selectAll("text")
-        .attr("transform", "translate(-10,0)rotate(-45)")
-        .style("text-anchor", "end");
-
-var y_scale = d3.scaleBand()
-    .range([0, confidenceChartHeight])
-    .domain(allLabels)
-    .padding(.1);
-confidenceChartSvg.append("g")
-    .call(d3.axisLeft(y_scale))
+const confidenceChart = new ConfidenceChart(targetLabels)
 
 // initialize model inference session
 // TODO: wrap this in a promise and have game wait until model is initialized
@@ -79,29 +54,9 @@ updateDistanceIndicator()
 
 function getMousePosition(mouseEvent, canvas) {
     const canvasBoundingRect = canvas.getBoundingClientRect();
-    mouseX = event.clientX - canvasBoundingRect.left - canvas.offsetLeft + 0.5;
-    mouseY = event.clientY - canvasBoundingRect.top - canvas.offsetTop + 0.5;
+    var mouseX = event.clientX - canvasBoundingRect.left - canvas.offsetLeft + 0.5;
+    var mouseY = event.clientY - canvasBoundingRect.top - canvas.offsetTop + 0.5;
     return { mouseX, mouseY };
-}
-
-function updatePredictionChart(chartData) {
-    const dataRects = document.querySelectorAll(".dataRect");
-    if (dataRects.length > 0) {
-        for (const dataRect of dataRects) {
-            dataRect.parentNode.removeChild(dataRect)
-        }
-    }
-
-    confidenceChartSvg.selectAll()
-        .data(chartData)
-        .enter()
-        .append("rect")
-        .attr("class", "dataRect")
-        .attr("x", x_scale(0) )
-        .attr("y", function(d) { return y_scale(d.label); })
-        .attr("width", function(d) { return x_scale(d.value); })
-        .attr("height", y_scale.bandwidth())
-        .attr("fill", "#69b3a2")
 }
 
 function cropCanvasImage(canvasImage) {
@@ -137,7 +92,7 @@ function cropCanvasImage(canvasImage) {
         const cropX = Math.floor(Math.max(cropMidpoint[0] - cropRadius, 0))
         const cropY = Math.floor(Math.min(cropMidpoint[1] - cropRadius, canvasImageWidth))
 
-        croppedCanvasImage = new MarvinImage(cropDiameter, cropDiameter, MarvinImage.COLOR_MODEL_BINARY)
+        const croppedCanvasImage = new MarvinImage(cropDiameter, cropDiameter, MarvinImage.COLOR_MODEL_BINARY)
         Marvin.crop(
             canvasImage,
             croppedCanvasImage,
@@ -156,8 +111,8 @@ function cropCanvasImage(canvasImage) {
 
 function imageData2BWData(imageData) {
     // need to get alpha channel because MarvinJ's getColorComponent is broken
-    alphaChannelBuffer = []
-    for (i = 0; i < imageData.data.length; i += 4) {
+    var alphaChannelBuffer = []
+    for (let i = 0; i < imageData.data.length; i += 4) {
         alphaChannelBuffer.push(imageData.data[i + 3]);//resizedImageData[i + 2])
     }
 
@@ -166,11 +121,11 @@ function imageData2BWData(imageData) {
 
 async function updatePreview(canvasContext, callbackFn) {
     canvas.toBlob((blob) => {
-        canvasBlobUrl = URL.createObjectURL(blob)
-        canvasImage = new MarvinImage(canvas.width, canvas.height, MarvinImage.COLOR_MODEL_BINARY)
+        const canvasBlobUrl = URL.createObjectURL(blob)
+        const canvasImage = new MarvinImage(canvas.width, canvas.height, MarvinImage.COLOR_MODEL_BINARY)
         canvasImage.load(canvasBlobUrl, async () => {
             // crop canvas image to exactly bounds
-            cropedCanvasImage = cropCanvasImage(canvasImage)
+            const cropedCanvasImage = cropCanvasImage(canvasImage)
 
             // scale to 26x26 using pica (marvinj's rescaling sucks)
             let image26Data = await pica.resizeBuffer({
@@ -197,13 +152,13 @@ function normalize(arr, minNorm=0, maxNorm=1) {
     const maxValue = Math.max.apply(Math, arr)
     const ratio = maxValue * maxNorm
 
-    for ( i = 0; i < arr.length; i++ ) {
+    for (let i = 0; i < arr.length; i++ ) {
         arr[i] /= ratio;
     }
     return arr
 }
 
-function softmax(arr, factor = 1) {
+function softmax(arr, factor=1) {
     const exponents = arr.map((value) => Math.exp(value * factor))
     const total = exponents.reduce((a, b) => a + b, 0);
     return exponents.map((exp) => exp / total);
@@ -222,15 +177,15 @@ async function clientInferImage(callbackFn=null) {
 
         // perform inference
         // TODO: remove promise when game loads after inference session is loaded
-        inferenceSession = await inferenceSessionPromise
+        const inferenceSession = await inferenceSessionPromise
         const model_outputs = await inferenceSession.run({ "input": model_input })
 
         // normalize scores
         const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
 
         // filter to target outputs
-        filteredLabels = []
-        filteredOutputs = []
+        var filteredLabels = []
+        var filteredOutputs = []
         for (let i = 0; i < allLabels.length; i++) {
             if (targetLabels.includes(allLabels[i])) {
                 filteredLabels.push(allLabels[i])
@@ -239,14 +194,14 @@ async function clientInferImage(callbackFn=null) {
         }
 
         // apply softmax
-        const model_confidences = softmax(filteredOutputs, factor=7)
+        const model_confidences = softmax(filteredOutputs, 7)
 
         // update chart
-        chartData = []
-        for (i = 0; i < filteredLabels.length; i++) {
+        var chartData = []
+        for (let i = 0; i < filteredLabels.length; i++) {
             chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
         }
-        updatePredictionChart(chartData)
+        confidenceChart.updateData(chartData)
 
         if (callbackFn) {
             callbackFn()
@@ -276,6 +231,7 @@ canvas.onmousedown = (mouseEvent) => {
     if (mouseDistanceLimit - totalMouseDistance > 1) {
         let { mouseX, mouseY } = getMousePosition(mouseEvent, canvas);
 
+        // send socket, then move
         canvasContext.beginPath();
         canvasContext.moveTo(mouseX, mouseY);
 
