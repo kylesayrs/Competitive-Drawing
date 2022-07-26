@@ -1,12 +1,13 @@
-<!-- base.html -->
+<!-- game_room.html -->
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <title>Competitive Drawing</title>
-        <!--meta property="og:image" content="mycustomimage.png"-->
+        <!-- TODO meta property="og:image" content="mycustomimage.png"-->
         <link rel="shortcut icon" href="{{ url_for('static', filename='assets/flavicons/favicon.ico') }}">
+
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/game_room.css') }}">
     </head>
     <body>
         <canvas id="draw" width="500%" height="500%">
@@ -23,11 +24,7 @@
         <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
         <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
         <script src="https://d3js.org/d3.v4.js"></script>
-        <script type="text/javascript">
-            inferenceMode = "client"
-            inferenceUrl = {{ inference_url | tojson }}
-            modelPath = "{{ url_for('static', filename='models/model.onnx') }}"
-        </script>
-        <script type="text/javascript" src="{{url_for('static', filename='scripts/base.js')}}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='scripts/game_room.js')}}"></script>
     </body>
 </html>

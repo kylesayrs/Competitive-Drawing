@@ -1,6 +1,13 @@
 // libraries
 pica = pica({ features: ["js"] })
 
+// Some sort of "ready to play" message
+var socket = io();
+socket.on("connect", function() {
+    console.log("connected!")
+});
+socket.emit("join", {"room": window.location.room});
+
 // get canvas elements
 const canvas = document.getElementById("draw");
 const canvasContext = canvas.getContext("2d");
@@ -13,17 +20,14 @@ distanceIndicatorButton = document.getElementById("distanceIndicatorButton")
 // global state
 allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
              "tree", "clock", "squirrel", "duck", "jail"]
-var targetLabels = allLabels;
-var sumPixelsChanged = 0;
+var targetLabels = ["pig", "duck"];
 var mouseHolding = false;
 var inferenceMutex = false;
 var lastMouseX = 0;
 var lastMouseY = 0;
 var totalMouseDistance = 0;
-var mouseDistanceLimit = 2000000; // TODO: needs to be proportional to canvas size
-                                  // also the count needs to update on resize
-
-canvasContext.lineWidth = 15; // TODO: Proportional to canvas size
+var mouseDistanceLimit = 200;
+canvasContext.lineWidth = 15;
 
 // set up prediction chart
 confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
@@ -56,7 +60,7 @@ confidenceChartSvg.append("g")
 // initialize model inference session
 // TODO: wrap this in a promise and have game wait until model is initialized
 const inferenceSessionPromise = ort.InferenceSession.create(
-    modelPath
+    "/static/models/model.onnx"
 );
 
 // scale
@@ -266,7 +270,6 @@ async function serverInferImage(callbackFn=null) {
     if (callbackFn) {
         callbackFn()
     }
-    // TODO on response success, update some prediction element
 }
 
 canvas.onmousedown = (mouseEvent) => {
@@ -284,7 +287,6 @@ canvas.onmousedown = (mouseEvent) => {
 
 function onMouseEnd(_mouseEvent) {
     mouseHolding = false;
-    sumPixelsChanged = 0;
 
     // TODO: await on mutex
     if (!inferenceMutex) {
