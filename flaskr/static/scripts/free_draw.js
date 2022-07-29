@@ -8,34 +8,24 @@ import { Inferencer } from "/static/scripts/canvas_inference.js";
 // global state
 const allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
              "tree", "clock", "squirrel", "duck", "jail"]
-const targetLabels = ["pig", "duck"];
 
-const confidenceChart = new ConfidenceChart(targetLabels)
-const distanceIndicator = new DistanceIndicator(150, 0)
-const drawingBoard = new DrawingBoard(distanceIndicator)
-const inferencer = new Inferencer(allLabels, targetLabels)
+const confidenceChart = new ConfidenceChart(allLabels)
+const drawingBoard = new DrawingBoard()
+const inferencer = new Inferencer(allLabels)
 
-var inferenceMutex = false
+var inferenceMutex = false // true for locked, false for unlocked
 
 async function clientInferImage() {
-    if (inferenceMutex) { return } // wrap in drawing mutex?
+    if (inferenceMutex) { return }
     inferenceMutex = true
 
     const previewImageData = await drawingBoard.updatePreview()
     const model_confidences = await inferencer.inferPreviewImageData(previewImageData)
 
-    // filter labels
-    var filteredLabels = []
-    for (let i = 0; i < allLabels.length; i++) {
-        if (targetLabels.includes(allLabels[i])) {
-            filteredLabels.push(allLabels[i])
-        }
-    }
-
     // update chart
     var chartData = []
-    for (let i = 0; i < filteredLabels.length; i++) {
-        chartData.push({"label": filteredLabels[i], "value": model_confidences[i]})
+    for (let i = 0; i < allLabels.length; i++) {
+        chartData.push({"label": allLabels[i], "value": model_confidences[i]})
     }
     confidenceChart.updateData(chartData)
     inferenceMutex = false

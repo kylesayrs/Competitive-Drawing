@@ -1,5 +1,5 @@
 export class DrawingBoard {
-    constructor(distanceIndicator) {
+    constructor(distanceIndicator=null) {
         this._distanceIndicator = distanceIndicator
 
         this.canvas = document.getElementById("draw");
@@ -118,7 +118,7 @@ export class DrawingBoard {
     }
 
     onMouseDown(mouseEvent) {
-        if (this._distanceIndicator.mouseDistanceLimit - this._distanceIndicator.totalMouseDistance > 1) {
+        if (this._distanceIndicator == null || this._distanceIndicator.mouseDistanceLimit - this._distanceIndicator.totalMouseDistance > 1) {
             let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
 
             // send socket, then move
@@ -144,7 +144,7 @@ export class DrawingBoard {
             let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
 
             // if overreach, interpolate on line to match remaining distance
-            if (this._distanceIndicator.totalMouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
+            if (this._distanceIndicator && this._distanceIndicator.totalMouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
                 const distanceRemaining = this._distanceIndicator.mouseDistanceLimit - this._distanceIndicator.totalMouseDistance
                 const theta = Math.asin((mouseY - this.lastMouseY) / strokeDistance)
 
@@ -161,7 +161,9 @@ export class DrawingBoard {
             this.canvasContext.lineTo(mouseX, mouseY);
             this.canvasContext.stroke();
 
-            this._distanceIndicator.totalMouseDistance += strokeDistance
+            if (this._distanceIndicator) {
+                this._distanceIndicator.totalMouseDistance += strokeDistance
+            }
 
             this.lastMouseX = mouseX;
             this.lastMouseY = mouseY;
@@ -170,6 +172,5 @@ export class DrawingBoard {
                 this.afterMouseMove()
             }
         }
-    };
-
+    }
 }

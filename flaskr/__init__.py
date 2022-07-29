@@ -28,6 +28,10 @@ def create_app():
     def select():
         return render_template("select.html")
 
+    @app.route("/free_draw", methods=["GET"])
+    def free_draw():
+        return render_template("free_draw.html")
+
     @app.route("/local_game", methods=["GET"])
     def local_game():
         return render_template("local_game.html")

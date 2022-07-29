@@ -27,9 +27,9 @@ function softmax(arr, factor=1) {
 }
 
 export class Inferencer {
-    constructor(allLabels, targetLabels) {
+    constructor(allLabels, targetLabels=null) {
         this.allLabels = allLabels
-        this.targetLabels = targetLabels
+        this.targetLabels = targetLabels == null ? allLabels : targetLabels
 
         this.inferenceSession = ort.InferenceSession.create(
             "/static/models/model.onnx"
@@ -55,6 +55,7 @@ export class Inferencer {
         const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
 
         // filter to target outputs
+
         var filteredOutputs = []
         for (let i = 0; i < this.allLabels.length; i++) {
             if (this.targetLabels.includes(this.allLabels[i])) {
