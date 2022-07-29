@@ -2,7 +2,7 @@ import os
 import json
 
 from flask import Flask, request, render_template, redirect
-from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit
+from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
 from .inference import infer_image
 
@@ -20,27 +20,17 @@ def create_app():
     except OSError:
         raise ValueError("Could not create instance folder")
 
-    """
-    class MyCustomNamespace(Namespace):
-        def on_connect(self):
-            pass
-
-        def on_disconnect(self):
-            pass
-
-        def on_my_event(self, data):
-            emit('my_response', data)
-
-    socketio.on_namespace(MyCustomNamespace('/test'))
-    """
-
     @app.route("/", methods=["GET"])
     def home():
         return redirect("/select", code=302)
 
     @app.route("/select", methods=["GET"])
     def select():
-        return render_template("game_room.html")
+        return render_template("select.html")
+
+    @app.route("/local_game", methods=["GET"])
+    def local_game():
+        return render_template("local_game.html")
 
     @app.route("/game_room", methods=["GET"])
     def game_room():
@@ -61,12 +51,14 @@ def create_app():
             mimetype='application/json'
         )
 
+    @socketio.on("select")
+    def select(payload):
+        if payload.get("type") == "localgame":
+            emit("goto", "/localgame")
+
     @socketio.on("join")
     def on_join(data):
-        print("on_join")
-        print(data)
         join_room(data["room"])
-        print("asdf")
         send("someone has entered the room", to=room)
 
     @socketio.on('leave')

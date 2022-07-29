@@ -1,0 +1,20 @@
+<!-- select.html -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Competitive Drawing</title>
+        <!-- TODO meta property="og:image" content="mycustomimage.png"-->
+        <link rel="shortcut icon" href="{{ url_for('static', filename='assets/flavicons/favicon.ico') }}">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/game_room.css') }}">
+    </head>
+    <body>
+        <button id="localGameButton">Local Game</button>
+        <button id="freeDrawButton">Free Draw</button>
+        <button id="aiButton">Play Against AI</button>
+        <button id="multiplayerButton">Multiplayer</button>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+        <script type="module" src="{{url_for('static', filename='scripts/select.js')}}"></script>
+    </body>
+</html>
