@@ -84,29 +84,35 @@ export class DrawingBoard {
         }
     }
 
-    async updatePreview(callbackFn) {
-        this.canvas.toBlob((blob) => {
-            const canvasBlobUrl = URL.createObjectURL(blob)
-            const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
-            canvasImage.load(canvasBlobUrl, async () => {
-                // crop canvas image to exactly bounds
-                const cropedCanvasImage = this.cropCanvasImage(canvasImage)
+    async updatePreview(callbackFn=null) {
+        return new Promise((resolve) => {
+            this.canvas.toBlob(async (blob) => {
+                const canvasBlobUrl = URL.createObjectURL(blob)
+                const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
+                canvasImage.load(canvasBlobUrl, async () => {
+                    // crop canvas image to exactly bounds
+                    const cropedCanvasImage = this.cropCanvasImage(canvasImage)
 
-                // scale to 26x26 using pica (marvinj's rescaling sucks)
-                let image26Data = await pica.resizeBuffer({
-                    "src": cropedCanvasImage.imageData.data,
-                    "width": cropedCanvasImage.imageData.width,
-                    "height": cropedCanvasImage.imageData.height,
-                    "toWidth": 26,
-                    "toHeight": 26
+                    // scale to 26x26 using pica (marvinj's rescaling sucks)
+                    let image26Data = await pica.resizeBuffer({
+                        "src": cropedCanvasImage.imageData.data,
+                        "width": cropedCanvasImage.imageData.width,
+                        "height": cropedCanvasImage.imageData.height,
+                        "toWidth": 26,
+                        "toHeight": 26
+                    })
+                    image26Data = new Uint8ClampedArray(image26Data)
+                    const image26ImageData = new ImageData(image26Data, 26, 26)
+
+                    // place onto 28x28 with 1x1 padding
+                    this.previewCanvasContext.putImageData(image26ImageData, 1, 1)
+                    const previewCanvasImageData = this.previewCanvasContext.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height)
+                    if (callbackFn) {
+                        callbackFn(previewCanvasImageData)
+                    } else {
+                        resolve(previewCanvasImageData)
+                    }
                 })
-                image26Data = new Uint8ClampedArray(image26Data)
-                const image26ImageData = new ImageData(image26Data, 26, 26)
-
-                // place onto 28x28 with 1x1 padding
-                this.previewCanvasContext.putImageData(image26ImageData, 1, 1)
-                const previewCanvasImageData = this.previewCanvasContext.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height)
-                callbackFn(previewCanvasImageData)
             })
         })
     }
