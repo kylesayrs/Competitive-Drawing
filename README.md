@@ -38,3 +38,4 @@ TODO
         * mouse distance
     * code cleanup, split up javascript files
     * top left logo pencil color should be blue
+    * download libraries locally?

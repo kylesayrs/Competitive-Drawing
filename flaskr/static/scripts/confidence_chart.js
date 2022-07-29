@@ -1,3 +1,7 @@
+/*
+filename: confidence_chart
+
+*/
 
 export class ConfidenceChart {
     constructor(labels) {

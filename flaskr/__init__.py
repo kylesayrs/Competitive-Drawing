@@ -56,18 +56,6 @@ def create_app():
         if payload.get("type") == "localgame":
             emit("goto", "/localgame")
 
-    @socketio.on("join")
-    def on_join(data):
-        join_room(data["room"])
-        send("someone has entered the room", to=room)
-
-    @socketio.on('leave')
-    def on_leave(data):
-        username = data['username']
-        room = data['room']
-        leave_room(room)
-        send(username + ' has left the room.', to=room)
-
     return app
 
 if __name__ == "__main__":
