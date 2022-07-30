@@ -1,3 +1,11 @@
+/*
+filename: drawing_board.js
+author: Kyle Sayers
+details: The DrawingBoard controls the drawing canvas as well as the preview canvas.
+         Future implementations will allow a virtual preview canvas rather than
+         relying on one already appended to the DOM.
+*/
+
 export class DrawingBoard {
     constructor(distanceIndicator=null) {
         this._distanceIndicator = distanceIndicator

@@ -1,9 +1,9 @@
 // libraries
 pica = pica({ features: ["js"] })
-import { ConfidenceChart } from "/static/scripts/confidence_chart.js";
-import { DistanceIndicator } from "/static/scripts/distance_indicator.js";
-import { DrawingBoard } from "/static/scripts/drawing_board.js";
-import { Inferencer } from "/static/scripts/canvas_inference.js";
+import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js";
+import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
+import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
+import { Inferencer } from "/static/scripts/components/canvas_inference.js";
 
 // global state
 const allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",

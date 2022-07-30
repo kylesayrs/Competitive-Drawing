@@ -1,3 +1,11 @@
+/*
+filename: distance_indicator.js
+author: Kyle Sayers
+details: The DistanceIndicator is responsible for controlling and keeping track
+         of drawing distances. It can be used as arguments to other classes for
+         control and access to drawing distances.
+*/
+
 export class DistanceIndicator {
     constructor(mouseDistanceLimit, totalMouseDistance) {
         this.indicatorElement = document.getElementById("distanceIndicator")

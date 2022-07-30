@@ -1,3 +1,10 @@
+/*
+filename: canvas_inference.js
+author: Kyle Sayers
+details: The Inferencer is responsible for running the model from canvas data.
+         It also does some post processing and filtering
+*/
+
 function normalize(arr, minNorm=0, maxNorm=1) {
     const minimumValue = Math.min.apply(Math, arr)
     arr = arr.map((value) => value - minimumValue, minNorm)
@@ -27,9 +34,10 @@ function softmax(arr, factor=1) {
 }
 
 export class Inferencer {
-    constructor(allLabels, targetLabels=null) {
+    constructor(allLabels, targetLabels=null, softmaxFactor=7) {
         this.allLabels = allLabels
         this.targetLabels = targetLabels == null ? allLabels : targetLabels
+        self.softmaxFactor = softmaxFactor
 
         this.inferenceSession = ort.InferenceSession.create(
             "/static/models/model.onnx"
@@ -55,7 +63,6 @@ export class Inferencer {
         const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
 
         // filter to target outputs
-
         var filteredOutputs = []
         for (let i = 0; i < this.allLabels.length; i++) {
             if (this.targetLabels.includes(this.allLabels[i])) {
@@ -64,7 +71,7 @@ export class Inferencer {
         }
 
         // apply softmax
-        const model_confidences = softmax(filteredOutputs, 7)
+        const model_confidences = softmax(filteredOutputs, self.softmaxFactor)
 
         if (callbackFn) {
             callbackFn(model_confidences)

@@ -1,6 +1,7 @@
 /*
 filename: confidence_chart
-
+author: Kyle Sayers
+details: ConfidenceChart is used to control the confidence chart
 */
 
 export class ConfidenceChart {
