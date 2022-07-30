@@ -130,3 +130,11 @@ dmypy.json
 
 # research folder
 research
+
+# training data folders
+train/samples/
+train/checkpoints/
+train/raw_data/
+train/wandb
+
+!.gitignore

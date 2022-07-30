@@ -8,7 +8,6 @@ TODO
 * train model
     * investigate exactly how data was created so we can match
     * retrain with more classes
-    * move training code to repo
 * ai opponent
     * stroke loss?
     * static gradient descent with a few random initializations
