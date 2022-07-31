@@ -4,14 +4,14 @@ author: Kyle Sayers
 details: The Inferencer is responsible for running the model from canvas data
 */
 
-function imageData2BWData(imageData) {
+function imageDataToModelInputData(imageData) {
     // need to get alpha channel because MarvinJ's getColorComponent is broken
     var alphaChannelBuffer = []
     for (let i = 0; i < imageData.data.length; i += 4) {
-        alphaChannelBuffer.push(imageData.data[i + 3]);//resizedImageData[i + 2])
+        alphaChannelBuffer.push(imageData.data[i + 3] / 255);
     }
 
-    return new Float32Array(alphaChannelBuffer)
+    return new Float32Array(alphaChannelBuffer);
 }
 
 export class Inferencer {
@@ -42,17 +42,17 @@ export class Inferencer {
 
     async clientInferImage(previewImageData) {
         // get from preview image data
-        const imageDataBuffer = imageData2BWData(previewImageData)
+        const modelInputData = imageDataToModelInputData(previewImageData)
 
         // create input
         const modelInput = new ort.Tensor(
-            imageDataBuffer,
+            modelInputData,
             [1, 1, 28, 28]
         );
 
         // perform inference
         const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
-        const modelOutputs = modelOutputsRaw.output.data
+        const modelOutputs = modelOutputsRaw.logits.data
 
         return modelOutputs
     }

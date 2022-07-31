@@ -1,7 +1,6 @@
 import os
 import json
 import onnx
-from onnx2pytorch import ConvertModel
 import base64
 from io import BytesIO, StringIO
 from PIL import Image
@@ -10,7 +9,20 @@ import re
 from flask import Flask, request, render_template, redirect
 from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
-from .inference import infer_image
+from .inference import load_model, infer_image
+
+ALL_LABELS = [
+    "sheep",
+    "guitar",
+    "pig",
+    "tree",
+    "clock",
+    "squirrel",
+    "duck",
+    "panda",
+    "spider",
+    "snowflake",
+]
 
 def create_app():
     # create and configure the app
@@ -20,8 +32,8 @@ def create_app():
     socketio = SocketIO(app)
     socketio.run(app)
 
-    # load model
-    pytorch_model = load_model(os.environ.get("MODEL_PATH", "./flaskr/static/models/model.onnx"))
+    # load model TODO move to inference.py
+    model = load_model()
 
     # create instance folder
     try:
@@ -39,23 +51,25 @@ def create_app():
 
     @app.route("/free_draw", methods=["GET"])
     def free_draw():
-        return render_template("free_draw.html")
+        return render_template("free_draw.html", data={"allLabels": ALL_LABELS})
 
     @app.route("/local_game", methods=["GET"])
     def local_game():
-        return render_template("local_game.html")
+        return render_template("local_game.html", data={"allLabels": ALL_LABELS})
 
     @app.route("/game_room", methods=["GET"])
     def game_room():
-        return render_template("game_room.html")
+        return render_template("game_room.html", data={"allLabels": ALL_LABELS})
 
     @app.route("/infer", methods=["POST"])
     def infer():
         image_data_url = request.json["imageDataUrl"]
-        image_data = re.sub('^data:image/.+;base64,', '', image_data_url)
-        image = Image.open(BytesIO(base64.b64decode(image_data)))
+        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data = base64.b64decode(image_data_str)
+        image_data_io = BytesIO(image_data)
+        image = Image.open(image_data_io)
 
-        model_outputs = infer_image(image)
+        model_outputs = infer_image(model, image)
 
         # TODO grad cam
         # TODO cheat detection
@@ -75,11 +89,6 @@ def create_app():
             emit("goto", "/localgame")
 
     return app
-
-def load_model(model_path):
-    onnx_model = onnx.load(model_path)
-    pytorch_model = ConvertModel(onnx_model)
-    return pytorch_model
 
 if __name__ == "__main__":
     create_app()
