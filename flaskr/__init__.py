@@ -51,27 +51,17 @@ def create_app():
 
     @app.route("/infer", methods=["POST"])
     def infer():
-        print("TODO: infer image")
-        canvas_url = request.json["canvasBlobUrl"]
-        image_data = re.sub('^data:image/.+;base64,', '', canvas_url)
+        image_data_url = request.json["imageDataUrl"]
+        image_data = re.sub('^data:image/.+;base64,', '', image_data_url)
         image = Image.open(BytesIO(base64.b64decode(image_data)))
-        #image = Image.open(io.BytesIO(canvas_url))
-        """
-        #image_b64 = request.values['imageBase64']
-        image_data = re.sub('^data:image/.+;base64,', '', canvas_url)#.decode('base64')
-        print(image_data)
-        image_PIL = Image.open(StringIO(image_data))
-        print(image_PIL)
-        """
 
-        confidences = infer_image(image)
+        model_outputs = infer_image(image)
 
         # TODO grad cam
         # TODO cheat detection
-
         return app.response_class(
             response=json.dumps({
-                "confidences": confidences,
+                "modelOutputs": model_outputs,
                 "gradCam": None,
                 "isCheater": False,
             }),

@@ -3,7 +3,7 @@ pica = pica({ features: ["js"] })
 import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js";
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
-import { Inferencer } from "/static/scripts/components/canvas_inference.js";
+import { Inferencer } from "/static/scripts/components/inference.js";
 
 // global state
 const allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
@@ -17,39 +17,22 @@ const inferencer = new Inferencer()
 
 var inferenceMutex = false // true for locked, false for unlocked
 
-async function clientInferImage() {
-    if (inferenceMutex) { return }
-    inferenceMutex = true
-
-    const previewImageData = await drawingBoard.updatePreview()
-    const modelOutputs = await inferencer.inferPreviewImageData(previewImageData)
-
-    confidenceChart.update(modelOutputs)
-    inferenceMutex = false
-}
-
-async function serverInferImage() {
-    return; // TODO: implement
-
-    response = await fetch(
-        inferenceUrl,
-        {
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": JSON.stringify({"imageData": canvasImageData})
-        }
-    )
-}
-
 drawingBoard.afterMouseEnd = async () => {
-    clientInferImage()
-    serverInferImage()
+    const previewImageData = await drawingBoard.updatePreview()
+    const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
+    const modelOutputs = await inferencer.serverInferImage(imageDataUrl)
+    confidenceChart.update(modelOutputs)
 }
 
 drawingBoard.afterMouseMove = async () => {
-    clientInferImage()
+    if (!inferenceMutex) {
+        inferenceMutex = true
+
+        const previewImageData = await drawingBoard.updatePreview()
+        const modelOutputs = await inferencer.clientInferImage(previewImageData)
+        confidenceChart.update(modelOutputs)
+        inferenceMutex = false
+    }
 }
 
 //TODO: window.onresize = () =>

@@ -61,7 +61,7 @@ export class ConfidenceChart {
 
     update(modelOutputs) {
         // normalize scores
-        const modelOutputsNormalized = normalize(modelOutputs.output.data, 0, 1)
+        const modelOutputsNormalized = normalize(modelOutputs, 0, 1)
 
         // filter to target outputs
         // TODO use .filter()

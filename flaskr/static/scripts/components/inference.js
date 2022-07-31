@@ -22,24 +22,38 @@ export class Inferencer {
         this.inferenceSession.then(() => console.log("Loaded ort"))
     }
 
-    async inferPreviewImageData(previewImageData, callbackFn=null) {
-        // grab data from preview canvas
+    async serverInferImage(imageDataUrl) {
+        const response = await fetch(
+            "/infer",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({"imageDataUrl": imageDataUrl})
+            }
+        )
+        if (!response.ok) {
+            console.log("Invalid server inference response")
+        }
+        const responseJson = await response.json()
+        return responseJson["modelOutputs"]
+    }
+
+    async clientInferImage(previewImageData) {
+        // get from preview image data
         const imageDataBuffer = imageData2BWData(previewImageData)
 
         // create input
-        const model_input = new ort.Tensor(
+        const modelInput = new ort.Tensor(
             imageDataBuffer,
             [1, 1, 28, 28]
         );
 
         // perform inference
-        // TODO: remove promise when game loads after inference session is loaded
-        const modelOutputs = await (await this.inferenceSession).run({ "input": model_input })
+        const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
+        const modelOutputs = modelOutputsRaw.output.data
 
-        if (callbackFn) {
-            callbackFn(modelOutputs)
-        } else {
-            return modelOutputs
-        }
+        return modelOutputs
     }
 }
