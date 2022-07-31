@@ -8,6 +8,7 @@ TODO
 * train model
     * investigate exactly how data was created so we can match
     * retrain with more classes
+    * sdg optimizer
 * ai opponent
     * stroke loss?
     * static gradient descent with a few random initializations
@@ -31,6 +32,7 @@ TODO
         * rotate vertically, show percentages at top of bars
     * only show relevant classes
         * me is on left, opponent is on right
+    * clear canvas button
 * bug fixing
     * update on resize
         * stroke length

@@ -1,21 +1,8 @@
 /*
 filename: canvas_inference.js
 author: Kyle Sayers
-details: The Inferencer is responsible for running the model from canvas data.
-         It also does some post processing and filtering
+details: The Inferencer is responsible for running the model from canvas data
 */
-
-function normalize(arr, minNorm=0, maxNorm=1) {
-    const minimumValue = Math.min.apply(Math, arr)
-    arr = arr.map((value) => value - minimumValue, minNorm)
-    const maxValue = Math.max.apply(Math, arr)
-    const ratio = maxValue * maxNorm
-
-    for (let i = 0; i < arr.length; i++ ) {
-        arr[i] /= ratio;
-    }
-    return arr
-}
 
 function imageData2BWData(imageData) {
     // need to get alpha channel because MarvinJ's getColorComponent is broken
@@ -27,18 +14,8 @@ function imageData2BWData(imageData) {
     return new Float32Array(alphaChannelBuffer)
 }
 
-function softmax(arr, factor=1) {
-    const exponents = arr.map((value) => Math.exp(value * factor))
-    const total = exponents.reduce((a, b) => a + b, 0);
-    return exponents.map((exp) => exp / total);
-}
-
 export class Inferencer {
-    constructor(allLabels, targetLabels=null, softmaxFactor=7) {
-        this.allLabels = allLabels
-        this.targetLabels = targetLabels == null ? allLabels : targetLabels
-        self.softmaxFactor = softmaxFactor
-
+    constructor() {
         this.inferenceSession = ort.InferenceSession.create(
             "/static/models/model.onnx"
         );
@@ -57,26 +34,12 @@ export class Inferencer {
 
         // perform inference
         // TODO: remove promise when game loads after inference session is loaded
-        const model_outputs = await (await this.inferenceSession).run({ "input": model_input })
-
-        // normalize scores
-        const model_outputs_normalized = normalize(model_outputs.output.data, 0, 1)
-
-        // filter to target outputs
-        var filteredOutputs = []
-        for (let i = 0; i < this.allLabels.length; i++) {
-            if (this.targetLabels.includes(this.allLabels[i])) {
-                filteredOutputs.push(model_outputs_normalized[i])
-            }
-        }
-
-        // apply softmax
-        const model_confidences = softmax(filteredOutputs, self.softmaxFactor)
+        const modelOutputs = await (await this.inferenceSession).run({ "input": model_input })
 
         if (callbackFn) {
-            callbackFn(model_confidences)
+            callbackFn(modelOutputs)
         } else {
-            return model_confidences
+            return modelOutputs
         }
     }
 }

@@ -11,7 +11,7 @@ const allLabels = ["sheep", "dragon", "mona_lisa", "guitar", "pig",
 
 const confidenceChart = new ConfidenceChart(allLabels)
 const drawingBoard = new DrawingBoard()
-const inferencer = new Inferencer(allLabels)
+const inferencer = new Inferencer()
 
 var inferenceMutex = false // true for locked, false for unlocked
 
@@ -20,30 +20,31 @@ async function clientInferImage() {
     inferenceMutex = true
 
     const previewImageData = await drawingBoard.updatePreview()
-    const model_confidences = await inferencer.inferPreviewImageData(previewImageData)
+    const modelOutputs = await inferencer.inferPreviewImageData(previewImageData)
 
     // update chart
-    var chartData = []
-    for (let i = 0; i < allLabels.length; i++) {
-        chartData.push({"label": allLabels[i], "value": model_confidences[i]})
-    }
-    confidenceChart.updateData(chartData)
+    confidenceChart.update(modelOutputs)
     inferenceMutex = false
 }
 
 async function serverInferImage() {
-    return; // TODO: implement
-
-    response = await fetch(
-        inferenceUrl,
+    return
+    const canvasBlobUrl = drawingBoard.canvas.toDataURL();
+    const response = await fetch(
+        "/infer",
         {
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json"
             },
-            "body": JSON.stringify({"imageData": canvasImageData})
+            "body": JSON.stringify({"canvasBlobUrl": canvasBlobUrl})
         }
     )
+    if (!response.ok) {
+        console.log("Invalid server inference response")
+    }
+    const responseJson = await response.json()
+    console.log(responseJson)
 }
 
 drawingBoard.afterMouseEnd = async () => {
