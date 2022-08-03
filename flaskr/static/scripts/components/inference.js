@@ -37,7 +37,9 @@ export class Inferencer {
             console.log("Invalid server inference response")
         }
         const responseJson = await response.json()
-        return responseJson["modelOutputs"]
+        const modelOutputs = responseJson["modelOutputs"]
+        const gradCamImage = responseJson["gradCamImage"]
+        return { modelOutputs, gradCamImage }
     }
 
     async clientInferImage(previewImageData) {

@@ -17,7 +17,7 @@ export class DrawingBoard {
 
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
-        this.canvasContext.lineWidth = 15;
+        this.canvasContext.lineWidth = 10;
         this.canvasContext.scale(
             this.canvas.width / this.canvas.getBoundingClientRect().width,
             this.canvas.height / this.canvas.getBoundingClientRect().height
@@ -111,6 +111,10 @@ export class DrawingBoard {
                     })
                     image26Data = new Uint8ClampedArray(image26Data)
                     const image26ImageData = new ImageData(image26Data, 26, 26)
+
+                    // TODO: technically there's some time loss here as well as
+                    // a potential frame or so where the user can see a blank canvas
+                    await this.previewCanvasContext.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
 
                     // place onto 28x28 with 1x1 padding
                     this.previewCanvasContext.putImageData(image26ImageData, 1, 1)

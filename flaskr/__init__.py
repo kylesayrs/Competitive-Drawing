@@ -9,7 +9,7 @@ import re
 from flask import Flask, request, render_template, redirect
 from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
-from .inference import load_model, infer_image
+from .inference import Inferencer
 
 ALL_LABELS = [
     "sheep",
@@ -33,7 +33,11 @@ def create_app():
     socketio.run(app)
 
     # load model TODO move to inference.py
-    model = load_model()
+    inferencer = Inferencer(
+        model_checkpoint_path=os.environ.get(
+            "MODEL_PATH", "./flaskr/static/models/model.pth"
+        )
+    )
 
     # create instance folder
     try:
@@ -69,14 +73,18 @@ def create_app():
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
 
-        model_outputs = infer_image(model, image)
+        #target_index = request.json["targetIndex"]
+        target_index = 0
+
+        #model_outputs = inferencer.infer_image(image)
+        model_outputs, grad_cam_image = inferencer.infer_image_with_cam(image, target_index)
 
         # TODO grad cam
         # TODO cheat detection
         return app.response_class(
             response=json.dumps({
                 "modelOutputs": model_outputs,
-                "gradCam": None,
+                "gradCamImage": grad_cam_image,
                 "isCheater": False,
             }),
             status=200,
