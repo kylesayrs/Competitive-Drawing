@@ -17,7 +17,7 @@ export class DrawingBoard {
 
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
-        this.canvasContext.lineWidth = 10;
+        this.canvasContext.lineWidth = 7;
         this.canvasContext.scale(
             this.canvas.width / this.canvas.getBoundingClientRect().width,
             this.canvas.height / this.canvas.getBoundingClientRect().height

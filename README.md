@@ -6,6 +6,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 TODO
 * name?
 * train model
+    * use larger image size, different pen widths
     * investigate exactly how data was created so we can match
     * retrain with more classes
     * sdg optimizer
@@ -14,8 +15,6 @@ TODO
     * static gradient descent with a few random initializations
     * gan
     * self-play reinforcement learning
-* server side inference
-    * at the end mouse out to validate data and correct results
 * game mechanics
     * multiplayer sockets
     * distance limits slowly get smaller
@@ -23,8 +22,8 @@ TODO
     * erasing turn for loser if winning by more than 30%
         * the loser always has hope, the winner has to continue to draw to avoid relying on one feature
     * cheat detection
-    * grad cam
     * optional coloring for opponent vs your strokes
+    * target selector for local play
 * better ui
     * canvas on left
     * preview bottom right

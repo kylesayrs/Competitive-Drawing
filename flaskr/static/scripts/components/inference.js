@@ -22,7 +22,7 @@ export class Inferencer {
         this.inferenceSession.then(() => console.log("Loaded ort"))
     }
 
-    async serverInferImage(imageDataUrl) {
+    async serverInferImage(imageDataUrl, targetIndex) {
         const response = await fetch(
             "/infer",
             {
@@ -30,7 +30,10 @@ export class Inferencer {
                 "headers": {
                     "Content-Type": "application/json"
                 },
-                "body": JSON.stringify({"imageDataUrl": imageDataUrl})
+                "body": JSON.stringify({
+                    "imageDataUrl": imageDataUrl,
+                    "targetIndex": targetIndex,
+                })
             }
         )
         if (!response.ok) {

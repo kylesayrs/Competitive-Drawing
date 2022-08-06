@@ -73,8 +73,7 @@ def create_app():
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
 
-        #target_index = request.json["targetIndex"]
-        target_index = 0
+        target_index = request.json["targetIndex"]
 
         #model_outputs = inferencer.infer_image(image)
         model_outputs, grad_cam_image = inferencer.infer_image_with_cam(image, target_index)
