@@ -1,16 +1,23 @@
+# general
 import os
 import json
-import onnx
+from dotenv import load_dotenv
+
+# canvas to numpy (to be moved)
 import base64
 from io import BytesIO, StringIO
 from PIL import Image
 import re
 
+# flask
 from flask import Flask, request, render_template, redirect
 from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
+# implementations
 from .inference import Inferencer
+from .models import GameState, Player, GameManager
 
+# TODO: move to .env
 ALL_LABELS = [
     "sheep",
     "guitar",
@@ -25,10 +32,13 @@ ALL_LABELS = [
 ]
 
 def create_app():
+    # get dot env
+    load_dotenv(".env")
+
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     api_root = os.environ.get("API_ROOT", "http://localhost:5000") # TODO launch with this root too
-    app.config['SECRET_KEY'] = 'secret!'
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "secret!")
     socketio = SocketIO(app)
     socketio.run(app)
 
@@ -67,6 +77,7 @@ def create_app():
 
     @app.route("/infer", methods=["POST"])
     def infer():
+        # TODO: move this to utils file
         image_data_url = request.json["imageDataUrl"]
         image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
         image_data = base64.b64decode(image_data_str)
@@ -78,8 +89,8 @@ def create_app():
         #model_outputs = inferencer.infer_image(image)
         model_outputs, grad_cam_image = inferencer.infer_image_with_cam(image, target_index)
 
-        # TODO grad cam
         # TODO cheat detection
+
         return app.response_class(
             response=json.dumps({
                 "modelOutputs": model_outputs,
@@ -90,10 +101,48 @@ def create_app():
             mimetype='application/json'
         )
 
-    @socketio.on("select")
-    def select(payload):
-        if payload.get("type") == "localgame":
-            emit("goto", "/localgame")
+    game_manager = GameManager()
+
+    # jank
+    @app.route("/reset_rooms", methods=["GET"])
+    def reset_rooms():
+        game_manager.rooms = {}
+
+        response = app.response_class(
+            response=json.dumps({
+                "status": "success",
+                "code": 0,
+                "rooms": game_manager.rooms,
+            }),
+            status=200,
+            mimetype='application/json'
+        )
+        return response
+
+    @socketio.on("join_room")
+    def on_join_room(data):
+        room_id = data.get("room_id")
+        room_id = int(room_id)
+        join_room(room_id)
+
+        if room_id not in game_manager.rooms:
+            game_manager.rooms[room_id] = GameState(ALL_LABELS)
+
+        game_state = game_manager.rooms[room_id]
+        if game_state.can_add_player():
+            new_player = game_state.add_player()
+
+            emit("assign_player", {"playerId": new_player.id}, to=room_id)
+
+            if game_state.can_start_game() and not game_state.started:
+                start_game_data = {
+                    "targets": {
+                        player.id: player.target
+                        for player in game_state.players
+                    }
+                }
+                emit("start_game", start_game_data, to=room_id)
+                game_state.started = True
 
     return app
 

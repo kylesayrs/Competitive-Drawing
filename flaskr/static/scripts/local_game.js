@@ -21,7 +21,7 @@ var targetIndex = 4
 drawingBoard.afterMouseEnd = async () => {
     const previewImageData = await drawingBoard.updatePreview()
     const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
-    const modelOutputs = await inferencer.serverInferImage(imageDataUrl, targetIndex)
+    const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, targetIndex)
     confidenceChart.update(modelOutputs)
 }
 

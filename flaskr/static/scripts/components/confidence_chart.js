@@ -26,12 +26,20 @@ function softmax(arr, factor=1) {
 export class ConfidenceChart {
     constructor(allLabels, targetLabels=null, softmaxFactor=7) {
         this.allLabels = allLabels
-        this.targetLabels = targetLabels != null ? targetLabels : allLabels
+        this._targetLabels = targetLabels != null ? targetLabels : allLabels
         this.softmaxFactor = softmaxFactor
+
+        this.buildSvg()
+    }
+
+    buildSvg() {
+        // remove previous
+        d3.select("#confidenceChart").html("");
 
         const confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
         const confidenceChartWidth = 460 - confidenceChartMargin.left - confidenceChartMargin.right
         const confidenceChartHeight = 400 - confidenceChartMargin.top - confidenceChartMargin.bottom;
+
         this.confidenceChartSvg = d3.select("#confidenceChart")
             .append("svg")
                 .attr("width", confidenceChartWidth + confidenceChartMargin.left + confidenceChartMargin.right)
@@ -52,11 +60,20 @@ export class ConfidenceChart {
 
         this.y_scale = d3.scaleBand()
             .range([0, confidenceChartHeight])
-            .domain(this.targetLabels)
+            .domain(this._targetLabels)
             .padding(.1);
 
         this.confidenceChartSvg.append("g")
             .call(d3.axisLeft(this.y_scale))
+    }
+
+    get targetLabels() {
+        return this._targetLabels
+    }
+
+    set targetLabels(targetLabels) {
+        this._targetLabels = targetLabels
+        this.buildSvg()
     }
 
     update(modelOutputs) {
@@ -68,7 +85,7 @@ export class ConfidenceChart {
         var filteredOutputs = []
         var filteredLabels = []
         for (let i = 0; i < this.allLabels.length; i++) {
-            if (this.targetLabels.includes(this.allLabels[i])) {
+            if (this._targetLabels.includes(this.allLabels[i])) {
                 filteredOutputs.push(modelOutputsNormalized[i])
                 filteredLabels.push(this.allLabels[i])
             }
