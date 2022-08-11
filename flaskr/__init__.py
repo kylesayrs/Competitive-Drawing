@@ -34,13 +34,16 @@ ALL_LABELS = [
 def create_app():
     # get dot env
     load_dotenv(".env")
+    host = os.environ.get("HOST", "localhost")
+    root = os.environ.get("ROOT", "5000")
+    api_root = os.environ.get("API_ROOT", "http://localhost:5000")
+    secret_key = os.environ.get("SECRET_KEY", "secret!")
 
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    api_root = os.environ.get("API_ROOT", "http://localhost:5000") # TODO launch with this root too
-    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "secret!")
+    app.config['SECRET_KEY'] = secret_key
     socketio = SocketIO(app)
-    socketio.run(app)
+    socketio.run(app, host=host, root=root)
 
     # load model TODO move to inference.py
     inferencer = Inferencer(

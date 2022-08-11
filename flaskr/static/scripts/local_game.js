@@ -6,7 +6,7 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 // allLabels from flask
 
-const targetLabels = ["panda", "duck"];
+const targetLabels = ["pig", "squirrel"];
 
 const confidenceChart = new ConfidenceChart(allLabels, targetLabels)
 const distanceIndicator = new DistanceIndicator(80, 0)
