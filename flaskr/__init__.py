@@ -135,14 +135,15 @@ def create_app():
         if game_state.can_add_player():
             new_player = game_state.add_player()
 
-            emit("assign_player", {"playerId": new_player.id}, to=room_id)
+            emit("assign_player", {"playerId": new_player.id})
 
             if game_state.can_start_game() and not game_state.started:
                 start_game_data = {
                     "targets": {
                         player.id: player.target
                         for player in game_state.players
-                    }
+                    },
+                    "turn": game_state.players[0].id
                 }
                 emit("start_game", start_game_data, to=room_id)
                 game_state.started = True

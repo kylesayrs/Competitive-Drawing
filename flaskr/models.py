@@ -27,7 +27,7 @@ class GameState:
         return len(self.players) < 2
 
     def add_player(self):
-        target_index = random.randint(0, len(self.labels) - 1)
+        target_index = random.randint(0, len(self.labels) - 1) #  TODO: avoid overlap
         new_player = Player(
             id=uuid.uuid4().hex,
             target=self.labels[target_index],

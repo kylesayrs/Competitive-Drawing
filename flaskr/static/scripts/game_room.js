@@ -14,6 +14,7 @@ const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
 
 // global state
+var inferenceMutex = false // true for locked, false for unlocked
 var playerGameState = new PlayerGameState()
 
 // socketio
@@ -24,7 +25,7 @@ socket.emit("join_room", params)
 socket.on("assign_player", function(data) {
     console.log("assign_player")
     console.log(data)
-    playerGameState.playerId = data["playerId"]
+    playerGameState.id = data["playerId"]
 })
 
 socket.on("start_game", function(data) {
@@ -34,10 +35,17 @@ socket.on("start_game", function(data) {
     // TODO: use find and better stuff
     var targetLabels = []
     for (const playerId in data["targets"]) {
-        if (playerId == playerGameState.playerId) {
-            playerGameState.playerTarget = data["targets"][playerId]
+        if (playerId == playerGameState.id) {
+            playerGameState.target = data["targets"][playerId]
         }
         targetLabels.push(data["targets"][playerId])
+    }
+
+    console.log(data["turn"])
+    console.log(playerGameState.id)
+    if (data["turn"] == playerGameState.id) {
+        playerGameState.myTurn = true
+        console.log("my turn!")
     }
 
     confidenceChart.targetLabels = targetLabels
@@ -45,20 +53,22 @@ socket.on("start_game", function(data) {
 
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {
-    const previewImageData = await drawingBoard.updatePreview()
-    const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
-    const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, playerGameState.playerTarget)
-    confidenceChart.update(modelOutputs)
+    if (playerGameState.myTurn) {
+        const previewImageData = await drawingBoard.updatePreview()
+        const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
+        const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, playerGameState.target)
+        confidenceChart.update(modelOutputs)
+    }
 }
 
 drawingBoard.afterMouseMove = async () => {
-    if (!playerGameState.inferenceMutex) {
-        playerGameState.inferenceMutex = true
+    if (!inferenceMutex && playerGameState.myTurn) {
+        inferenceMutex = true
 
         const previewImageData = await drawingBoard.updatePreview()
         const modelOutputs = await inferencer.clientInferImage(previewImageData)
         confidenceChart.update(modelOutputs)
-        playerGameState.inferenceMutex = false
+        inferenceMutex = false
     }
 }
 

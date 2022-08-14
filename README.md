@@ -29,7 +29,8 @@ TODO
     * canvas on left
     * preview bottom right
     * plot to top right on top of preview
-        * rotate vertically, show percentages at top of bars
+        * rotate vertically
+        * in competitive mode, show confidence as a single bar below canvas
     * only show relevant classes
         * me is on left, opponent is on right
     * clear canvas button
