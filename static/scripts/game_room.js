@@ -5,10 +5,9 @@ import { DistanceIndicator } from "/static/scripts/components/distance_indicator
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { PlayerGameState } from "/static/scripts/components/player_game_state.js";
-var socket = io()
-// allLabels from flask
+// gameConfig from Flask
 
-const confidenceChart = new ConfidenceChart(allLabels)
+const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(80, 0)
 const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
@@ -19,8 +18,11 @@ const urlParams = Object.fromEntries(urlSearchParams.entries());
 var roomId = urlParams["room_id"]
 var inferenceMutex = false // true for locked, false for unlocked
 var playerGameState = new PlayerGameState()
+drawingBoard.enabled = false
 
 // socketio
+var socket = io()
+
 socket.emit("join_room", {
     "room_id": roomId
 })

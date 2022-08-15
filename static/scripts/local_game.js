@@ -4,11 +4,11 @@ import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js"
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
-// allLabels from flask
+// gameConfig from Flask
 
 const targetLabels = ["pig", "squirrel"];
 
-const confidenceChart = new ConfidenceChart(allLabels, targetLabels)
+const confidenceChart = new ConfidenceChart(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(80, 0)
 const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
@@ -16,6 +16,7 @@ const inferencer = new Inferencer()
 // global state
 var inferenceMutex = false // true for locked, false for unlocked
 var targetIndex = 4
+drawingBoard.enabled = true
 
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {

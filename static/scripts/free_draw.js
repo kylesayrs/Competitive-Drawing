@@ -5,16 +5,17 @@ import { DistanceIndicator } from "/static/scripts/components/distance_indicator
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { gradCamImageToImageData } from "/static/scripts/helpers.js";
-// allLabels from flask
+// gameConfig from Flask
 
 // components
 const drawingBoard = new DrawingBoard()
-const confidenceChart = new ConfidenceChart(allLabels)
+const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
 const inferencer = new Inferencer(drawingBoard)
 
 // game state
 var inferenceMutex = false
 var targetIndex = 0
+drawingBoard.enabled = true
 
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {

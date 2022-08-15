@@ -23,7 +23,7 @@ export class DrawingBoard {
             this.canvas.height / this.canvas.getBoundingClientRect().height
         )
 
-        this.enabled = false
+        this.enabled = true
         this.mouseHolding = false
         this.lastMouseX = 0
         this.lastMouseY = 0

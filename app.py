@@ -19,20 +19,6 @@ from utils.models import GameState, Player, GameManager
 
 load_dotenv(".env")
 
-# TODO: move to .env
-ALL_LABELS = [
-    "sheep",
-    "guitar",
-    "pig",
-    "tree",
-    "clock",
-    "squirrel",
-    "duck",
-    "panda",
-    "spider",
-    "snowflake",
-]
-
 def create_app():
     # get environment variables
     host = os.environ.get("HOST", "localhost")
@@ -48,6 +34,11 @@ def create_app():
 
     # load model TODO move to inference.py
     inferencer = Inferencer(model_checkpoint_path)
+
+    game_config = {
+        "allLabels": json.loads(os.environ.get("ALL_LABELS")),
+        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5)
+    }
 
     # create instance folder
     try:
@@ -65,15 +56,15 @@ def create_app():
 
     @app.route("/free_draw", methods=["GET"])
     def free_draw():
-        return render_template("free_draw.html", data={"allLabels": ALL_LABELS})
+        return render_template("free_draw.html", game_config=game_config)
 
     @app.route("/local_game", methods=["GET"])
     def local_game():
-        return render_template("local_game.html", data={"allLabels": ALL_LABELS})
+        return render_template("local_game.html", game_config=game_config)
 
     @app.route("/game_room", methods=["GET"])
     def game_room():
-        return render_template("game_room.html", data={"allLabels": ALL_LABELS})
+        return render_template("game_room.html", game_config=game_config)
 
     @app.route("/infer", methods=["POST"])
     def infer():
@@ -125,7 +116,7 @@ def create_app():
         room_id = int(room_id)
         join_room(room_id)
 
-        games_manager.rooms.setdefault(room_id, GameState(ALL_LABELS))
+        games_manager.rooms.setdefault(room_id, GameState(game_config["allLabels"]))
 
         game_state = games_manager.rooms[room_id]
         if game_state.can_add_player():
@@ -170,4 +161,4 @@ if __name__ == "__main__":
     port = os.environ.get("PORT", "5000")
 
     app, socketio = create_app()
-    socketio.run(app, host=host, port=port)
+    socketio.run(app, host=host, port=port, debug=True)
