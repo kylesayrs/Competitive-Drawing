@@ -14,8 +14,10 @@ from flask import Flask, request, render_template, redirect
 from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
 # implementations
-from .inference import Inferencer
-from .models import GameState, Player, GameManager
+from inference import Inferencer
+from models import GameState, Player, GameManager
+
+load_dotenv(".env")
 
 # TODO: move to .env
 ALL_LABELS = [
@@ -33,24 +35,17 @@ ALL_LABELS = [
 
 def create_app():
     # get dot env
-    load_dotenv(".env")
-    host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", "5000")
     api_root = os.environ.get("API_ROOT", "http://localhost:5000")
     secret_key = os.environ.get("SECRET_KEY", "secret!")
+    model_checkpoint_path = os.environ.get("MODEL_PATH", "./static/models/model.pth")
 
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config["SECRET_KEY"] = secret_key
     socketio = SocketIO(app)
-    socketio.run(app, host=host, port=port)
 
     # load model TODO move to inference.py
-    inferencer = Inferencer(
-        model_checkpoint_path=os.environ.get(
-            "MODEL_PATH", "./flaskr/static/models/model.pth"
-        )
-    )
+    inferencer = Inferencer(model_checkpoint_path)
 
     # create instance folder
     try:
@@ -166,7 +161,13 @@ def create_app():
             game_state.next_turn()
             emit_start_turn(game_state, room_id)
 
-    return app
+    return app, socketio
 
 if __name__ == "__main__":
-    create_app()
+    print(os.environ)
+    host = os.environ.get("HOST", "localhost")
+    port = os.environ.get("PORT", "5000")
+    print(f"host={host}, port={port}")
+
+    app, socketio = create_app()
+    socketio.run(app, host=host, port=port)

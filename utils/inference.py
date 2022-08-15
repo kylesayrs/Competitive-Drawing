@@ -25,10 +25,7 @@ class Inferencer:
 
     def load_model(self, model_checkpoint_path):
         model = Classifier()
-
-        model_checkpoint_path = os.environ.get("MODEL_PATH", "./flaskr/static/models/model.pth")
         model.load_state_dict(torch.load(model_checkpoint_path, map_location=DEVICE))
-
         model = model.eval()
         return model
 
