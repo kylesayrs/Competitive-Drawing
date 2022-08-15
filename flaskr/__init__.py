@@ -43,7 +43,6 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config["SECRET_KEY"] = secret_key
     socketio = SocketIO(app)
-    socketio.run(app, host=host, port=port)
 
     # load model TODO move to inference.py
     inferencer = Inferencer(
@@ -166,7 +165,8 @@ def create_app():
             game_state.next_turn()
             emit_start_turn(game_state, room_id)
 
-    return app
+    return socketio
 
 if __name__ == "__main__":
-    create_app()
+    socketio_app = create_app()
+    socketio_app.run(app, host=host, port=port)
