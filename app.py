@@ -14,8 +14,8 @@ from flask import Flask, request, render_template, redirect
 from flask_socketio import SocketIO, join_room, leave_room, Namespace, emit, send
 
 # implementations
-from inference import Inferencer
-from models import GameState, Player, GameManager
+from utils.inference import Inferencer
+from utils.models import GameState, Player, GameManager
 
 load_dotenv(".env")
 
@@ -34,8 +34,10 @@ ALL_LABELS = [
 ]
 
 def create_app():
-    # get dot env
-    api_root = os.environ.get("API_ROOT", "http://localhost:5000")
+    # get environment variables
+    host = os.environ.get("HOST", "localhost")
+    port = os.environ.get("PORT", "5000")
+    api_root = f"http://{host}:{port}"
     secret_key = os.environ.get("SECRET_KEY", "secret!")
     model_checkpoint_path = os.environ.get("MODEL_PATH", "./static/models/model.pth")
 
@@ -164,10 +166,8 @@ def create_app():
     return app, socketio
 
 if __name__ == "__main__":
-    print(os.environ)
     host = os.environ.get("HOST", "localhost")
     port = os.environ.get("PORT", "5000")
-    print(f"host={host}, port={port}")
 
     app, socketio = create_app()
     socketio.run(app, host=host, port=port)
