@@ -23,6 +23,7 @@ export class DrawingBoard {
             this.canvas.height / this.canvas.getBoundingClientRect().height
         )
 
+        this.enabled = false
         this.mouseHolding = false
         this.lastMouseX = 0
         this.lastMouseY = 0
@@ -151,7 +152,7 @@ export class DrawingBoard {
     }
 
     async onMouseMove(mouseEvent) {
-        if (this.mouseHolding) {
+        if (this.enabled && this.mouseHolding) {
             let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
             let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
 

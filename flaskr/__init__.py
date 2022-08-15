@@ -35,15 +35,15 @@ def create_app():
     # get dot env
     load_dotenv(".env")
     host = os.environ.get("HOST", "localhost")
-    root = os.environ.get("ROOT", "5000")
+    port = os.environ.get("PORT", "5000")
     api_root = os.environ.get("API_ROOT", "http://localhost:5000")
     secret_key = os.environ.get("SECRET_KEY", "secret!")
 
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config['SECRET_KEY'] = secret_key
+    app.config["SECRET_KEY"] = secret_key
     socketio = SocketIO(app)
-    socketio.run(app, host=host, root=root)
+    socketio.run(app, host=host, port=port)
 
     # load model TODO move to inference.py
     inferencer = Inferencer(
@@ -104,18 +104,18 @@ def create_app():
             mimetype='application/json'
         )
 
-    game_manager = GameManager()
+    games_manager = GameManager()
 
     # jank
     @app.route("/reset_rooms", methods=["GET"])
     def reset_rooms():
-        game_manager.rooms = {}
+        games_manager.rooms = {}
 
         response = app.response_class(
             response=json.dumps({
                 "status": "success",
                 "code": 0,
-                "rooms": game_manager.rooms,
+                "rooms": games_manager.rooms,
             }),
             status=200,
             mimetype='application/json'
@@ -128,25 +128,43 @@ def create_app():
         room_id = int(room_id)
         join_room(room_id)
 
-        if room_id not in game_manager.rooms:
-            game_manager.rooms[room_id] = GameState(ALL_LABELS)
+        games_manager.rooms.setdefault(room_id, GameState(ALL_LABELS))
 
-        game_state = game_manager.rooms[room_id]
+        game_state = games_manager.rooms[room_id]
         if game_state.can_add_player():
             new_player = game_state.add_player()
 
-            emit("assign_player", {"playerId": new_player.id})
+            emit("assign_player", {
+                "playerId": new_player.id
+            })
 
             if game_state.can_start_game() and not game_state.started:
+                #  TODO: start_game -> game_state that includes canvas state
+                #  send no matter what to account for refreshing
                 start_game_data = {
                     "targets": {
                         player.id: player.target
                         for player in game_state.players
                     },
-                    "turn": game_state.players[0].id
                 }
                 emit("start_game", start_game_data, to=room_id)
+
                 game_state.started = True
+                emit_start_turn(game_state, room_id)
+
+    def emit_start_turn(game_state, room_id):
+        emit("start_turn", {
+            "turn": game_state.turn.id
+        }, to=room_id)
+
+    @socketio.on("end_turn")
+    def end_turn(data):
+        room_id = int(data["roomId"])
+
+        game_state = games_manager.rooms[room_id]
+        if data["playerId"] == game_state.turn.id:
+            game_state.next_turn()
+            emit_start_turn(game_state, room_id)
 
     return app
 

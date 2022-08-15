@@ -14,13 +14,13 @@ class Player:
 class GameState:
     labels: List[str]
     players: List[Player]
-    player_turn_index: int
     started: bool
+    _player_turn_index: int
 
     def __init__(self, labels):
         self.labels = labels
         self.players = []
-        self.player_turn_index = 0
+        self._player_turn_index = 0
         self.started = False
 
     def can_add_player(self):
@@ -37,6 +37,13 @@ class GameState:
 
     def can_start_game(self):
         return len(self.players) >= 2
+
+    @property
+    def turn(self):
+        return self.players[self._player_turn_index]
+
+    def next_turn(self):
+        self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
 
 class GameManager:
     rooms: Dict[int, GameState]

@@ -14,41 +14,41 @@ const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
 
 // global state
+const urlSearchParams = new URLSearchParams(window.location.search);
+const urlParams = Object.fromEntries(urlSearchParams.entries());
+var roomId = urlParams["room_id"]
 var inferenceMutex = false // true for locked, false for unlocked
 var playerGameState = new PlayerGameState()
 
 // socketio
-const urlSearchParams = new URLSearchParams(window.location.search);
-const params = Object.fromEntries(urlSearchParams.entries());
-socket.emit("join_room", params)
-
-socket.on("assign_player", function(data) {
-    console.log("assign_player")
-    console.log(data)
-    playerGameState.id = data["playerId"]
+socket.emit("join_room", {
+    "room_id": roomId
 })
 
-socket.on("start_game", function(data) {
-    console.log("start_game")
-    console.log(data)
+socket.on("assign_player", (data) => {
+    playerGameState.playerId = data["playerId"]
+})
 
+socket.on("start_game", (data) => {
     // TODO: use find and better stuff
     var targetLabels = []
     for (const playerId in data["targets"]) {
-        if (playerId == playerGameState.id) {
+        if (playerId == playerGameState.playerId) {
             playerGameState.target = data["targets"][playerId]
         }
         targetLabels.push(data["targets"][playerId])
     }
 
-    console.log(data["turn"])
-    console.log(playerGameState.id)
-    if (data["turn"] == playerGameState.id) {
-        playerGameState.myTurn = true
-        console.log("my turn!")
-    }
-
     confidenceChart.targetLabels = targetLabels
+})
+
+socket.on("start_turn", (data) => {
+    if (data["turn"] == playerGameState.playerId) {
+        playerGameState.myTurn = true
+        drawingBoard.enabled = true
+    } else {
+        drawingBoard.enabled = false
+    }
 })
 
 // distanceIndicator.onEnd = () => serverInferImage
@@ -70,6 +70,14 @@ drawingBoard.afterMouseMove = async () => {
         confidenceChart.update(modelOutputs)
         inferenceMutex = false
     }
+}
+
+distanceIndicator.afterOnClick = () => {
+    socket.emit("end_turn", {
+        "roomId": roomId,
+        "playerId": playerGameState.playerId
+    })
+    drawingBoard.enabled = false
 }
 
 //TODO: window.onresize = () =>
