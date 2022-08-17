@@ -2,6 +2,8 @@ from typing import List, Dict
 
 import uuid
 import random
+import numpy
+from PIL import Image
 
 class Player:
     id: str
@@ -12,12 +14,14 @@ class Player:
         self.target = target
 
 class GameState:
+    canvas: List[List[List[int]]]
     labels: List[str]
     players: List[Player]
     started: bool
     _player_turn_index: int
 
     def __init__(self, labels):
+        self.canvas = Image.new("RGB", (28, 28), (255, 255, 255))
         self.labels = labels
         self.players = []
         self._player_turn_index = 0
@@ -44,6 +48,9 @@ class GameState:
 
     def next_turn(self):
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
+
+    def canvasToSerial(self):
+        return numpy.array(self.canvas).tolist()
 
 class GameManager:
     rooms: Dict[int, GameState]

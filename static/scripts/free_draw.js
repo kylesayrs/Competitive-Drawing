@@ -4,7 +4,7 @@ import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js"
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
-import { gradCamImageToImageData } from "/static/scripts/helpers.js";
+import { imageToImageData } from "/static/scripts/helpers.js";
 // gameConfig from Flask
 
 // components
@@ -23,8 +23,8 @@ drawingBoard.afterMouseEnd = async () => {
     const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
     const { modelOutputs, gradCamImage } = await inferencer.serverInferImage(imageDataUrl, targetIndex)
     confidenceChart.update(modelOutputs)
-    const gradImageData = gradCamImageToImageData(gradCamImage)
-    drawingBoard.previewCanvasContext.putImageData(gradImageData, 0, 0)
+    const gradImageData = imageToImageData(gradCamImage)
+    drawingBoard.putPreviewImageData(gradImageData)
 }
 
 drawingBoard.afterMouseMove = async () => {

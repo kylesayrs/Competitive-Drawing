@@ -25,7 +25,6 @@ function softmax(arr, factor=1) {
 
 export class ConfidenceChart {
     constructor(allLabels, targetLabels=null, softmaxFactor=7) {
-        console.log(softmaxFactor)
         this.allLabels = allLabels
         this._targetLabels = targetLabels != null ? targetLabels : allLabels
         this.softmaxFactor = softmaxFactor

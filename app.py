@@ -129,27 +129,41 @@ def create_app():
             if game_state.can_start_game() and not game_state.started:
                 #  TODO: start_game -> game_state that includes canvas state
                 #  send no matter what to account for refreshing
-                start_game_data = {
-                    "targets": {
-                        player.id: player.target
-                        for player in game_state.players
-                    },
-                }
-                emit("start_game", start_game_data, to=room_id)
+                emit_start_game(game_state, room_id)
 
                 game_state.started = True
                 emit_start_turn(game_state, room_id)
 
+    def emit_start_game(game_state, room_id):
+        emit("start_game", {
+            "canvas": game_state.canvasToSerial(),
+            "targets": {
+                player.id: player.target
+                for player in game_state.players
+            }
+        }, to=room_id)
+
     def emit_start_turn(game_state, room_id):
         emit("start_turn", {
+            "canvas": game_state.canvasToSerial(),
             "turn": game_state.turn.id
         }, to=room_id)
 
     @socketio.on("end_turn")
     def end_turn(data):
+        print("end_turn")
+        print(data)
         room_id = int(data["roomId"])
-
         game_state = games_manager.rooms[room_id]
+
+        image_data_url = data["canvas"]
+        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data = base64.b64decode(image_data_str)
+        image_data_io = BytesIO(image_data)
+        canvas = Image.open(image_data_io)
+
+        game_state.canvas = canvas
+
         if data["playerId"] == game_state.turn.id:
             game_state.next_turn()
             emit_start_turn(game_state, room_id)

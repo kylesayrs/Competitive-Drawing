@@ -5,6 +5,7 @@ import { DistanceIndicator } from "/static/scripts/components/distance_indicator
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { PlayerGameState } from "/static/scripts/components/player_game_state.js";
+import { imageToImageData } from "/static/scripts/helpers.js";
 // gameConfig from Flask
 
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
@@ -33,6 +34,8 @@ socket.on("assign_player", (data) => {
 
 socket.on("start_game", (data) => {
     // TODO: use find and better stuff
+    console.log("start_game")
+    console.log(data)
     var targetLabels = []
     for (const playerId in data["targets"]) {
         if (playerId == playerGameState.playerId) {
@@ -41,10 +44,21 @@ socket.on("start_game", (data) => {
         targetLabels.push(data["targets"][playerId])
     }
 
+    // update canvas
+    const canvasImageData = imageToImageData(data["canvas"])
+    drawingBoard.putPreviewImageData(canvasImageData, true)
+
     confidenceChart.targetLabels = targetLabels
 })
 
 socket.on("start_turn", (data) => {
+    console.log("start_turn")
+    console.log(data)
+
+    // update canvas
+    const canvasImageData = imageToImageData(data["canvas"])
+    drawingBoard.putPreviewImageData(canvasImageData, true)
+    
     if (data["turn"] == playerGameState.playerId) {
         playerGameState.myTurn = true
         drawingBoard.enabled = true
@@ -56,8 +70,8 @@ socket.on("start_turn", (data) => {
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {
     if (playerGameState.myTurn) {
-        const previewImageData = await drawingBoard.updatePreview()
-        const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
+        await drawingBoard.updatePreview()
+        const imageDataUrl = drawingBoard.getPreviewImageDataUrl()
         const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, playerGameState.target)
         confidenceChart.update(modelOutputs)
     }
@@ -67,17 +81,23 @@ drawingBoard.afterMouseMove = async () => {
     if (!inferenceMutex && playerGameState.myTurn) {
         inferenceMutex = true
 
-        const previewImageData = await drawingBoard.updatePreview()
+        await drawingBoard.updatePreview()
+        const previewImageData = drawingBoard.getPreviewImageData()
         const modelOutputs = await inferencer.clientInferImage(previewImageData)
         confidenceChart.update(modelOutputs)
+
         inferenceMutex = false
     }
 }
 
 distanceIndicator.afterOnClick = () => {
+    const imageDataUrl = drawingBoard.getPreviewImageDataUrl()
+
     socket.emit("end_turn", {
         "roomId": roomId,
-        "playerId": playerGameState.playerId
+        "playerId": playerGameState.playerId,
+        "canvas": imageDataUrl
+        //replay data
     })
     drawingBoard.enabled = false
 }

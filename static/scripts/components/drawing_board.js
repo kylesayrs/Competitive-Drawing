@@ -5,6 +5,7 @@ details: The DrawingBoard controls the drawing canvas as well as the preview can
          Future implementations will allow a virtual preview canvas rather than
          relying on one already appended to the DOM.
 */
+import { resizeImageData } from "/static/scripts/helpers.js";
 
 export class DrawingBoard {
     constructor(distanceIndicator=null) {
@@ -93,8 +94,8 @@ export class DrawingBoard {
         }
     }
 
-    async updatePreview(callbackFn=null) {
-        return new Promise((resolve) => {
+    async updatePreview() {
+        return new Promise(() => {
             this.canvas.toBlob(async (blob) => {
                 const canvasBlobUrl = URL.createObjectURL(blob)
                 const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
@@ -103,15 +104,7 @@ export class DrawingBoard {
                     const cropedCanvasImage = this.cropCanvasImage(canvasImage)
 
                     // scale to 26x26 using pica (marvinj's rescaling sucks)
-                    let image26Data = await pica.resizeBuffer({
-                        "src": cropedCanvasImage.imageData.data,
-                        "width": cropedCanvasImage.imageData.width,
-                        "height": cropedCanvasImage.imageData.height,
-                        "toWidth": 26,
-                        "toHeight": 26
-                    })
-                    image26Data = new Uint8ClampedArray(image26Data)
-                    const image26ImageData = new ImageData(image26Data, 26, 26)
+                    const image26ImageData = await resizeImageData(cropedCanvasImage.imageData, [26, 26])
 
                     // TODO: technically there's some time loss here as well as
                     // a potential frame or so where the user can see a blank canvas
@@ -119,15 +112,29 @@ export class DrawingBoard {
 
                     // place onto 28x28 with 1x1 padding
                     this.previewCanvasContext.putImageData(image26ImageData, 1, 1)
-                    const previewCanvasImageData = this.previewCanvasContext.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height)
-                    if (callbackFn) {
-                        callbackFn(previewCanvasImageData)
-                    } else {
-                        resolve(previewCanvasImageData)
-                    }
                 })
             })
         })
+    }
+
+    getPreviewImageData() {
+        return this.previewCanvasContext.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height)
+    }
+
+    getPreviewImageDataUrl() {
+        return this.previewCanvas.toDataURL()
+    }
+
+    async putPreviewImageData(previewCanvasImageData, updateCanvas=false) {
+        this.previewCanvasContext.putImageData(previewCanvasImageData, 0, 0)
+        if (updateCanvas) {
+            if (updateCanvas) {
+                const canvasImageData = await resizeImageData(previewCanvasImageData, [this.canvas.width, this.canvas.height])
+
+                this.canvasContext.putImageData(canvasImageData, 0, 0)
+            }
+        }
+        this.previewCanvasContext
     }
 
     onMouseDown(mouseEvent) {
