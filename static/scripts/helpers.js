@@ -1,4 +1,4 @@
-export function imageToImageData(image) {
+export function imageToImageData(image, width, height) {
     var imageDataBuffer = []
     const add_alpha = image[0][0].length == 3
     for (let y = 0; y < image.length; y++) {
@@ -11,11 +11,12 @@ export function imageToImageData(image) {
             }
         }
     }
+    console.log(imageDataBuffer.length / width / height)
 
     const imageData = new ImageData(
         new Uint8ClampedArray(imageDataBuffer),
-        28,
-        28,
+        width,
+        height,
     )
 
     return imageData;

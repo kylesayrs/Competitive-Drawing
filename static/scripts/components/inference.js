@@ -5,13 +5,13 @@ details: The Inferencer is responsible for running the model from canvas data
 */
 
 function imageDataToModelInputData(imageData) {
-    // need to get alpha channel because MarvinJ's getColorComponent is broken
-    var alphaChannelBuffer = []
+    // TODO use marvinj
+    var redChannelBuffer = []
     for (let i = 0; i < imageData.data.length; i += 4) {
-        alphaChannelBuffer.push(imageData.data[i + 3] / 255);
+        redChannelBuffer.push(1 - (imageData.data[i + 0] / 255))
     }
 
-    return new Float32Array(alphaChannelBuffer);
+    return new Float32Array(redChannelBuffer);
 }
 
 export class Inferencer {

@@ -20,7 +20,7 @@ drawingBoard.enabled = true
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {
     const previewImageData = await drawingBoard.updatePreview()
-    const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
+    const imageDataUrl = drawingBoard.getPreviewImageDataUrl();
     const { modelOutputs, gradCamImage } = await inferencer.serverInferImage(imageDataUrl, targetIndex)
     confidenceChart.update(modelOutputs)
     const gradImageData = imageToImageData(gradCamImage)
@@ -31,7 +31,8 @@ drawingBoard.afterMouseMove = async () => {
     if (!inferenceMutex) {
         inferenceMutex = true
 
-        const previewImageData = await drawingBoard.updatePreview()
+        await drawingBoard.updatePreview()
+        const previewImageData = drawingBoard.getPreviewImageData()
         const modelOutputs = await inferencer.clientInferImage(previewImageData)
         confidenceChart.update(modelOutputs)
         inferenceMutex = false

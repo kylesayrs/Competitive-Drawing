@@ -16,13 +16,17 @@ export class DrawingBoard {
         this.previewCanvas = document.getElementById("preview")
         this.previewCanvasContext = this.previewCanvas.getContext("2d")
 
+        this.resetCanvases()
+
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
         this.canvasContext.lineWidth = 7;
-        this.canvasContext.scale(
-            this.canvas.width / this.canvas.getBoundingClientRect().width,
-            this.canvas.height / this.canvas.getBoundingClientRect().height
-        )
+        this.canvasContext.width = 500
+        this.canvasContext.height = 500
+        //this.canvasContext.scale(
+        //    this.canvas.width / this.canvas.getBoundingClientRect().width,
+        //    this.canvas.height / this.canvas.getBoundingClientRect().height
+        //)
 
         this.enabled = true
         this.mouseHolding = false
@@ -36,6 +40,18 @@ export class DrawingBoard {
 
         this.afterMouseEnd = null
         this.afterMouseMove = null
+    }
+
+    resetCanvases() {
+        this.canvasContext.beginPath();
+        this.canvasContext.rect(0, 0, this.canvas.width, this.canvas.height);
+        this.canvasContext.fillStyle = "white";
+        this.canvasContext.fill();
+
+        this.previewCanvasContext.beginPath();
+        this.previewCanvasContext.rect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+        this.previewCanvasContext.fillStyle = "white";
+        this.previewCanvasContext.fill();
     }
 
     getMousePosition(mouseEvent) {
@@ -57,8 +73,8 @@ export class DrawingBoard {
         let foundAnyPixels = false
         for (let y = 0; y < canvasImageHeight; y++) {
             for (let x = 0; x < canvasImageWidth; x++) {
-            	let alpha = canvasImage.getAlphaComponent(x, y);
-                if (alpha > 0) {
+            	let red = canvasImage.getIntComponent0(x, y);
+                if (red < 255) {
                     bounds["min_width"] = Math.min(bounds["min_width"], x);
                     bounds["max_width"] = Math.max(bounds["max_width"], x);
                     bounds["min_height"] = Math.min(bounds["min_height"], y);
@@ -94,25 +110,35 @@ export class DrawingBoard {
         }
     }
 
+    resetPreviewBorder() {
+        this.previewCanvasContext.beginPath();
+        this.previewCanvasContext.rect(0, 0, this.previewCanvas.width, 1);
+        this.previewCanvasContext.rect(0, 0, 1, this.previewCanvas.height);
+        this.previewCanvasContext.rect(this.previewCanvas.width - 1, 0, this.previewCanvas.width, this.previewCanvas.height);
+        this.previewCanvasContext.rect(0, this.previewCanvas.height - 1, this.previewCanvas.width, this.previewCanvas.height);
+        this.previewCanvasContext.fillStyle = "white";
+        this.previewCanvasContext.fill();
+    }
+
     async updatePreview() {
-        return new Promise(() => {
-            this.canvas.toBlob(async (blob) => {
-                const canvasBlobUrl = URL.createObjectURL(blob)
-                const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
-                canvasImage.load(canvasBlobUrl, async () => {
-                    // crop canvas image to exactly bounds
-                    const cropedCanvasImage = this.cropCanvasImage(canvasImage)
+        return new Promise(async (resolve) => {
+            const canvasBlobUrl = await this.canvas.toDataURL()
+            const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
+            canvasImage.load(canvasBlobUrl, async () => {
+                // crop canvas image to exactly bounds
+                const cropedCanvasImage = this.cropCanvasImage(canvasImage)
 
-                    // scale to 26x26 using pica (marvinj's rescaling sucks)
-                    const image26ImageData = await resizeImageData(cropedCanvasImage.imageData, [26, 26])
+                // scale to 26x26 using pica (marvinj's rescaling sucks)
+                const image26ImageData = resizeImageData(cropedCanvasImage.imageData, [26, 26])
 
-                    // TODO: technically there's some time loss here as well as
-                    // a potential frame or so where the user can see a blank canvas
-                    await this.previewCanvasContext.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+                // TODO: technically there's some time loss here as well as
+                // a potential frame or so where the user can see a blank canvas
+                this.resetPreviewBorder();
 
-                    // place onto 28x28 with 1x1 padding
-                    this.previewCanvasContext.putImageData(image26ImageData, 1, 1)
-                })
+                // place onto 28x28 with 1x1 padding
+                this.previewCanvasContext.putImageData(await image26ImageData, 1, 1)
+
+                resolve()
             })
         })
     }
@@ -125,6 +151,10 @@ export class DrawingBoard {
         return this.previewCanvas.toDataURL()
     }
 
+    getCanvasImageDataUrl() {
+        return this.canvas.toDataURL()
+    }
+
     async putPreviewImageData(previewCanvasImageData, updateCanvas=false) {
         this.previewCanvasContext.putImageData(previewCanvasImageData, 0, 0)
         if (updateCanvas) {
@@ -135,6 +165,10 @@ export class DrawingBoard {
             }
         }
         this.previewCanvasContext
+    }
+
+    putCanvasImageData(canvasImageData) {
+        this.canvasContext.putImageData(canvasImageData, 0, 0)
     }
 
     onMouseDown(mouseEvent) {

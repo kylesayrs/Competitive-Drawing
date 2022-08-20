@@ -21,7 +21,7 @@ class GameState:
     _player_turn_index: int
 
     def __init__(self, labels):
-        self.canvas = Image.new("RGB", (28, 28), (255, 255, 255))
+        self.canvasImage = Image.new("RGB", (500, 500), (255, 255, 255))
         self.labels = labels
         self.players = []
         self._player_turn_index = 0
@@ -49,8 +49,8 @@ class GameState:
     def next_turn(self):
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
 
-    def canvasToSerial(self):
-        return numpy.array(self.canvas).tolist()
+    def canvasImageToSerial(self):
+        return numpy.array(self.canvasImage).tolist()
 
 class GameManager:
     rooms: Dict[int, GameState]

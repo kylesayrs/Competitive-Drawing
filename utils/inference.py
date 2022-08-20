@@ -1,6 +1,6 @@
 import os
 import numpy
-from PIL import Image
+from PIL import Image, ImageOps
 
 import torch
 from torchvision.transforms.functional import to_tensor
@@ -30,8 +30,11 @@ class Inferencer:
         return model
 
     def _convert_image_to_input(self, image):
-        alpha_channel = image.split()[-1]
-        input = to_tensor(alpha_channel)
+        image = image.convert('RGB')
+        image = ImageOps.invert(image)
+        image.save("/Users/poketopa/Desktop/image.png")
+        red_channel = image.split()[0]
+        input = to_tensor(red_channel)
         input = torch.reshape(input, (1, 1, 28, 28))
 
         return input
@@ -51,7 +54,7 @@ class Inferencer:
     def infer_image_with_cam(self, image, target_index):
         input = self._convert_image_to_input(image)
 
-        targets = [ClassifierOutputTarget(4)]
+        targets = [ClassifierOutputTarget(target_index)]
 
         grayscale_cam = self.cam(input_tensor=input, targets=targets)
         grayscale_cam = grayscale_cam[0, :]

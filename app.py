@@ -136,7 +136,7 @@ def create_app():
 
     def emit_start_game(game_state, room_id):
         emit("start_game", {
-            "canvas": game_state.canvasToSerial(),
+            "canvas": game_state.canvasImageToSerial(),
             "targets": {
                 player.id: player.target
                 for player in game_state.players
@@ -144,8 +144,9 @@ def create_app():
         }, to=room_id)
 
     def emit_start_turn(game_state, room_id):
+        game_state.canvasImage.save("/Users/poketopa/Desktop/tmp2.png")
         emit("start_turn", {
-            "canvas": game_state.canvasToSerial(),
+            "canvas": game_state.canvasImageToSerial(),
             "turn": game_state.turn.id
         }, to=room_id)
 
@@ -160,9 +161,11 @@ def create_app():
         image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
-        canvas = Image.open(image_data_io)
+        image = Image.open(image_data_io)
 
-        game_state.canvas = canvas
+        image.save("/Users/poketopa/Desktop/tmp.png")
+
+        game_state.canvasImage = image
 
         if data["playerId"] == game_state.turn.id:
             game_state.next_turn()
