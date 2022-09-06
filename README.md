@@ -1,7 +1,7 @@
 # Competitive-Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
-<img src="flaskr/static/assets/logo.png" alt="Competitive Drawing Logo" width="200px" height="200px" />
+<img src="https://raw.githubusercontent.com/kylesayrs/Competitive-Drawing/main/static/assets/logo.png" alt="Competitive Drawing Logo" width="200px" height="200px" />
 <img src="repo_assets/panda_duck.gif" alt="Competitive Drawing Logo" width="800px" height="400px" />
 
 TODO
