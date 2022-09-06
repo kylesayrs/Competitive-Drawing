@@ -5,18 +5,14 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 <img src="repo_assets/panda_duck.gif" alt="Competitive Drawing Logo" width="800px" height="400px" />
 
 TODO
-* name?
 * train model
-    * use larger image size, different pen widths
-    * investigate exactly how data was created so we can match
     * retrain with more classes
-    * sdg optimizer
+    * try sdg optimizer
 * ai opponent
-    * stroke loss?
-    * static gradient descent with a few random initializations
-    * gan
+    * two losses: discriminator/stroke loss and prediction score loss
     * self-play reinforcement learning
 * game mechanics
+    * switch to stroke-based system, not pixels
     * multiplayer sockets
     * distance limits slowly get smaller
     * hide opponent target
@@ -33,11 +29,7 @@ TODO
         * in competitive mode, show confidence as a single bar below canvas
     * only show relevant classes
         * me is on left, opponent is on right
-    * clear canvas button
+    * clear canvas button in free draw mode
 * bug fixing
-    * update on resize
-        * stroke length
-        * mouse distance
-    * code cleanup, split up javascript files
+    * update on window resize
     * top left logo pencil color should be blue
-    * download libraries locally?
