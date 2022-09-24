@@ -7,10 +7,10 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 TODO
 * train model
     * retrain with more classes
-    * try sdg optimizer
+    * try sgd optimizer
 * ai opponent
     * two losses: discriminator/stroke loss and prediction score loss
-    * self-play reinforcement learning
+    * MCTS self-play
 * game mechanics
     * switch to stroke-based system, not pixels
     * multiplayer sockets
