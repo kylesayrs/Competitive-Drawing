@@ -1,5 +1,4 @@
 // libraries
-pica = pica({ features: ["js"] })
 import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js";
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
