@@ -27,8 +27,6 @@ export class DrawingBoard {
         this.canvasContext.lineWidth = 7;
         this.canvasContext.width = 500
         this.canvasContext.height = 500
-        this.rescaleCanvas()
-        window.onresize = this.rescaleCanvas()
 
         this.enabled = true
         this.mouseHolding = false
@@ -44,13 +42,6 @@ export class DrawingBoard {
         this.afterMouseMove = null
     }
 
-    rescaleCanvas() {
-        console.log("rescaleCanvas")
-        this.canvasContext.scale(
-            this.canvas.width / this.canvas.getBoundingClientRect().width,
-            this.canvas.height / this.canvas.getBoundingClientRect().height
-        )
-    }
 
     resetCanvases() {
         this.canvasContext.beginPath();
@@ -66,8 +57,14 @@ export class DrawingBoard {
 
     getMousePosition(mouseEvent) {
         const canvasBoundingRect = this.canvas.getBoundingClientRect();
-        var mouseX = event.clientX - canvasBoundingRect.left - this.canvas.offsetLeft + 0.5;
-        var mouseY = event.clientY - canvasBoundingRect.top - this.canvas.offsetTop + 0.5;
+
+        // the 10 and -1 here are meaningless adjustments that look good
+        const scaleX = (this.canvas.width + 10) / canvasBoundingRect.width
+        const scaleY = (this.canvas.height + 10) / canvasBoundingRect.height
+        const canvasX = event.clientX - canvasBoundingRect.left - this.canvas.offsetLeft - 0.5
+        const canvasY = event.clientY - canvasBoundingRect.top - this.canvas.offsetTop - 0.5
+        const mouseX = scaleX * canvasX - 1;
+        const mouseY = scaleY * canvasY - 1;
         return { mouseX, mouseY };
     }
 

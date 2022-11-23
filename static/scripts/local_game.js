@@ -6,7 +6,7 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 // gameConfig from Flask
 
-const targetLabels = ["spider", "duck"];
+const targetLabels = ["sheep", "duck"];
 
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(140, 0)
@@ -18,14 +18,11 @@ var inferenceMutex = false // true for locked, false for unlocked
 var targetIndex = 4
 drawingBoard.enabled = true
 
-// distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {
-    /*
     const previewImageData = await drawingBoard.updatePreview()
     const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
     const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, targetIndex)
     confidenceChart.update(modelOutputs)
-    */
 }
 
 drawingBoard.afterMouseMove = async () => {
