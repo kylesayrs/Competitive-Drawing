@@ -12,9 +12,13 @@ export class DrawingBoard {
         this._distanceIndicator = distanceIndicator
 
         this.canvas = document.getElementById("draw");
-        this.canvasContext = this.canvas.getContext("2d");
+        this.canvasContext = this.canvas.getContext("2d", {
+            willReadFrequently: true
+        })
         this.previewCanvas = document.getElementById("preview")
-        this.previewCanvasContext = this.previewCanvas.getContext("2d")
+        this.previewCanvasContext = this.previewCanvas.getContext("2d", {
+            willReadFrequently: true
+        })
 
         this.resetCanvases()
 
@@ -23,10 +27,8 @@ export class DrawingBoard {
         this.canvasContext.lineWidth = 7;
         this.canvasContext.width = 500
         this.canvasContext.height = 500
-        //this.canvasContext.scale(
-        //    this.canvas.width / this.canvas.getBoundingClientRect().width,
-        //    this.canvas.height / this.canvas.getBoundingClientRect().height
-        //)
+        this.rescaleCanvas()
+        window.onresize = this.rescaleCanvas()
 
         this.enabled = true
         this.mouseHolding = false
@@ -40,6 +42,14 @@ export class DrawingBoard {
 
         this.afterMouseEnd = null
         this.afterMouseMove = null
+    }
+
+    rescaleCanvas() {
+        console.log("rescaleCanvas")
+        this.canvasContext.scale(
+            this.canvas.width / this.canvas.getBoundingClientRect().width,
+            this.canvas.height / this.canvas.getBoundingClientRect().height
+        )
     }
 
     resetCanvases() {
@@ -138,7 +148,9 @@ export class DrawingBoard {
                 // place onto 28x28 with 1x1 padding
                 this.previewCanvasContext.putImageData(await image26ImageData, 1, 1)
 
-                resolve()
+                // get image data (with border)
+                const previewImageData = this.getPreviewImageData()
+                resolve(previewImageData)
             })
         })
     }

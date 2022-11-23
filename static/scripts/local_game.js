@@ -6,10 +6,10 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 // gameConfig from Flask
 
-const targetLabels = ["pig", "squirrel"];
+const targetLabels = ["spider", "duck"];
 
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
-const distanceIndicator = new DistanceIndicator(80, 0)
+const distanceIndicator = new DistanceIndicator(140, 0)
 const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
 
@@ -20,10 +20,12 @@ drawingBoard.enabled = true
 
 // distanceIndicator.onEnd = () => serverInferImage
 drawingBoard.afterMouseEnd = async () => {
+    /*
     const previewImageData = await drawingBoard.updatePreview()
     const imageDataUrl = drawingBoard.previewCanvas.toDataURL();
     const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, targetIndex)
     confidenceChart.update(modelOutputs)
+    */
 }
 
 drawingBoard.afterMouseMove = async () => {
