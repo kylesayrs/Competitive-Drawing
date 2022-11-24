@@ -1,3 +1,7 @@
+body {
+  background-image: url("/static/assets/background_white.png");
+}
+
 canvas#draw {
     border: 5px solid #000000;
     width: 30%;
