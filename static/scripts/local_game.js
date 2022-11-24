@@ -5,7 +5,7 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 // gameConfig from Flask
 
-const targetLabels = ["sheep", "duck"];
+const targetLabels = ["squirrel", "snowflake"];
 
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(140, 0)
