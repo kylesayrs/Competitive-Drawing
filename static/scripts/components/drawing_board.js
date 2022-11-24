@@ -24,9 +24,9 @@ export class DrawingBoard {
 
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
-        this.canvasContext.lineWidth = 7;
-        this.canvasContext.width = 500
-        this.canvasContext.height = 500
+        this.canvasContext.lineWidth = this.canvas.width / 70;
+        this.canvasContext.width = this.canvas.width
+        this.canvasContext.height = this.canvas.height
 
         this.enabled = true
         this.mouseHolding = false
