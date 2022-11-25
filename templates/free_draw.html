@@ -10,9 +10,11 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
     </head>
     <body>
-        <canvas id="draw" width="500%" height="500%">
-            Update your browser to support HTML5 Canvas
-        </canvas>
+        <div id="draw-container">
+            <canvas id="draw">
+                Update your browser to support HTML5 Canvas
+            </canvas>
+        </div>
         <canvas id="preview" width=28 height=28>
             Update your browser to support HTML5 Canvas
         </canvas>

@@ -35,3 +35,17 @@ export async function resizeImageData(srcImageData, dstImageSize) {
     const dstImageDataArray = new Uint8ClampedArray(dstImageData)
     return new ImageData(dstImageDataArray, dstImageSize[0], dstImageSize[1])
 }
+
+/*
+export function binarizeMarvinImage(marvinImage) {
+    for (let pixelStart = 0; pixelStart < marvinImage.imageData.data.length; pixelStart ++) {
+        let maxValue = Math.max(marvinImage.imageData.data.slice(pixelStart, pixelStart + 4))
+        marvinImage.imageData.data[0] = maxValue
+        marvinImage.imageData.data[1] = maxValue
+        marvinImage.imageData.data[2] = maxValue
+        marvinImage.imageData.data[3] = maxValue
+    }
+
+    return marvinImage
+}
+*/

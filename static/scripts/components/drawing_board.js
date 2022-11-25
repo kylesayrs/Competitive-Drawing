@@ -8,7 +8,7 @@ details: The DrawingBoard controls the drawing canvas as well as the preview can
 import { resizeImageData } from "/static/scripts/helpers.js";
 
 export class DrawingBoard {
-    constructor(distanceIndicator=null) {
+    constructor(distanceIndicator=null, canvasSize=500) {
         this._distanceIndicator = distanceIndicator
 
         this.canvas = document.getElementById("draw");
@@ -20,13 +20,14 @@ export class DrawingBoard {
             willReadFrequently: true
         })
 
+        this.canvas.setAttribute("width", canvasSize)
+        this.canvas.setAttribute("height",canvasSize)
+
         this.resetCanvases()
 
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
         this.canvasContext.lineWidth = this.canvas.width / 70;
-        this.canvasContext.width = this.canvas.width
-        this.canvasContext.height = this.canvas.height
 
         this.enabled = true
         this.mouseHolding = false
@@ -44,7 +45,6 @@ export class DrawingBoard {
 
 
     resetCanvases() {
-        this.canvasContext.beginPath();
         this.canvasContext.rect(0, 0, this.canvas.width, this.canvas.height);
         this.canvasContext.fillStyle = "white";
         this.canvasContext.fill();
@@ -57,14 +57,12 @@ export class DrawingBoard {
 
     getMousePosition(mouseEvent) {
         const canvasBoundingRect = this.canvas.getBoundingClientRect();
-
-        // the 10 and -1 here are meaningless adjustments that look good
-        const scaleX = (this.canvas.width + 10) / canvasBoundingRect.width
-        const scaleY = (this.canvas.height + 10) / canvasBoundingRect.height
-        const canvasX = event.clientX - canvasBoundingRect.left - this.canvas.offsetLeft - 0.5
-        const canvasY = event.clientY - canvasBoundingRect.top - this.canvas.offsetTop - 0.5
-        const mouseX = scaleX * canvasX - 1;
-        const mouseY = scaleY * canvasY - 1;
+        const scaleX = this.canvas.width / canvasBoundingRect.width
+        const scaleY = this.canvas.height / canvasBoundingRect.height
+        const canvasX = event.clientX - canvasBoundingRect.left
+        const canvasY = event.clientY - canvasBoundingRect.top
+        const mouseX = scaleX * canvasX;
+        const mouseY = scaleY * canvasY;
         return { mouseX, mouseY };
     }
 

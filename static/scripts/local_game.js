@@ -5,11 +5,11 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 // gameConfig from Flask
 
-const targetLabels = ["squirrel", "snowflake"];
+const targetLabels = ["spider", "pig"];
 
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(140, 0)
-const drawingBoard = new DrawingBoard(distanceIndicator)
+const drawingBoard = new DrawingBoard(distanceIndicator, 500)
 const inferencer = new Inferencer()
 
 // global state
