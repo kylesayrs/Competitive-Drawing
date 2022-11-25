@@ -7,6 +7,7 @@ SAMPLES_DIR_PATH = "./samples"
 NUM_ROWS = 18
 NUM_COLUMNS = 18
 BORDER = 30
+RAND_PLACEMENT = False
 OUTFILE_PATH = "background.png"
 
 if __name__ == "__main__":
@@ -41,9 +42,11 @@ if __name__ == "__main__":
 
     # place images
     for image_index, image in enumerate(images):
+        random_x = random.randint(0, BORDER * 2) if RAND_PLACEMENT else BORDER
+        random_y = random.randint(0, BORDER * 2) if RAND_PLACEMENT else BORDER
         image_with_border = cv2.copyMakeBorder(
             image,
-            BORDER, BORDER, BORDER, BORDER,
+            random_y, BORDER * 2 - random_y, random_x, BORDER * 2 - random_x,
             cv2.BORDER_CONSTANT, value=0
         )
 
