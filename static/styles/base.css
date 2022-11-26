@@ -1,5 +1,13 @@
 body {
-  background-image: url("/static/assets/background_white.png");
+    background-image: url("/static/assets/background_white.png");
+}
+
+img#home-button {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 100px;
+    height: 100px;
 }
 
 div#game-controls {
@@ -10,7 +18,7 @@ div#game-controls {
 }
 
 div#left-controls {
-    padding-top: 30px;
+    height: 100%;
     padding-right: 30px;
     margin-left: auto;
 }
@@ -44,7 +52,7 @@ div#confidenceChart {
 }
 
 div#confidence-bar {
-    width: 50vw;
+    width: 50%;
     height: 5vw;
     min-height: 24px;
     background-color: #eaeaea;
@@ -60,7 +68,6 @@ div#confidence-bar {
 }
 
 div#left-confidence {
-    width: 0%;
     height: 100%;
     float: left;
     background: linear-gradient(#25abc4, #252dc4);
@@ -68,7 +75,6 @@ div#left-confidence {
 }
 
 div#right-confidence {
-    width: 0%;
     height: 100%;
     float: right;
     background: linear-gradient(#c46d25, #c42525);
@@ -87,4 +93,23 @@ p#right-confidence-label {
     right: 2%;
     top: 20%;
     margin: auto;
+}
+
+div#distance-bar {
+    width: 3vw;
+    height: 100%;
+    background-color: #eaeaea;
+    border: 1vw solid #fff;
+    border-radius: 5vw;
+    box-shadow: 0 0 2vw rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    position: relative;
+}
+
+div#distance-bottom {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(#303030, #000000);
+    transition: 0.1s ease;
 }

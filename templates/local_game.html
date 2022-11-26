@@ -10,10 +10,15 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
     </head>
     <body>
+        <a href="/">
+            <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
+        </a>
         <div id="game-container">
             <div id="game-controls">
                 <div id="left-controls">
-                    <p id="distanceIndicator"></p>
+                    <div id="distance-bar">
+                        <div id="distance-bottom"></div>
+                    </div>
                 </div>
 
                 <div id="draw-container">
