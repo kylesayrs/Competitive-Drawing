@@ -4,24 +4,7 @@ author: Kyle Sayers
 details: ConfidenceChart is used to control the confidence chart. It also does some
          data processing like normalization and softmax
 */
-
-function normalize(arr, minNorm=0, maxNorm=1) {
-    const minimumValue = Math.min.apply(Math, arr)
-    arr = arr.map((value) => value - minimumValue, minNorm)
-    const maxValue = Math.max.apply(Math, arr)
-    const ratio = maxValue * maxNorm
-
-    for (let i = 0; i < arr.length; i++ ) {
-        arr[i] /= ratio;
-    }
-    return arr
-}
-
-function softmax(arr, factor=1) {
-    const exponents = arr.map((value) => Math.exp(value * factor))
-    const total = exponents.reduce((a, b) => a + b, 0);
-    return exponents.map((exp) => exp / total);
-}
+import { normalize, softmax } from "/static/scripts/helpers.js";
 
 export class ConfidenceChart {
     constructor(allLabels, targetLabels=null, softmaxFactor=7) {

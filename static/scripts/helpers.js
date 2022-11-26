@@ -36,6 +36,24 @@ export async function resizeImageData(srcImageData, dstImageSize) {
     return new ImageData(dstImageDataArray, dstImageSize[0], dstImageSize[1])
 }
 
+export function normalize(arr, minNorm=0, maxNorm=1) {
+    const minimumValue = Math.min.apply(Math, arr)
+    arr = arr.map((value) => value - minimumValue, minNorm)
+    const maxValue = Math.max.apply(Math, arr)
+    const ratio = maxValue * maxNorm
+
+    for (let i = 0; i < arr.length; i++ ) {
+        arr[i] /= ratio;
+    }
+    return arr
+}
+
+export function softmax(arr, factor=1) {
+    const exponents = arr.map((value) => Math.exp(value * factor))
+    const total = exponents.reduce((a, b) => a + b, 0);
+    return exponents.map((exp) => exp / total);
+}
+
 /*
 export function binarizeMarvinImage(marvinImage) {
     for (let pixelStart = 0; pixelStart < marvinImage.imageData.data.length; pixelStart ++) {

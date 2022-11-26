@@ -29,3 +29,45 @@ canvas#preview {
 div#confidenceChart {
     float: right;
 }
+
+div#confidence-bar {
+    width: 50vw;
+    height: 5vw;
+    min-height: 24px;
+    background-color: #eaeaea;
+    border: 1vw solid #fff;
+    border-radius: 5vw;
+    box-shadow: 0 0 2vw rgba(0, 127, 255, 0.25);
+    overflow: hidden;
+    position: relative;
+}
+
+div#left-confidence {
+    width: 0%;
+    height: 100%;
+    float: left;
+    background: linear-gradient(#25abc4, #252dc4);
+    transition: 0.5s ease;
+}
+
+div#right-confidence {
+    width: 0%;
+    height: 100%;
+    float: right;
+    background: linear-gradient(#c46d25, #c42525);
+    transition: 0.5s ease;
+}
+
+p#left-confidence-label {
+    position: absolute;
+    left: 2%;
+    top: 20%;
+    margin: auto;
+}
+
+p#right-confidence-label {
+    position: absolute;
+    right: 2%;
+    top: 20%;
+    margin: auto;
+}
