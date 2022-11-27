@@ -29,3 +29,4 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
     * option to expand preview
     * more appealing end turn button
     * better home screen button
+    * mobile support
