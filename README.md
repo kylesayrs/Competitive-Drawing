@@ -16,6 +16,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 * game design
     * win condition
     * ramping up/down distance
+    * showing grad cam power up?
     * erasing turn
     * cheat detection
 * infrastructure
