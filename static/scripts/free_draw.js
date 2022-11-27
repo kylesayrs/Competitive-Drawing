@@ -1,13 +1,11 @@
 // libraries
 import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js";
-import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { imageToImageData } from "/static/scripts/helpers.js";
-// gameConfig from Flask
 
 // components
-const drawingBoard = new DrawingBoard()
+const drawingBoard = new DrawingBoard(null, 500)
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
 const inferencer = new Inferencer(drawingBoard)
 

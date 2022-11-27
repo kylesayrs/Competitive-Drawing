@@ -8,7 +8,7 @@ details : The DistanceIndicator is responsible for controlling and keeping track
 
 export class DistanceIndicator {
     constructor(mouseDistanceLimit, totalMouseDistance) {
-        this.indicatorElement = document.getElementById("distanceIndicator")
+        this.distanceBottom = document.getElementById("distance-bottom")
         this.buttonElement = document.getElementById("distanceIndicatorButton")
 
         this._mouseDistanceLimit = mouseDistanceLimit
@@ -42,7 +42,8 @@ export class DistanceIndicator {
 
     afterOnClick() {}
 
-    update(value) {
-        this.indicatorElement.innerHTML = "Distance remaining: " + Math.round(this._mouseDistanceLimit - this._totalMouseDistance).toString();
+    update() {
+        var percentLeft = 100 * this._totalMouseDistance / this._mouseDistanceLimit
+        this.distanceBottom.style.height = (100 - percentLeft)  + "%";
     }
 }

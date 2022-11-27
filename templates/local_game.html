@@ -7,29 +7,52 @@
         <link rel="shortcut icon" href="{{ url_for('static', filename='assets/flavicons/favicon.ico') }}">
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles/game_room.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
     </head>
     <body>
-        <canvas id="draw" width="500%" height="500%">
-            Update your browser to support HTML5 Canvas
-        </canvas>
-        <canvas id="preview" width=28 height=28>
-            Update your browser to support HTML5 Canvas
-        </canvas>
-        <div id="confidenceChart"></div>
-        <p id="distanceIndicator"></p>
-        <button id="distanceIndicatorButton" type="button">Reset Indicator</button>
+        <a href="/">
+            <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
+        </a>
+        <div id="game-container">
+            <div id="game-controls">
+                <div id="left-controls">
+                    <div id="distance-bar">
+                        <div id="distance-bottom"></div>
+                    </div>
+                </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
-        <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
-        <script src="https://d3js.org/d3.v4.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+                <div id="draw-container">
+                    <canvas id="draw">
+                        Update your browser to support HTML5 Canvas
+                    </canvas>
+                </div>
 
-        <script type="text/javascript">
-            gameConfig = {{ game_config | tojson }}
-        </script>
+                <div id="right-controls">
+                    <button id="distanceIndicatorButton" type="button">End Turn</button>
+                    <canvas id="preview" width=28 height=28>
+                        Update your browser to support HTML5 Canvas
+                    </canvas>
+                </div>
+            </div>
 
-        <script type="module" src="{{url_for('static', filename='scripts/local_game.js')}}"></script>
+            <div id="confidence-bar">
+                <p id="left-confidence-label"></p>
+                <p id="right-confidence-label"></p>
+                <div id="left-confidence"></div>
+                <div id="right-confidence"></div>
+            </div>
+        </div>
     </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+    <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        gameConfig = {{ game_config | tojson }}
+    </script>
+
+    <script type="module" src="{{url_for('static', filename='scripts/local_game.js')}}"></script>
 </html>

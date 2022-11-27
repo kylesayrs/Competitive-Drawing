@@ -30,9 +30,8 @@ class Inferencer:
         return model
 
     def _convert_image_to_input(self, image):
-        image = image.convert('RGB')
+        image = image.convert("RGB")
         image = ImageOps.invert(image)
-        image.save("/Users/poketopa/Desktop/image.png")
         red_channel = image.split()[0]
         input = to_tensor(red_channel)
         input = torch.reshape(input, (1, 1, 28, 28))
