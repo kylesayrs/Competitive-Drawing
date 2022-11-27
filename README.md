@@ -8,7 +8,9 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
     * train model
         * retrain with pairs of classes
         * try sgd optimizer (better generalization)
+        * automated training
     * ai opponent
+        * backpropogate through strokes defined by points?
         * two losses: discriminator/stroke loss and prediction score loss
         * self play
 * game design
@@ -22,9 +24,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
     * dedicated inference instance
 * ui
     * target selector for local play
-    * distance indicator
-        * add wave effect
-        * fix margin at bottom (middle canvas doesn't use entire height)
+    * add wave effect to distance indicator
     * option to expand preview
     * more appealing end turn button
     * better home screen button
