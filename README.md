@@ -19,6 +19,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
     * showing grad cam power up?
     * erasing turn
     * cheat detection
+    * stroke replay for online multiplayer
 * infrastructure
     * online multiplayer
     * protect api endpoints
