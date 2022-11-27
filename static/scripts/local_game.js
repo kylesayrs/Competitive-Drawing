@@ -7,8 +7,8 @@ import { Inferencer } from "/static/scripts/components/inference.js";
 const targetLabels = ["clock", "spider"];
 
 const confidenceBar = new ConfidenceBar(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
-const distanceIndicator = new DistanceIndicator(140, 0)
-const drawingBoard = new DrawingBoard(distanceIndicator, 500)
+const distanceIndicator = new DistanceIndicator(gameConfig.distancePerTurn)
+const drawingBoard = new DrawingBoard(distanceIndicator, gameConfig.canvasSize)
 const inferencer = new Inferencer()
 
 // global state

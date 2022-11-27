@@ -10,6 +10,7 @@ import { resizeImageData } from "/static/scripts/helpers.js";
 export class DrawingBoard {
     constructor(distanceIndicator=null, canvasSize=500) {
         this._distanceIndicator = distanceIndicator
+        this.canvasSize = canvasSize
 
         this.canvas = document.getElementById("draw");
         this.canvasContext = this.canvas.getContext("2d", {
@@ -20,8 +21,8 @@ export class DrawingBoard {
             willReadFrequently: true
         })
 
-        this.canvas.setAttribute("width", canvasSize)
-        this.canvas.setAttribute("height",canvasSize)
+        this.canvas.setAttribute("width", this.canvasSize)
+        this.canvas.setAttribute("height", this.canvasSize)
 
         this.resetCanvases()
 

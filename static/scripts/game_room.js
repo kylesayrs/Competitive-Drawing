@@ -7,8 +7,8 @@ import { PlayerGameState } from "/static/scripts/components/player_game_state.js
 import { imageToImageData } from "/static/scripts/helpers.js";
 
 const confidenceBar = new ConfidenceBar(gameConfig.allLabels, null, gameConfig.softmaxFactor)
-const distanceIndicator = new DistanceIndicator(80)
-const drawingBoard = new DrawingBoard(distanceIndicator)
+const distanceIndicator = new DistanceIndicator(gameConfig.distancePerTurn)
+const drawingBoard = new DrawingBoard(distanceIndicator, gameConfig.canvasSize)
 const inferencer = new Inferencer()
 
 // global state
@@ -30,7 +30,7 @@ socket.on("assign_player", (data) => {
     playerGameState.playerId = data["playerId"]
 })
 
-socket.on("start_game", (data) => {
+socket.on("start_game", async (data) => {
     // TODO: use find
     var targetLabels = []
     for (const playerId in data["targets"]) {
@@ -41,17 +41,32 @@ socket.on("start_game", (data) => {
     }
 
     // update canvas
-    const canvasImageData = imageToImageData(data["canvas"], 500, 500)
+    const canvasImageData = imageToImageData(
+        data["canvas"],
+        drawingBoard.canvasSize,
+        drawingBoard.canvasSize
+    )
     drawingBoard.putPreviewImageData(canvasImageData, true)
 
     confidenceBar.targetLabels = targetLabels
+
+    // initalize bar
+    await drawingBoard.updatePreview()
+    const previewImageData = drawingBoard.getPreviewImageData()
+    const modelOutputs = await inferencer.clientInferImage(previewImageData)
+    confidenceBar.update(modelOutputs)
 })
 
 socket.on("start_turn", (data) => {
     console.log("start_turn")
     console.log(data)
     // update canvas
-    const canvasImageData = imageToImageData(data["canvas"], 500, 500)
+    console.log(drawingBoard.canvasSize)
+    const canvasImageData = imageToImageData(
+        data["canvas"],
+        drawingBoard.canvasSize,
+        drawingBoard.canvasSize
+    )
     drawingBoard.putCanvasImageData(canvasImageData, true)
 
     if (data["turn"] == playerGameState.playerId) {
@@ -101,6 +116,5 @@ distanceIndicator.onButtonClick = (_event) => {
     distanceIndicator.emptyDistance()
 }
 
-// initalize confidences and distance indicator
+// initalize distance indicator
 distanceIndicator.emptyDistance()
-drawingBoard.afterMouseMove()

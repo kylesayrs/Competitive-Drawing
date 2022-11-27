@@ -5,7 +5,7 @@ import { Inferencer } from "/static/scripts/components/inference.js";
 import { imageToImageData } from "/static/scripts/helpers.js";
 
 // components
-const drawingBoard = new DrawingBoard(null, 500)
+const drawingBoard = new DrawingBoard(null, gameConfig.canvasSize)
 const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
 const inferencer = new Inferencer(drawingBoard)
 

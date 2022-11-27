@@ -22,7 +22,7 @@ load_dotenv(".env")
 def create_app():
     # get environment variables
     host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", "5000")
+    port = os.environ.get("PORT", 5000)
     api_root = f"http://{host}:{port}"
     secret_key = os.environ.get("SECRET_KEY", "secret!")
     model_checkpoint_path = os.environ.get("MODEL_PATH", "./static/models/model.pth")
@@ -37,7 +37,9 @@ def create_app():
 
     game_config = {
         "allLabels": json.loads(os.environ.get("ALL_LABELS")),
-        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5)
+        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5),
+        "canvasSize": os.environ.get("CANVAS_SIZE", 100),
+        "distancePerTurn": os.environ.get("DISTANCE_PER_TURN", 80)
     }
 
     # create instance folder
@@ -145,7 +147,6 @@ def create_app():
         }, to=room_id)
 
     def emit_start_turn(game_state, room_id):
-        game_state.canvasImage.save("/Users/poketopa/Desktop/tmp2.png")
         emit("start_turn", {
             "canvas": game_state.canvasImageToSerial(),
             "turn": game_state.turn.id
@@ -164,8 +165,6 @@ def create_app():
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
 
-        image.save("/Users/poketopa/Desktop/tmp.png")
-
         game_state.canvasImage = image
 
         if data["playerId"] == game_state.turn.id:
@@ -176,7 +175,7 @@ def create_app():
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", "5000")
+    port = os.environ.get("PORT", 5000)
 
     app, socketio = create_app()
     socketio.run(app, host=host, port=port, debug=True)
