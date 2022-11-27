@@ -60,8 +60,8 @@ socket.on("start_game", async (data) => {
 socket.on("start_turn", (data) => {
     console.log("start_turn")
     console.log(data)
+
     // update canvas
-    console.log(drawingBoard.canvasSize)
     const canvasImageData = imageToImageData(
         data["canvas"],
         drawingBoard.canvasSize,
@@ -77,6 +77,16 @@ socket.on("start_turn", (data) => {
         playerGameState.myTurn = false
         drawingBoard.enabled = false
     }
+
+    // update confidences and preview image
+    inferenceMutex = true
+
+    await drawingBoard.updatePreview()
+    const previewImageData = drawingBoard.getPreviewImageData()
+    const modelOutputs = await inferencer.clientInferImage(previewImageData)
+    confidenceBar.update(modelOutputs)
+
+    inferenceMutex = false
 })
 
 // distanceIndicator.onEnd = () => serverInferImage

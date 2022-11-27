@@ -14,10 +14,16 @@ export class DrawingBoard {
 
         this.canvas = document.getElementById("draw");
         this.canvasContext = this.canvas.getContext("2d", {
+            alpha: false,
+            colorSpace: "srgb",
+            desynchronized: true,
             willReadFrequently: true
         })
         this.previewCanvas = document.getElementById("preview")
         this.previewCanvasContext = this.previewCanvas.getContext("2d", {
+            alpha: false,
+            colorSpace: "srgb",
+            desynchronized: false,
             willReadFrequently: true
         })
 
@@ -80,7 +86,7 @@ export class DrawingBoard {
         for (let y = 0; y < canvasImageHeight; y++) {
             for (let x = 0; x < canvasImageWidth; x++) {
             	let red = canvasImage.getIntComponent0(x, y);
-                if (red < 255) {
+                if (red < 254) { // TODO: investigate weird 254 values
                     bounds["min_width"] = Math.min(bounds["min_width"], x);
                     bounds["max_width"] = Math.max(bounds["max_width"], x);
                     bounds["min_height"] = Math.min(bounds["min_height"], y);
