@@ -112,6 +112,7 @@ def create_app():
 
     @socketio.on("join_room")
     def on_join_room(data):
+        print(f"on_join_room: {data}")
         room_id = data.get("room_id")
         room_id = int(room_id)
         join_room(room_id)

@@ -1,14 +1,13 @@
 // libraries
-import { ConfidenceChart } from "/static/scripts/components/confidence_chart.js";
+import { ConfidenceBar } from "/static/scripts/components/confidence_bar.js";
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { PlayerGameState } from "/static/scripts/components/player_game_state.js";
 import { imageToImageData } from "/static/scripts/helpers.js";
-// gameConfig from Flask
 
-const confidenceChart = new ConfidenceChart(gameConfig.allLabels, null, gameConfig.softmaxFactor)
-const distanceIndicator = new DistanceIndicator(80, 0)
+const confidenceBar = new ConfidenceBar(gameConfig.allLabels, null, gameConfig.softmaxFactor)
+const distanceIndicator = new DistanceIndicator(80)
 const drawingBoard = new DrawingBoard(distanceIndicator)
 const inferencer = new Inferencer()
 
@@ -32,9 +31,7 @@ socket.on("assign_player", (data) => {
 })
 
 socket.on("start_game", (data) => {
-    // TODO: use find and better stuff
-    console.log("start_game")
-    console.log(data)
+    // TODO: use find
     var targetLabels = []
     for (const playerId in data["targets"]) {
         if (playerId == playerGameState.playerId) {
@@ -47,13 +44,12 @@ socket.on("start_game", (data) => {
     const canvasImageData = imageToImageData(data["canvas"], 500, 500)
     drawingBoard.putPreviewImageData(canvasImageData, true)
 
-    confidenceChart.targetLabels = targetLabels
+    confidenceBar.targetLabels = targetLabels
 })
 
 socket.on("start_turn", (data) => {
     console.log("start_turn")
     console.log(data)
-
     // update canvas
     const canvasImageData = imageToImageData(data["canvas"], 500, 500)
     drawingBoard.putCanvasImageData(canvasImageData, true)
@@ -61,6 +57,7 @@ socket.on("start_turn", (data) => {
     if (data["turn"] == playerGameState.playerId) {
         playerGameState.myTurn = true
         drawingBoard.enabled = true
+        distanceIndicator.resetDistance()
     } else {
         playerGameState.myTurn = false
         drawingBoard.enabled = false
@@ -73,7 +70,7 @@ drawingBoard.afterMouseEnd = async () => {
         await drawingBoard.updatePreview()
         const imageDataUrl = drawingBoard.getPreviewImageDataUrl()
         const { gradCamImage, modelOutputs } = await inferencer.serverInferImage(imageDataUrl, playerGameState.targetIndex)
-        confidenceChart.update(modelOutputs)
+        confidenceBar.update(modelOutputs)
     }
 }
 
@@ -84,13 +81,13 @@ drawingBoard.afterMouseMove = async () => {
         await drawingBoard.updatePreview()
         const previewImageData = drawingBoard.getPreviewImageData()
         const modelOutputs = await inferencer.clientInferImage(previewImageData)
-        confidenceChart.update(modelOutputs)
+        confidenceBar.update(modelOutputs)
 
         inferenceMutex = false
     }
 }
 
-distanceIndicator.afterOnClick = () => {
+distanceIndicator.onButtonClick = (_event) => {
     const imageDataUrl = drawingBoard.getCanvasImageDataUrl()
 
     socket.emit("end_turn", {
@@ -99,7 +96,11 @@ distanceIndicator.afterOnClick = () => {
         "canvas": imageDataUrl
         //replay data
     })
+
     drawingBoard.enabled = false
+    distanceIndicator.emptyDistance()
 }
 
-//TODO: window.onresize = () =>
+// initalize confidences and distance indicator
+distanceIndicator.emptyDistance()
+drawingBoard.afterMouseMove()

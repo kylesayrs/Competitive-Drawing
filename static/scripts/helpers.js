@@ -13,7 +13,6 @@ export function imageToImageData(image, width, height) {
             }
         }
     }
-    console.log(imageDataBuffer.length / width / height)
 
     const imageData = new ImageData(
         new Uint8ClampedArray(imageDataBuffer),
