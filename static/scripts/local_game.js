@@ -3,7 +3,6 @@ import { ConfidenceBar } from "/static/scripts/components/confidence_bar.js";
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
-// gameConfig from Flask
 
 const targetLabels = ["clock", "spider"];
 

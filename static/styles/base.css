@@ -18,7 +18,6 @@ div#game-controls {
 }
 
 div#left-controls {
-    height: 100%;
     padding-right: 30px;
     margin-left: auto;
 }
@@ -46,8 +45,8 @@ canvas#preview {
     aspect-ratio: 1 / 1;
 }
 
-div#confidenceChart {
-    float: right;
+div#confidence-chart {
+    margin: auto;
 }
 
 div#confidence-bar {
@@ -96,7 +95,7 @@ p#right-confidence-label {
 
 div#distance-bar {
     width: 3vw;
-    height: 100%;
+    height: 450px;
     background-color: #eaeaea;
     border: 1vw solid #fff;
     border-radius: 5vw;

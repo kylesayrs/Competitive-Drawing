@@ -1,4 +1,4 @@
-<!-- local_game.html -->
+<!-- free_draw.html -->
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -10,26 +10,40 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
     </head>
     <body>
-        <div id="draw-container">
-            <canvas id="draw">
-                Update your browser to support HTML5 Canvas
-            </canvas>
+        <a href="/">
+            <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
+        </a>
+        <div id="game-container">
+            <div id="game-controls">
+                <div id="left-controls">
+                    <div id="confidence-chart"></div>
+                </div>
+
+                <div id="draw-container">
+                    <canvas id="draw">
+                        Update your browser to support HTML5 Canvas
+                    </canvas>
+                </div>
+
+                <div id="right-controls">
+                    <button id="distanceIndicatorButton" type="button">End Turn</button>
+                    <canvas id="preview" width=28 height=28>
+                        Update your browser to support HTML5 Canvas
+                    </canvas>
+                </div>
+            </div>
         </div>
-        <canvas id="preview" width=28 height=28>
-            Update your browser to support HTML5 Canvas
-        </canvas>
-        <div id="confidenceChart"></div>
-
-        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
-        <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
-        <script src="https://d3js.org/d3.v4.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-
-        <script type="text/javascript">
-            gameConfig = {{ game_config | tojson }}
-        </script>
-
-        <script type="module" src="{{url_for('static', filename='scripts/free_draw.js')}}"></script>
     </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+    <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        gameConfig = {{ game_config | tojson }}
+    </script>
+
+    <script type="module" src="{{url_for('static', filename='scripts/free_draw.js')}}"></script>
 </html>

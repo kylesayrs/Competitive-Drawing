@@ -17,13 +17,13 @@ export class ConfidenceChart {
 
     buildSvg() {
         // remove previous
-        d3.select("#confidenceChart").html("");
+        d3.select("#confidence-chart").html("");
 
         const confidenceChartMargin = {"top": 20, "right": 30, "bottom": 40, "left": 90}
         const confidenceChartWidth = 460 - confidenceChartMargin.left - confidenceChartMargin.right
         const confidenceChartHeight = 400 - confidenceChartMargin.top - confidenceChartMargin.bottom;
 
-        this.confidenceChartSvg = d3.select("#confidenceChart")
+        this.confidenceChartSvg = d3.select("#confidence-chart")
             .append("svg")
                 .attr("width", confidenceChartWidth + confidenceChartMargin.left + confidenceChartMargin.right)
                 .attr("height", confidenceChartHeight + confidenceChartMargin.top + confidenceChartMargin.bottom)
