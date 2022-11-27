@@ -57,7 +57,7 @@ socket.on("start_game", async (data) => {
     confidenceBar.update(modelOutputs)
 })
 
-socket.on("start_turn", (data) => {
+socket.on("start_turn", async (data) => {
     console.log("start_turn")
     console.log(data)
 
