@@ -1,5 +1,6 @@
 from typing import List, Dict
 
+import os
 import uuid
 import random
 import numpy
@@ -21,7 +22,8 @@ class GameState:
     _player_turn_index: int
 
     def __init__(self, labels):
-        self.canvasImage = Image.new("RGB", (500, 500), (255, 255, 255))
+        self.canvasSize = int(os.environ.get("CANVAS_SIZE", 500))
+        self.canvasImage = Image.new("RGB", (self.canvasSize, self.canvasSize), (255, 255, 255))
         self.labels = labels
         self.players = []
         self._player_turn_index = 0

@@ -7,27 +7,26 @@ details : The DistanceIndicator is responsible for controlling and keeping track
 */
 
 export class DistanceIndicator {
-    constructor(mouseDistanceLimit, totalMouseDistance) {
-        this.distanceBottom = document.getElementById("distance-bottom")
-        this.buttonElement = document.getElementById("distanceIndicatorButton")
+    constructor(mouseDistanceLimit, mouseDistance=0) {
+        this.distanceBottom = document.querySelector("#distance-bottom")
+        this.buttonElement = document.querySelector("#distanceIndicatorButton")
 
         this._mouseDistanceLimit = mouseDistanceLimit
-        this._totalMouseDistance = totalMouseDistance
+        this._mouseDistance = mouseDistance
 
         this.buttonElement.onclick = (_event) => {
-            this.totalMouseDistance = 0;
-            this.afterOnClick();
+            this.onButtonClick(_event)
         }
 
         this.update()
     }
 
-    get totalMouseDistance() {
-        return this._totalMouseDistance
+    get mouseDistance() {
+        return this._mouseDistance
     }
 
-    set totalMouseDistance(value) {
-        this._totalMouseDistance = value
+    set mouseDistance(value) {
+        this._mouseDistance = value
         this.update()
     }
 
@@ -40,10 +39,24 @@ export class DistanceIndicator {
         this.update()
     }
 
-    afterOnClick() {}
+    get distanceRemaining() {
+        return this._mouseDistanceLimit - this._mouseDistance
+    }
+
+    resetDistance() {
+        this.mouseDistance = 0
+    }
+
+    emptyDistance() {
+        this.mouseDistance = this._mouseDistanceLimit
+    }
+
+    onButtonClick(_event) {
+        this.resetDistance()
+    }
 
     update() {
-        var percentLeft = 100 * this._totalMouseDistance / this._mouseDistanceLimit
+        var percentLeft = 100 * this._mouseDistance / this._mouseDistanceLimit
         this.distanceBottom.style.height = (100 - percentLeft)  + "%";
     }
 }
