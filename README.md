@@ -1,7 +1,7 @@
 # Competitive-Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
-<img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo" width="800px" height="400px" />
+<img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
 
 ### TODO ###
 * research
