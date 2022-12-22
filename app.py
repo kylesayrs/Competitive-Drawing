@@ -72,7 +72,7 @@ def create_app():
     def infer():
         # TODO: move this to utils file
         image_data_url = request.json["imageDataUrl"]
-        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
@@ -91,7 +91,7 @@ def create_app():
                 "isCheater": False,
             }),
             status=200,
-            mimetype='application/json'
+            mimetype="application/json"
         )
 
     games_manager = GameManager()
@@ -108,7 +108,7 @@ def create_app():
                 "rooms": games_manager.rooms,
             }),
             status=200,
-            mimetype='application/json'
+            mimetype="application/json"
         )
         return response
 
@@ -160,7 +160,7 @@ def create_app():
         game_state = games_manager.rooms[room_id]
 
         image_data_url = data["canvas"]
-        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)

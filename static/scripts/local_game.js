@@ -3,8 +3,9 @@ import { ConfidenceBar } from "/static/scripts/components/confidence_bar.js";
 import { DistanceIndicator } from "/static/scripts/components/distance_indicator.js";
 import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
+import { getRandomLabels } from "/static/scripts/helpers.js"
 
-const targetLabels = ["clock", "spider"];
+const targetLabels = getRandomLabels(2);
 
 const confidenceBar = new ConfidenceBar(gameConfig.allLabels, targetLabels, gameConfig.softmaxFactor)
 const distanceIndicator = new DistanceIndicator(gameConfig.distancePerTurn)

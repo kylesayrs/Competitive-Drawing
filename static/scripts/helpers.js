@@ -1,5 +1,10 @@
 pica = pica({ features: ["js"] })
 
+export function getRandomLabels(numLabels=2) {
+    const shuffledLabels = gameConfig.allLabels.sort(() => 0.5 - Math.random());
+    return shuffledLabels.slice(0, numLabels)
+}
+
 export function imageToImageData(image, width, height) {
     var imageDataBuffer = []
     const add_alpha = image[0][0].length == 3
