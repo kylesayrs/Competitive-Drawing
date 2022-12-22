@@ -56,7 +56,7 @@ div#confidence-bar {
     background-color: #eaeaea;
     border: 1vw solid #fff;
     border-radius: 5vw;
-    box-shadow: 0 0 2vw rgba(0, 127, 255, 0.25);
+    box-shadow: 0 0 2vw rgba(0, 0, 0, 0.25);
     overflow: hidden;
     position: relative;
 
@@ -68,14 +68,14 @@ div#confidence-bar {
 div#left-confidence {
     height: 100%;
     float: left;
-    background: linear-gradient(#25abc4, #252dc4);
+    background: #1A5EFA;
     transition: 0.5s ease;
 }
 
 div#right-confidence {
     height: 100%;
     float: right;
-    background: linear-gradient(#c46d25, #c42525);
+    background: #F01A27;
     transition: 0.5s ease;
 }
 

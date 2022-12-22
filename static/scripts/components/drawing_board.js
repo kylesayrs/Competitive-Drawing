@@ -10,18 +10,25 @@ import { resizeImageData } from "/static/scripts/helpers.js";
 export class DrawingBoard {
     constructor(distanceIndicator=null, canvasSize=500) {
         this._distanceIndicator = distanceIndicator
+        this.canvasSize = canvasSize
 
         this.canvas = document.getElementById("draw");
         this.canvasContext = this.canvas.getContext("2d", {
+            alpha: false,
+            colorSpace: "srgb",
+            desynchronized: true,
             willReadFrequently: true
         })
         this.previewCanvas = document.getElementById("preview")
         this.previewCanvasContext = this.previewCanvas.getContext("2d", {
+            alpha: false,
+            colorSpace: "srgb",
+            desynchronized: false,
             willReadFrequently: true
         })
 
-        this.canvas.setAttribute("width", canvasSize)
-        this.canvas.setAttribute("height",canvasSize)
+        this.canvas.setAttribute("width", this.canvasSize)
+        this.canvas.setAttribute("height", this.canvasSize)
 
         this.resetCanvases()
 
@@ -79,7 +86,7 @@ export class DrawingBoard {
         for (let y = 0; y < canvasImageHeight; y++) {
             for (let x = 0; x < canvasImageWidth; x++) {
             	let red = canvasImage.getIntComponent0(x, y);
-                if (red < 255) {
+                if (red < 254) { // TODO: investigate weird 254 values
                     bounds["min_width"] = Math.min(bounds["min_width"], x);
                     bounds["max_width"] = Math.max(bounds["max_width"], x);
                     bounds["min_height"] = Math.min(bounds["min_height"], y);
@@ -179,7 +186,7 @@ export class DrawingBoard {
     }
 
     onMouseDown(mouseEvent) {
-        if (this._distanceIndicator == null || this._distanceIndicator.mouseDistanceLimit - this._distanceIndicator.totalMouseDistance > 1) {
+        if (this._distanceIndicator == null || this._distanceIndicator.distanceRemaining > 1) {
             let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
 
             // send socket, then move
@@ -205,8 +212,8 @@ export class DrawingBoard {
             let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
 
             // if overreach, interpolate on line to match remaining distance
-            if (this._distanceIndicator && this._distanceIndicator.totalMouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
-                const distanceRemaining = this._distanceIndicator.mouseDistanceLimit - this._distanceIndicator.totalMouseDistance
+            if (this._distanceIndicator && this._distanceIndicator.mouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
+                const distanceRemaining = this._distanceIndicator.distanceRemaining
                 const theta = Math.asin((mouseY - this.lastMouseY) / strokeDistance)
 
                 mouseX = Math.cos(theta) * distanceRemaining + this.lastMouseX
@@ -223,7 +230,7 @@ export class DrawingBoard {
             this.canvasContext.stroke();
 
             if (this._distanceIndicator) {
-                this._distanceIndicator.totalMouseDistance += strokeDistance
+                this._distanceIndicator.mouseDistance += strokeDistance
             }
 
             this.lastMouseX = mouseX;

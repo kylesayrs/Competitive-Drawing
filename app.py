@@ -22,7 +22,7 @@ load_dotenv(".env")
 def create_app():
     # get environment variables
     host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", "5000")
+    port = os.environ.get("PORT", 5000)
     api_root = f"http://{host}:{port}"
     secret_key = os.environ.get("SECRET_KEY", "secret!")
     model_checkpoint_path = os.environ.get("MODEL_PATH", "./static/models/model.pth")
@@ -37,7 +37,9 @@ def create_app():
 
     game_config = {
         "allLabels": json.loads(os.environ.get("ALL_LABELS")),
-        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5)
+        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5),
+        "canvasSize": os.environ.get("CANVAS_SIZE", 100),
+        "distancePerTurn": os.environ.get("DISTANCE_PER_TURN", 80)
     }
 
     # create instance folder
@@ -70,7 +72,7 @@ def create_app():
     def infer():
         # TODO: move this to utils file
         image_data_url = request.json["imageDataUrl"]
-        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
@@ -89,7 +91,7 @@ def create_app():
                 "isCheater": False,
             }),
             status=200,
-            mimetype='application/json'
+            mimetype="application/json"
         )
 
     games_manager = GameManager()
@@ -106,12 +108,13 @@ def create_app():
                 "rooms": games_manager.rooms,
             }),
             status=200,
-            mimetype='application/json'
+            mimetype="application/json"
         )
         return response
 
     @socketio.on("join_room")
     def on_join_room(data):
+        print(f"on_join_room: {data}")
         room_id = data.get("room_id")
         room_id = int(room_id)
         join_room(room_id)
@@ -144,7 +147,6 @@ def create_app():
         }, to=room_id)
 
     def emit_start_turn(game_state, room_id):
-        game_state.canvasImage.save("/Users/poketopa/Desktop/tmp2.png")
         emit("start_turn", {
             "canvas": game_state.canvasImageToSerial(),
             "turn": game_state.turn.id
@@ -158,12 +160,10 @@ def create_app():
         game_state = games_manager.rooms[room_id]
 
         image_data_url = data["canvas"]
-        image_data_str = re.sub('^data:image/.+;base64,', '', image_data_url)
+        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
         image = Image.open(image_data_io)
-
-        image.save("/Users/poketopa/Desktop/tmp.png")
 
         game_state.canvasImage = image
 
@@ -175,7 +175,7 @@ def create_app():
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", "5000")
+    port = os.environ.get("PORT", 5000)
 
     app, socketio = create_app()
     socketio.run(app, host=host, port=port, debug=True)

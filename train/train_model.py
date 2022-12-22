@@ -1,4 +1,7 @@
+from typing import List, Optional, Tuple
+
 import os
+import json
 import numpy
 import matplotlib.pyplot as plt
 import PIL
@@ -13,16 +16,16 @@ import torch.nn as nn
 from torchvision import transforms
 from timm.data import Mixup
 
-# needed to define model for exporting to onnx
-NUM_CLASSES = 10
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 # load data
-def load_data(root_dir, class_names=None):
+def load_data(root_dir: str, class_names: Optional[List[str]]=None):
     all_images = []
     all_labels = []
     label_names = []
     class_names = class_names if class_names is not None else os.listdir(root_dir)
-    assert len(class_names) == NUM_CLASSES == wandb.config["num_classes"]
     for file_i, file_name in enumerate(class_names):
         file_name += ".npy"
         file_path = os.path.join(root_dir, file_name)
@@ -36,6 +39,7 @@ def load_data(root_dir, class_names=None):
     print(f"loaded {len(all_images)} images, {len(all_labels)} labels, from {label_names}")
 
     return all_images, all_labels, label_names
+
 
 # dataset
 class QuickDrawDataset(torch.utils.data.Dataset):
@@ -61,10 +65,12 @@ class QuickDrawDataset(torch.utils.data.Dataset):
         else:
             return self.transform(image), label
 
+
 # model
 class Classifier(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes: int):
         super(Classifier, self).__init__()
+        self.num_classes = num_classes
 
         def conv_block(in_filters, out_filters, bn=True):
             block = [nn.Conv2d(in_filters, out_filters, 3, 2, 1), nn.ReLU(), nn.Dropout2d(0.2)]
@@ -81,7 +87,7 @@ class Classifier(nn.Module):
         )
 
         self.fc = nn.Sequential(
-            nn.Linear(128, NUM_CLASSES),
+            nn.Linear(128, self.num_classes),
         )
 
         self.softmax = nn.Softmax(dim=1)
@@ -94,30 +100,64 @@ class Classifier(nn.Module):
 
         return logits, confs
 
-if __name__ == "__main__":
+
+def save_model(model: nn.Module):
+    # save model onnx
+    torch.onnx.export(
+        model,
+        torch.zeros([1, 1] + list(wandb.config.image_shape)),
+        os.path.join(wandb.config["save_dir"], "model.onnx"),
+        input_names=["input"],
+        output_names=["logits", "output"],
+        opset_version=14
+    )
+
+    # save associated config file
+    with open(os.path.join(wandb.config["save_dir"], "config.json"), "w") as config_file:
+        json.dump(config_file, dict(wandb.config))
+
+
+def train_model(
+    class_names: List[str],
+    save_dir: str,
+    num_epochs: int = 30,
+    batch_size: int = 256,
+    test_batch_size: int = 256,
+    test_size: float = 0.2,
+    lr: float = 0.0001,
+    image_shape: Tuple[int, int] = (28, 28),
+    mixup_alpha: float = 0.3,
+    cutmix_alpha: float = 0.0,
+    cutmix_prob: float = 1.0,
+    label_smoothing: float = 0.1,
+    logging_rate: int = 1000,
+    save_checkpoints: bool = False,
+):
     # config
     run = wandb.init(
         project="competitive_drawing",
         entity="kylesayrs",
-        mode="online"
+        name="_".join(class_names),
+        reinit=True,
+        mode="online",
     )
     wandb.config = {
-        "image_shape": (28, 28),
-        "num_epochs": 30,
-        "batch_size": 256,
-        "num_classes": NUM_CLASSES,
-        "lr": 0.0001,
-        "logging_rate": 1000,
-        "test_batch_size": 256,
-        "mixup_alpha": 0.3,
-        "cutmix_alpha": 0.0,
-        "cutmix_prob": 1.0,
-        "label_smoothing": 0.1,
+        "image_shape": image_shape,
+        "num_epochs": num_epochs,
+        "batch_size": batch_size,
+        "num_classes": len(class_names),
+        "lr": lr,
+        "logging_rate": logging_rate,
+        "test_batch_size": test_batch_size,
+        "test_size": test_size,
+        "mixup_alpha": mixup_alpha,
+        "cutmix_alpha": cutmix_alpha,
+        "cutmix_prob": cutmix_prob,
+        "label_smoothing": label_smoothing,
+        "save_dir": save_dir,
+        "save_checkpoints": save_checkpoints,
+        "run_id": run.id,
     }
-    assert wandb.config["num_classes"] == NUM_CLASSES
-
-    CMAP = "gray_r"
-    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
     # transforms
     train_transform = transforms.Compose([
@@ -140,24 +180,16 @@ if __name__ == "__main__":
     )
 
     # load data
-    all_images, all_labels, label_names = load_data(
-        "raw_data",
-        class_names=[
-            "sheep",
-            "guitar",
-            "pig",
-            "tree",
-            "clock",
-            "squirrel",
-            "duck",
-            "panda",
-            "spider",
-            "snowflake",
-        ]
-    )
+    all_images, all_labels, label_names = load_data("raw_data", class_names=class_names)
 
     # create datasets
-    x_train, x_test, y_train, y_test = train_test_split(all_images, all_labels, test_size=0.20, shuffle=True, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(
+        all_images,
+        all_labels,
+        test_size=wandb.config["test_size"],
+        shuffle=True,
+        random_state=42
+    )
     assert len(x_train) == len(y_train)
     assert len(x_test) == len(y_test)
 
@@ -208,7 +240,11 @@ if __name__ == "__main__":
                     test_accuracy = accuracy_score(test_labels.cpu(), numpy.argmax(test_outputs.cpu(), axis=1))
                     test_loss = criterion(test_outputs, test_labels)
 
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / wandb.config["logging_rate"]} test_acc: {test_accuracy}')
+                print(
+                    f"[{epoch + 1}, {i + 1:5d}] "
+                    f"loss: {running_loss / wandb.config['logging_rate']} "
+                    f"test_acc: {test_accuracy}"
+                )
                 wandb.log({
                     "loss": running_loss / wandb.config["logging_rate"],
                     "test_loss": test_loss,
@@ -219,12 +255,14 @@ if __name__ == "__main__":
                 running_loss = 0.0
 
         # save each epoch
-        if run:
+        if wandb.config["save_checkpoints"]:
             os.makedirs(f"./checkpoints/{run.id}", exist_ok=True)
             print(f"saving model to ./checkpoints/{run.id}/epoch{epoch}.pth")
             torch.save(model.state_dict(), f"./checkpoints/{run.id}/epoch{epoch}.pth")
-        else:
-            print(f"saving model to ./checkpoints/epoch{epoch}.pth")
-            torch.save(model.state_dict(), f"./checkpoints/epoch{epoch}.pth")
 
-    print('Finished Training')
+    print("Finished Training")
+    save_model(model)
+
+
+if __name__ == "__main__":
+    train_model(["sheep", "clock"], save_path="models")
