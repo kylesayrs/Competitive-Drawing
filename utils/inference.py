@@ -24,7 +24,7 @@ class Inferencer:
         )
 
     def load_model(self, model_checkpoint_path):
-        model = Classifier()
+        model = Classifier(num_classes=10)
         model.load_state_dict(torch.load(model_checkpoint_path, map_location=DEVICE))
         model = model.eval()
         return model
