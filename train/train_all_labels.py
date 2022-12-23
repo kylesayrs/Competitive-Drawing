@@ -24,10 +24,11 @@ if __name__ == "__main__":
         momentum=None,
         optimizer="Adam",
         cutmix_prob=0.0,
-        logging_rate=1000,
+        logging_rate=1,
         patience_length=None,
         patience_threshold=None,
         model_name="Megamodel",
+        wandb_mode="disabled",
     )
 
     print("Done training all models")

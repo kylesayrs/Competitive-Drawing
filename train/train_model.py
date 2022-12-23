@@ -169,7 +169,8 @@ def train_model(
     patience_threshold: Optional[float] = 0.95,
     logging_rate: int = 100,
     save_checkpoints: bool = False,
-    model_name: Optional[str] = None
+    model_name: Optional[str] = None,
+    wandb_mode: str = "online",
 ):
     assert class_names[0] < class_names[1]
 
@@ -180,7 +181,7 @@ def train_model(
         entity="kylesayrs",
         name=model_name,
         reinit=True,
-        mode="online",
+        mode=wandb_mode,
         config={
             "model_name": model_name,
             "image_shape": image_shape,
