@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import os
 import json
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import PIL
 import cv2
 import wandb
+import boto3
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -18,6 +19,7 @@ from timm.data import Mixup
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+S3_CLIENT = boto3.client("s3")
 
 
 # load data
@@ -43,15 +45,22 @@ def load_data(root_dir: str, class_names: Optional[List[str]]=None):
 
 # dataset
 class QuickDrawDataset(torch.utils.data.Dataset):
-    def __init__(self, X, y, transform=None):
+    def __init__(self, X, y, is_test=False):
         self.X = X
         self.y = y
-        self.transform = transform
+        if not is_test:
+            self.transform = transforms.Compose([
+                transforms.RandomRotation(15),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomAffine(5, shear=5),
+                transforms.ToTensor(),
+            ])
+        else:
+            self.transform = transforms.Compose([
+                transforms.ToTensor(),
+            ])
 
         assert len(self.X) == len(self.y)
-
-    def add_transform(self, transform):
-        self.transform = transform
 
     def __len__(self):
         return len(self.X)
@@ -101,76 +110,102 @@ class Classifier(nn.Module):
         return logits, confs
 
 
-def save_model(model: nn.Module):
-    # save model onnx
+def upload_model(model: nn.Module, metrics: Dict[str, float]):
+    # upload model onnx
+    tmp_onnx_path = f"/tmp/model.onnx"
+    tmp_metadata_path = f"/tmp/metadata.json"
+
+    model = model.to("cpu")
     torch.onnx.export(
         model,
-        torch.zeros([1, 1] + list(wandb.config.image_shape)),
-        os.path.join(wandb.config["save_dir"], "model.onnx"),
+        torch.zeros([1, 1] + list(wandb.config["image_shape"])),
+        tmp_onnx_path,
         input_names=["input"],
         output_names=["logits", "output"],
         opset_version=14
     )
+    model = model.to(DEVICE)
 
-    # save associated config file
-    with open(os.path.join(wandb.config["save_dir"], "config.json"), "w") as config_file:
-        json.dump(config_file, dict(wandb.config))
+    S3_CLIENT.upload_file(
+        tmp_onnx_path,
+        "competitive-drawing-models-prod",
+        f"{wandb.config['model_name']}/model.onnx"
+    )
+
+    # upload associated config file
+    metadata = dict(wandb.config)
+    metadata.update(metrics)
+    with open(tmp_metadata_path, "w") as metadata_file:
+        json.dump(metadata, metadata_file)
+
+    S3_CLIENT.upload_file(
+        tmp_metadata_path,
+        "competitive-drawing-models-prod",
+        f"{wandb.config['model_name']}/metadata.json"
+    )
+
+    # remove temporary files
+    os.remove(tmp_onnx_path)
+    os.remove(tmp_metadata_path)
+
+    print("Uploaded model files")
 
 
 def train_model(
     class_names: List[str],
-    save_dir: str,
-    num_epochs: int = 30,
-    batch_size: int = 256,
-    test_batch_size: int = 256,
+    num_epochs: int = 6,
+    batch_size: int = 128,
+    test_batch_size: int = 128,
     test_size: float = 0.2,
-    lr: float = 0.0001,
+    lr: float = 0.005,
+    optimizer: str = "SGD",
+    momentum: float = 0.9,
     image_shape: Tuple[int, int] = (28, 28),
     mixup_alpha: float = 0.3,
     cutmix_alpha: float = 0.0,
-    cutmix_prob: float = 1.0,
+    cutmix_prob: float = 0.8,
     label_smoothing: float = 0.1,
-    logging_rate: int = 1000,
+    patience_length: Optional[int] = 3,
+    patience_threshold: Optional[float] = 0.95,
+    logging_rate: int = 100,
     save_checkpoints: bool = False,
+    model_name: Optional[str] = None,
+    wandb_mode: str = "online",
 ):
-    # config
+    assert class_names[0] < class_names[1]
+
+    # wandb
+    model_name = model_name or "-".join(class_names)
     run = wandb.init(
         project="competitive_drawing",
         entity="kylesayrs",
-        name="_".join(class_names),
+        name=model_name,
         reinit=True,
-        mode="online",
+        mode=wandb_mode,
+        config={
+            "model_name": model_name,
+            "image_shape": image_shape,
+            "num_epochs": num_epochs,
+            "batch_size": batch_size,
+            "num_classes": len(class_names),
+            "lr": lr,
+            "optimizer": optimizer,
+            "momentum": momentum,
+            "patience_length": patience_length,
+            "patience_threshold": patience_threshold,
+            "logging_rate": logging_rate,
+            "test_batch_size": test_batch_size,
+            "test_size": test_size,
+            "mixup_alpha": mixup_alpha,
+            "cutmix_alpha": cutmix_alpha,
+            "cutmix_prob": cutmix_prob,
+            "label_smoothing": label_smoothing,
+            "save_checkpoints": save_checkpoints,
+        }
     )
-    wandb.config = {
-        "image_shape": image_shape,
-        "num_epochs": num_epochs,
-        "batch_size": batch_size,
-        "num_classes": len(class_names),
-        "lr": lr,
-        "logging_rate": logging_rate,
-        "test_batch_size": test_batch_size,
-        "test_size": test_size,
-        "mixup_alpha": mixup_alpha,
-        "cutmix_alpha": cutmix_alpha,
-        "cutmix_prob": cutmix_prob,
-        "label_smoothing": label_smoothing,
-        "save_dir": save_dir,
-        "save_checkpoints": save_checkpoints,
-        "run_id": run.id,
-    }
+    print(wandb.config)
 
-    # transforms
-    train_transform = transforms.Compose([
-        transforms.RandomRotation(15),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomAffine(5, shear=5),
-        transforms.ToTensor(),
-    ])
-
-    test_transform = transforms.Compose([
-        transforms.ToTensor(),
-    ])
-
+    # mixup
     train_mixup = Mixup(
         mixup_alpha=wandb.config["mixup_alpha"],
         cutmix_alpha=wandb.config["cutmix_alpha"],
@@ -188,25 +223,32 @@ def train_model(
         all_labels,
         test_size=wandb.config["test_size"],
         shuffle=True,
-        random_state=42
     )
     assert len(x_train) == len(y_train)
     assert len(x_test) == len(y_test)
 
-    train_dataset = QuickDrawDataset(x_train, y_train, transform=train_transform)
-    test_dataset = QuickDrawDataset(x_test, y_test, transform=test_transform)
+    train_dataset = QuickDrawDataset(x_train, y_train, is_test=False)
+    test_dataset = QuickDrawDataset(x_test, y_test, is_test=True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=wandb.config["batch_size"],
-                                              shuffle=True, num_workers=2)
+                                              shuffle=True, num_workers=0, drop_last=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=wandb.config["test_batch_size"],
-                                              shuffle=True, num_workers=2)
+                                              shuffle=True, num_workers=0, drop_last=True)
 
-    model = Classifier().to(DEVICE)
-    optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config["lr"])
+    model = Classifier(wandb.config["num_classes"]).to(DEVICE)
+    if wandb.config["optimizer"] == "SGD":
+        optimizer = torch.optim.SGD(model.parameters(), lr=wandb.config["lr"], momentum=wandb.config["momentum"])
+    elif wandb.config["optimizer"] == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config["lr"])
+    else:
+        raise ValueError(f"Unknown optimizer {wandb.config['optimizer']}")
     criterion = nn.CrossEntropyLoss().to(DEVICE)
     print(model)
 
     # train
     print("begin training")
+    epoch_test_accs = []
+    test_accuracy = 0.0
+    metrics = {}
     for epoch in range(wandb.config["num_epochs"]):  # loop over the dataset multiple times
 
         running_loss = 0.0
@@ -245,14 +287,28 @@ def train_model(
                     f"loss: {running_loss / wandb.config['logging_rate']} "
                     f"test_acc: {test_accuracy}"
                 )
-                wandb.log({
+                metrics = {
                     "loss": running_loss / wandb.config["logging_rate"],
-                    "test_loss": test_loss,
+                    "test_loss": test_loss.item(),
                     "train_acc": train_accuracy,
                     "test_acc": test_accuracy,
-                })
+                }
+                wandb.log(metrics)
 
                 running_loss = 0.0
+
+        # check patience each epoch
+        epoch_test_accs.append(test_accuracy)
+        if (
+            wandb.config["patience_length"] and wandb.config["patience_threshold"] and
+            len(epoch_test_accs) >= wandb.config["patience_length"] and
+            all([
+                acc >= wandb.config["patience_threshold"]
+                for acc in epoch_test_accs[-1 * wandb.config["patience_length"]:]
+            ])
+        ):
+            break
+
 
         # save each epoch
         if wandb.config["save_checkpoints"]:
@@ -261,8 +317,20 @@ def train_model(
             torch.save(model.state_dict(), f"./checkpoints/{run.id}/epoch{epoch}.pth")
 
     print("Finished Training")
-    save_model(model)
+    upload_model(model, metrics)
 
 
 if __name__ == "__main__":
-    train_model(["sheep", "clock"], save_path="models")
+    train_model(
+        ["golf club", "clock"],
+        num_epochs=6,
+        batch_size=128,
+        test_batch_size=128,
+        lr=0.005,
+        momentum=0.9,
+        optimizer="SGD",
+        cutmix_prob=0.8,
+        logging_rate=100,
+        patience_length=3,
+        patience_threshold=0.95,
+    )
