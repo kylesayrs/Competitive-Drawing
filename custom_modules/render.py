@@ -5,8 +5,9 @@ import torch
 class LineRaster2d(torch.nn.Module):
     """
     Renders a line from p0 to p1 on the canvas.
-    The result is differentiable for all points
-    with respect to the inputs
+    The result is differentiable at all points
+    with respect to the inputs (although we restrict
+    rendering based on line_width)
 
     len_of_projection = torch.dot(p - p0, p1 - p0) / torch.norm(p1 - p0)
     t = len_of_projection / torch.norm(p1 - p0)  |  0 ≤ t ≤ 1
@@ -17,11 +18,9 @@ class LineRaster2d(torch.nn.Module):
     def __init__(self, canvas_shape, line_width=1.0):
         super().__init__()
         self.canvas_shape = canvas_shape
-        self.line_width = torch.nn.Parameter(torch.tensor(line_width))
+        self.line_width = line_width
 
     def forward(self, p0, p1):
-        #p0 = torch.clamp(p0, min=0, max=1) * torch.tensor(self.canvas_shape)
-        #p1 = torch.clamp(p1, min=0, max=1) * torch.tensor(self.canvas_shape)
         p0 = p0 * torch.tensor(self.canvas_shape)
         p1 = p1 * torch.tensor(self.canvas_shape)
         canvas = torch.zeros(self.canvas_shape)
@@ -47,47 +46,84 @@ class LineRaster2d(torch.nn.Module):
         return canvas
 
 
+class OpponentModel(torch.nn.Module):
+    def __init__(self, canvas_shape, line_width=2.0):
+        super(OpponentModel, self).__init__()
+
+        # In the future these will be computed outputs from a
+        # model that takes the original canvas as input
+        self.p0 = torch.nn.Parameter(torch.rand(2), requires_grad=True)
+        self.p1 = torch.nn.Parameter(torch.rand(2), requires_grad=True)
+
+        # line rendering
+        self.line_raster = LineRaster2d(canvas_shape, line_width=2.0)
+
+        # In the future we'll feed the render to the original
+        # classifier to compute our score
+
+    def forward(self):
+        p0 = torch.sigmoid(self.p0 * 1)
+        p1 = torch.sigmoid(self.p1 * 1)
+        output_canvas = self.line_raster(p0, p1)
+
+        return output_canvas
+
+
 # Notes: There are many contraints to take into account
 # 1. endpoints should be between 0 and 1 (or 0 and 28)
-#    a. alternatively, the function is differentiable everywhere
+#    a. model.p0.data.clamp_(0.01, 0.99)
+#       model.p1.data.clamp_(0.01, 0.99)
+#       although you lose the gradient if it goes off
+#    b. alternatively, the function is differentiable everywhere, although
+#       frankly I don't want rendering to affect every pixel, even during training
+#       Note: I tried this, and sometimes the gradient is so weak it doesn't affect loss
+#       I don't think this is enough for it to recover
+#    c. I just don't want endpoints to end up off canvas because then
+#       it messes with length calculations and if the line goes out of bounds
+#       then there is no gradient
+#    I think a happy medium is applying a sigmoid potentially with some alpha < 1
+#    This clamps it and still provides some gradient
 # 2. endpoints must have a length <= some value
 # 3. rendered outputs must be between 0 and 1
 #
-# I should swap the line function to a non-differentiable-everywhere version,
-# since this is most likely going to be how I implement the curve and frankly
-# I don't want rendering to affect every pixel, even during training
+# worst case it goes out of bounds and the AI doesn't use its entire distance
 
 
 if __name__ == "__main__":
     canvas_shape = (28, 28)
-    p0 = torch.nn.Parameter(torch.tensor([0.01, 0.01]), requires_grad=True)
-    p1 = torch.nn.Parameter(torch.tensor([0.7, 0.2]), requires_grad=True)
 
+    """ sunset target
     target_canvas = torch.zeros(canvas_shape)
     for y in range(canvas_shape[0]):
         target_canvas[y, :] = y / canvas_shape[0]
+    """
 
-    #cv2.imshow("target_canvas", target_canvas.numpy())
-    #cv2.waitKey(0)
+    """ exact line target """
+    target_p0 = torch.tensor([0.1, 0.1])
+    target_p1 = torch.tensor([0.9, 0.9])
+    target_canvas = LineRaster2d(canvas_shape, line_width=4.0)(target_p0, target_p1)
 
-    module = LineRaster2d(canvas_shape, line_width=2.0)
+    cv2.imshow("target_canvas", target_canvas.numpy())
+    cv2.waitKey(0)
+
+    model = OpponentModel(canvas_shape, line_width=2.0)
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.SGD(list(module.parameters()) + [p0, p1], lr=0.1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=3.0)
 
     while True:
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward
-        output_canvas = module(p0, p1)
+        output_canvas = model()
 
-        # backwards + optimize
+        # backwards and optimize
         loss = criterion(output_canvas, target_canvas)
         loss.backward()
         optimizer.step()
 
-        print(f"p0: {p0} p1: {p1}")
+        print(list(model.parameters()))
         print(f"loss: {loss.item()}")
         cv2.imshow("output_canvas", output_canvas.detach().numpy())
         cv2.waitKey(0)
