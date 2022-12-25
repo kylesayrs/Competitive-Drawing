@@ -2,8 +2,12 @@ from typing import List, Optional, Tuple
 
 import cv2
 import torch
+import numpy
 
-from helpers import get_line_precomputations, get_bezier_curve_precomputations
+from helpers import (
+    get_line_precomputations,
+    get_bezier_curve_precomputations
+)
 
 
 class PathRaster2d(torch.nn.Module):
@@ -14,14 +18,14 @@ class PathRaster2d(torch.nn.Module):
         self,
         canvas_shape: List[int],
         line_width: float = 1.0,
-        anti_aliasing: str = "linear",
-        num_path_samples: int = 6,
+        anti_aliasing_factor: str = 1.0,
+        num_path_samples: int = 8,
         path_sample_method: str = "uniform"
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
         self.line_width = line_width
-        self.anti_aliasing = anti_aliasing
+        self.anti_aliasing_factor = anti_aliasing_factor
         self.num_path_samples = num_path_samples
         self.path_sample_method = path_sample_method
 
@@ -32,11 +36,10 @@ class PathRaster2d(torch.nn.Module):
         if self.num_path_samples < 3:
             raise ValueError("num_path_samples must be greater than 3")
 
-        if self.anti_aliasing not in ["linear", "quadratic", "global"]:
-            raise ValueError("anti_aliasing must be 'linear', 'quadratic' or 'global'")
-
-        if self.path_sample_method not in ["uniform", "stochastic"]:
-            raise ValueError("path_sample_method must be 'uniform' or 'stochastic'")
+        if self.path_sample_method not in ["uniform", "uniform_t", "stochastic"]:
+            raise ValueError(
+                "path_sample_method must be 'uniform', 'uniform_t', or 'stochastic'"
+            )
 
 
     def get_distance_to_point(self, p: torch.tensor, key_points: List[torch.tensor]):
@@ -100,7 +103,11 @@ class PathRaster2d(torch.nn.Module):
             line_precomputations = get_line_precomputations(key_points)
 
         if len(key_points) >= 3:
-            b_curve_precomputations = get_bezier_curve_precomputations(key_points, self.num_path_samples)
+            b_curve_precomputations = get_bezier_curve_precomputations(
+                key_points,
+                self.num_path_samples,
+                self.path_sample_method
+            )
 
         # torch doesn't implement a map function, so a single thread will do
         for y in range(0, canvas.shape[0]):
@@ -121,15 +128,8 @@ class PathRaster2d(torch.nn.Module):
                         b_curve_precomputations=b_curve_precomputations
                     )
 
-                if self.anti_aliasing == "linear" and distance < self.line_width:
-                    canvas[y, x] = self.line_width - distance
-
-                if self.anti_aliasing == "quadratic":
-                    # TODO: move 1/3 to an argument
-                    canvas[y, x] = 1 - (distance / self.max_distance) ** (1 / 3)
-
-                if self.anti_aliasing == "global":
-                    canvas[y, x] = 1 - (distance / self.max_distance)
+                if distance < self.line_width:
+                    canvas[y, x] = 1 - (distance / self.max_distance) ** self.anti_aliasing_factor
 
         return canvas
 
@@ -149,7 +149,12 @@ class OpponentModel(torch.nn.Module):
     path is optimized, converging on a global solution
     """
 
-    def __init__(self, canvas_shape, line_width=2.0):
+    def __init__(
+        self,
+        canvas_shape,
+        line_width: float = 2.0,
+        anti_aliasing_factor: float = 1.0
+    ):
         super(OpponentModel, self).__init__()
 
         # key points to optimize
@@ -158,8 +163,12 @@ class OpponentModel(torch.nn.Module):
             for _ in range(4)
         ]
 
-        # line rendering
-        self.line_raster = PathRaster2d(canvas_shape, line_width=2.0)
+        # path rendering
+        self.path_raster = PathRaster2d(
+            canvas_shape,
+            line_width=line_width,
+            anti_aliasing_factor=anti_aliasing_factor,
+        )
 
         # In the future we'll feed the render to the original
         # classifier to compute our score
@@ -172,15 +181,28 @@ class OpponentModel(torch.nn.Module):
         return list(model_parameters) + self.key_points
 
     def forward(self):
-        key_points = [
+        # clamp endpoints
+        key_points =[
             torch.clamp(key_point, min=0, max=1)
-            for key_point in self.key_points
+            if key_point_i == 0 or key_point_i == len(self.key_points) - 1
+            else key_point
+            for key_point_i, key_point in enumerate(self.key_points)
         ]
-        print(key_points)
 
-        output_canvas = self.line_raster(self.key_points)
+        output_canvas = self.path_raster(key_points)
 
         return output_canvas
+
+
+def draw_output_and_target(output_canvas, target_canvas):
+    assert output_canvas.shape == target_canvas.shape
+    image = numpy.zeros((*output_canvas.shape, 3))
+
+    image[:, :, 0] = output_canvas.detach().numpy()
+    image[:, :, 1] = target_canvas.detach().numpy()
+
+    cv2.imshow("output and target", image)
+    cv2.waitKey(0)
 
 
 if __name__ == "__main__":
@@ -201,10 +223,10 @@ if __name__ == "__main__":
     cv2.imshow("target_canvas", target_canvas.numpy())
     cv2.waitKey(0)
 
-    model = OpponentModel(canvas_shape, line_width=2.0)
+    model = OpponentModel(canvas_shape, line_width=4.0, anti_aliasing_factor=0.25)
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
 
     while True:
         # zero the parameter gradients
@@ -218,7 +240,6 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
 
-        #print(list(model.parameters()))
+        print(list(model.parameters()))
         print(f"loss: {loss.item()}")
-        cv2.imshow("output_canvas", output_canvas.detach().numpy())
-        cv2.waitKey(0)
+        draw_output_and_target(output_canvas, target_canvas)
