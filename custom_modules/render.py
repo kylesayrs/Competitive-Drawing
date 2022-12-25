@@ -13,31 +13,46 @@ class PathRaster2d(torch.nn.Module):
         canvas_shape: List[int],
         line_width: float = 1.0,
         anti_aliasing: str = "linear",
+        num_path_samples: int = 10,
+        path_sample_method: str = "uniform"
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
         self.line_width = line_width
         self.anti_aliasing = anti_aliasing
+        self.num_path_samples = num_path_samples
+        self.path_sample_method = path_sample_method
 
         self.max_distance = torch.norm(
             torch.tensor(canvas_shape) - torch.tensor([0.0, 0.0])
         )
 
         if self.anti_aliasing not in ["linear", "quadratic", "global"]:
-            raise ValueError("anti_aliasing must be 'local', 'quadratic' or 'global'")
+            raise ValueError("anti_aliasing must be 'linear', 'quadratic' or 'global'")
+
+        if self.path_sample_method not in ["uniform", "stochastic"]:
+            raise ValueError("path_sample_method must be 'uniform' or 'stochastic'")
+
+
+    def get_distance_to_point(self, p: torch.tensor, key_points: List[torch.tensor]):
+        """
+        Obvious closed form
+        """
+        return torch.norm(p - key_points[0])
 
 
     def get_distance_to_line(
         self,
         p: torch.tensor,
-        p0: torch.tensor,
-        p1: torch.tensor,
+        key_points: List[torch.tensor],
         p1_minus_p0: Optional[float] = None,
         len_line_segment_squared: Optional[float] = None
     ):
         """
         This one has a closed form solution
         """
+        p0 = key_points[0]
+        p1 = key_points[1]
         p1_minus_p0 = p1 - p0 if p1_minus_p0 is None else p1_minus_p0
         len_line_segment_squared = (
             (p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2
@@ -52,19 +67,21 @@ class PathRaster2d(torch.nn.Module):
         return torch.norm(p - projection)
 
 
-    def sample_distances_on_path(self, key_points: List[torch. tensor], t: float):
-        if len(key_points) == 1:
-            return key_points[0]
+    def sample_distance_to_path(
+        self,
+        p: torch.tensor,
+        key_points: List[torch.tensor]
+    ):
+        """
+        """
+        assert len(key_points) > 0
 
-        if len(key_points) == 2:
-            return key_points[0]
+        #path_sample_method
 
-        else:
-            raise ValueError(f"Invalid number of key points, found {len(key_points)}")
 
 
     def forward(self, key_points):
-        # prepare canvas and keypoints
+        # prepare canvas and key_points
         canvas = torch.zeros(self.canvas_shape)
         canvas_shape_tensor = torch.tensor(self.canvas_shape)
         key_points = [key_point * canvas_shape_tensor for key_point in key_points]
@@ -82,22 +99,27 @@ class PathRaster2d(torch.nn.Module):
             for x in range(0, canvas.shape[1]):
                 p = torch.tensor([y, x], dtype=torch.float32)
 
-                if len(key_points) == 2:
+                if len(key_points) == 1:
+                    distance = self.get_distance_to_point(p, key_points)
+
+                elif len(key_points) == 2:
                     distance = self.get_distance_to_line(
-                        p,
-                        *key_points,
+                        p, key_points,
                         p1_minus_p0=p1_minus_p0,
                         len_line_segment_squared=len_line_segment_squared
                     )
+                else:
+                    distance = self.sample_distance_to_path(p, *key_points)
 
                 if self.anti_aliasing == "linear" and distance < self.line_width:
                     canvas[y, x] = self.line_width - distance
 
                 if self.anti_aliasing == "quadratic":
+                    # TODO: move 1/3 to an argument
                     canvas[y, x] = 1 - (distance / self.max_distance) ** (1 / 3)
 
                 if self.anti_aliasing == "global":
-                    canvas[y, x] = distance / self.max_distance
+                    canvas[y, x] = 1 - (distance / self.max_distance)
 
         return canvas
 
@@ -123,11 +145,11 @@ class OpponentModel(torch.nn.Module):
         # key points to optimize
         self.key_points = [
             torch.nn.Parameter(torch.rand(2), requires_grad=True)
-            for _ in range(2)
+            for _ in range(1)
         ]
 
         # line rendering
-        self.line_raster = PathRaster2d(canvas_shape, line_width=2.0)
+        self.line_raster = PathRaster2d(canvas_shape, line_width=2.0, anti_aliasing="global")
 
         # In the future we'll feed the render to the original
         # classifier to compute our score
