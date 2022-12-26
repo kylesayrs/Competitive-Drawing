@@ -19,7 +19,7 @@ class PathRaster2d(torch.nn.Module):
         canvas_shape: List[int],
         line_width: float = 1.0,
         anti_aliasing_factor: str = 1.0,
-        num_path_samples: int = 8,
+        num_path_samples: int = 10,
         path_sample_method: str = "uniform"
     ):
         super().__init__()
@@ -122,6 +122,7 @@ class PathRaster2d(torch.nn.Module):
                         p, key_points,
                         line_precomputations=line_precomputations
                     )
+
                 else:
                     distance = self.sample_distance_to_path(
                         p, key_points,
@@ -158,9 +159,17 @@ class OpponentModel(torch.nn.Module):
         super(OpponentModel, self).__init__()
 
         # key points to optimize
+        """
         self.key_points = [
             torch.nn.Parameter(torch.rand(2), requires_grad=True)
-            for _ in range(4)
+            for _ in range(2)
+        ]
+        """
+        self.key_points = [
+            torch.nn.Parameter(torch.tensor([0.1, 0.1]), requires_grad=True),
+            torch.nn.Parameter(torch.tensor([0.9, 0.2]), requires_grad=True),
+            torch.nn.Parameter(torch.tensor([0.0, 0.8]), requires_grad=True),
+            torch.nn.Parameter(torch.tensor([0.9, 0.9]), requires_grad=True)
         ]
 
         # path rendering
@@ -199,7 +208,8 @@ def draw_output_and_target(output_canvas, target_canvas):
     image = numpy.zeros((*output_canvas.shape, 3))
 
     image[:, :, 0] = output_canvas.detach().numpy()
-    image[:, :, 1] = target_canvas.detach().numpy()
+    image[:, :, 1] = output_canvas.detach().numpy()
+    image[:, :, 2] = target_canvas.detach().numpy()
 
     cv2.imshow("output and target", image)
     cv2.waitKey(0)
@@ -220,7 +230,7 @@ if __name__ == "__main__":
     target_canvas = PathRaster2d(canvas_shape, line_width=4.0)([target_p0, target_p1])
     #"""
 
-    model = OpponentModel(canvas_shape, line_width=4.0, anti_aliasing_factor=0.25)
+    model = OpponentModel(canvas_shape, line_width=3.0, anti_aliasing_factor=0.25)
 
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
