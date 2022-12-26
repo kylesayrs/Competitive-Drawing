@@ -5,6 +5,7 @@ import numpy
 from OpponentModel import OpponentModel
 from LineGraphic2d import LineGraphic2d
 from CurveGraphic2d import CurveGraphic2d
+from optimizer import make_hooked_optimizer
 
 
 def draw_output_and_target(output_canvas, target_canvas):
@@ -66,7 +67,11 @@ if __name__ == "__main__":
     )
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.8, momentum=0.9)
+    optimizer = make_hooked_optimizer(
+        torch.optim.SGD,
+        model.clamp_endpoints,
+        model.parameters(), lr=1.5, momentum=0.9,
+    )
 
     while True:
         # zero the parameter gradients

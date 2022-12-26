@@ -56,9 +56,6 @@ class OpponentModel(torch.nn.Module):
         # In the future we'll feed the render to the original
         # classifier to compute our score
 
-        # register backward hook to clamp endpoints from going off screen
-        self.register_full_backward_hook(self._clamp_endpoints)
-
 
     def parameters(self):
         """
@@ -74,6 +71,7 @@ class OpponentModel(torch.nn.Module):
         return output_canvas
 
 
-    def _clamp_endpoints(self, module, grad_input, grad_output):
-        self.key_points[0].clamp_(0, 1)
-        self.key_points[-1].clamp_(0, 1)
+    def clamp_endpoints(self):
+        with torch.no_grad():
+            self.key_points[0].clamp_(0, 1)
+            self.key_points[-1].clamp_(0, 1)
