@@ -173,6 +173,9 @@ class OpponentModel(torch.nn.Module):
         # In the future we'll feed the render to the original
         # classifier to compute our score
 
+        # register backward hook to clamp endpoints from going off screen
+        self.register_full_backward_hook(self.clamp_endpoints)
+
     def parameters(self):
         """
         Future: do this properly, something like making the parameters a module?
@@ -181,17 +184,14 @@ class OpponentModel(torch.nn.Module):
         return list(model_parameters) + self.key_points
 
     def forward(self):
-        # clamp endpoints
-        key_points =[
-            torch.clamp(key_point, min=0, max=1)
-            if key_point_i == 0 or key_point_i == len(self.key_points) - 1
-            else key_point
-            for key_point_i, key_point in enumerate(self.key_points)
-        ]
-
-        output_canvas = self.path_raster(key_points)
+        output_canvas = self.path_raster(self.key_points)
 
         return output_canvas
+
+
+    def clamp_endpoints(self, module, grad_input, grad_output):
+        self.key_points[0].clamp_(0, 1)
+        self.key_points[-1].clamp_(0, 1)
 
 
 def draw_output_and_target(output_canvas, target_canvas):
@@ -219,9 +219,6 @@ if __name__ == "__main__":
     target_p1 = torch.tensor([0.9, 0.9])
     target_canvas = PathRaster2d(canvas_shape, line_width=4.0)([target_p0, target_p1])
     #"""
-
-    cv2.imshow("target_canvas", target_canvas.numpy())
-    cv2.waitKey(0)
 
     model = OpponentModel(canvas_shape, line_width=4.0, anti_aliasing_factor=0.25)
 

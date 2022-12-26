@@ -14,7 +14,7 @@ def nCr(n: int, r: int):
 
 @cache
 def bernstein_polynomial(n: int, k: int, t: float):
-    return nCr(n, k) * (t ** k) * (1 - t) ** (n - k)
+    return nCr(n, k) * (t ** k) * ((1 - t) ** (n - k))
 
 
 def get_line_precomputations(key_points: List[torch.tensor]):
@@ -28,7 +28,7 @@ def get_line_precomputations(key_points: List[torch.tensor]):
 
 
 def get_uniform_ts(num_ts):
-    return [t / num_ts for t in range(num_ts)]
+    return [t / (num_ts - 1) for t in range(num_ts)]
 
 
 class BezierCurve():
@@ -42,24 +42,26 @@ class BezierCurve():
             for approx_t in self._approx_ts
         ]
 
+        assert len(self._approx_ts) == len(self._approx_points)
+
 
     @cache
     def _sample_directly(self, t: float):
         return sum([
-            key_point * bernstein_polynomial(len(self.key_points), key_point_i, t)
+            key_point * bernstein_polynomial(len(self.key_points) - 1, key_point_i, t)
             for key_point_i, key_point in enumerate(self.key_points)
         ])
 
 
     @cache
     def _sample_from_approximations(self, t: float):
-        right_index = numpy.searchsorted(self._approx_ts, t, side="left")
+        right_index = numpy.searchsorted(self._approx_ts, t, side="right")
         left_index = right_index - 1
 
         # edge cases
-        if right_index == 0:
+        if right_index <= 0:
             return self._approx_points[0]
-        if right_index == len(self._approx_ts):
+        if left_index >= len(self._approx_ts) - 1:
             return self._approx_points[-1]
 
         # sample by lerping
