@@ -15,6 +15,7 @@ class BezierCurve():
     ):
         self.key_points = key_points
         self.sample_method = sample_method
+        self.num_approximations = num_approximations
 
         self._approx_ts = get_uniform_ts(num_approximations)
         self._approx_points = [
@@ -54,7 +55,7 @@ class BezierCurve():
         # edge cases
         if right_index <= 0:
             return self._approx_points[0]
-        if left_index >= len(self._approx_ts) - 1:
+        if left_index >= self.num_approximations - 1:
             return self._approx_points[-1]
 
         # sample by lerping
@@ -91,3 +92,59 @@ class BezierCurve():
 
     def arc_length(self):
         return float(self._approx_lengths[-1])
+
+
+    def truncate(self, normed_t):
+        """
+        Subdivision algorithm
+        """
+        with torch.no_grad():
+            right_index = numpy.searchsorted(self._approx_lengths_normalized, normed_t, side="right")
+            left_index = right_index - 1
+
+            if right_index <= 0:
+                real_t = self._approx_ts[0]
+
+            if left_index >= self.num_approximations - 1:
+                real_t = self._approx_ts[-1]
+
+            else:
+                lerp_t = (
+                    (normed_t - self._approx_lengths_normalized[left_index]) /
+                    (
+                        self._approx_lengths_normalized[right_index] -
+                        self._approx_lengths_normalized[left_index]
+                    )
+                )
+
+                real_t = torch.lerp(
+                    torch.tensor(self._approx_ts[left_index]),
+                    torch.tensor(self._approx_ts[right_index]),
+                    lerp_t
+                )
+
+            degree_key_points = []
+            degree_key_points.append(self.key_points)  # first degree
+            for prev_degree in range(len(self.key_points) - 1):
+
+                key_points = [
+                    torch.lerp(
+                        degree_key_points[prev_degree][kp_i],
+                        degree_key_points[prev_degree][kp_i + 1],
+                        real_t
+                    )
+                    for kp_i in range(len(degree_key_points[prev_degree]) - 1)
+                ]
+
+                degree_key_points.append(key_points)
+
+            new_key_points = [
+                degree_key_points[degree][0]
+                for degree in range(len(self.key_points))
+            ]
+
+        self.__init__(
+            new_key_points,
+            sample_method=self.sample_method,
+            num_approximations=self.num_approximations
+        )

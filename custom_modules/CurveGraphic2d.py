@@ -56,11 +56,11 @@ class CurveGraphic2d(torch.nn.Module):
         return min([torch.norm(p - sample_point) for sample_point in sample_points])
 
 
-    def forward(self, key_points):
+    def forward(self, inputs: List[torch.tensor]):
         # prepare canvas and key_points
         canvas = torch.zeros(self.canvas_shape)
         canvas_shape_tensor = torch.tensor(self.canvas_shape)
-        key_points = [key_point * canvas_shape_tensor for key_point in key_points]
+        key_points = [input * canvas_shape_tensor for input in inputs]
 
         # precompute some values
         b_curve_precomputations = self.get_bezier_curve_precomputations(key_points)

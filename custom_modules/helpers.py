@@ -1,6 +1,6 @@
 from typing import List
 
-import time
+import cv2
 import math
 import torch
 import numpy
@@ -26,3 +26,18 @@ def cumulative_sum(array):
         sum(array[:i], 0.0)
         for i in range(len(array) + 1)
     ]
+
+
+def draw_output_and_target(output_canvas: torch.tensor, target_canvas: torch.tensor):
+    assert output_canvas.shape == target_canvas.shape
+    image = numpy.zeros((*output_canvas.shape, 3))
+
+    output = output_canvas.detach().numpy()
+    target = target_canvas.detach().numpy()
+
+    image[:, :, 0] = cv2.bitwise_and(1.0 - output, target)
+    image[:, :, 1] = cv2.bitwise_and(output, target)
+    image[:, :, 2] = cv2.bitwise_and(output, 1.0 - target)
+
+    cv2.imshow("output and target", image)
+    cv2.waitKey(0)

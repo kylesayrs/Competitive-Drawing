@@ -1,26 +1,11 @@
-import cv2
 import torch
 import numpy
 
-from OpponentModel import OpponentModel
+from StrokeScoreModel import StrokeScoreModel
 from LineGraphic2d import LineGraphic2d
 from CurveGraphic2d import CurveGraphic2d
 from optimizer import make_hooked_optimizer
-
-
-def draw_output_and_target(output_canvas, target_canvas):
-    assert output_canvas.shape == target_canvas.shape
-    image = numpy.zeros((*output_canvas.shape, 3))
-
-    output = output_canvas.detach().numpy()
-    target = target_canvas.detach().numpy()
-
-    image[:, :, 0] = cv2.bitwise_and(1.0 - output, target)
-    image[:, :, 1] = cv2.bitwise_and(output, target)
-    image[:, :, 2] = cv2.bitwise_and(output, 1.0 - target)
-
-    cv2.imshow("output and target", image)
-    cv2.waitKey(0)
+from helpers import draw_output_and_target
 
 
 if __name__ == "__main__":
@@ -58,9 +43,14 @@ if __name__ == "__main__":
     )(target_points)
     #"""
 
-    model = OpponentModel(
-        canvas_shape=canvas_shape,
-        num_key_points=7,
+    initial_inputs = [
+        torch.rand(2)
+        for _ in range(7)
+    ]
+    model = StrokeScoreModel(
+        canvas_shape,
+        initial_inputs,
+        max_length=10,
         num_samples=15,
         width=3.0,
         anti_aliasing_factor=0.25
@@ -69,7 +59,7 @@ if __name__ == "__main__":
     criterion = torch.nn.MSELoss()
     optimizer = make_hooked_optimizer(
         torch.optim.SGD,
-        model.clamp_endpoints,
+        model.constrain_endpoints,
         model.parameters(), lr=1.5, momentum=0.9,
     )
 
