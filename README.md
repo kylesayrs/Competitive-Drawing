@@ -48,3 +48,6 @@ The second is that the curve's arc length must not exceed a maximum length. As m
 <img src="./repo_assets/bezier_curve_subdivision.jpg" alt="Bezier Curve Subdivision" href="https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html"/>
 
 Both of these constraints are non-differentiable, so I enforce them after each optimization step.
+
+### Todo Board ###
+https://kahl.notion.site/90a75c8cbbbe4eb1924d24e61818d2d2?v=9aeff125dd33457da8f046c1715c206a
