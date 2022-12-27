@@ -19,13 +19,13 @@ My approach is to learn a curve which resembles an actual human pen stroke while
 ### Bézier Curve Differentiation ###
 Curves, unlike individual pixels values, are not obviously differentiable. To make curves differentiable, we can take advantage of an existing graphics technique called anti-aliasing which essentially adds blur around a line which is both pleasing to the eye and much more differentiable than binary valued pixels.
 
-In order to implement anti-aliasing of a vector curve, we must compute the shortest distance of each pixel to the curve in order to determine its brightness value. In the special case of a straight line, there is a close form solution that involves projecting the point onto the line and computing the distance from that projection point to our original point.
+In order to implement anti-aliasing of a vector curve, we must compute the shortest distance of each pixel to the curve in order to determine its brightness value. In the special case of a straight line, there is a closed form solution that involves projecting the point onto the line and computing the distance from that projection point to our original point.
 
 <p align="center">
 <img src="./repo_assets/distance_from_point_to_line.jpg" alt="Distance From Point to Line" href="https://www.chilimath.com/lessons/advanced-algebra/distance-between-point-and-line-formula/"/>
 </p>
 
-In the case of Bezier curves however, no closed form solution for projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and computes the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
+In the case of Bezier curves however, no closed form solution for projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and compute the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
 
 Again there is no closed form solution to uniformly sample distances along a Bézier curve, so I use a linear approximation with a couple points.
 
