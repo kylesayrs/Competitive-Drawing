@@ -1,1 +1,0 @@
-def search_stroke_
