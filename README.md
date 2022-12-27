@@ -1,7 +1,9 @@
 # Competitive-Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
+<p align="center">
 <img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
+</p>
 
 
 ## Differentiable Graphics for AI Opponent ##
@@ -19,24 +21,34 @@ Curves, unlike individual pixels values, are not obviously differentiable. To ma
 
 In order to implement anti-aliasing of a vector curve, we must compute the shortest distance of each pixel to the curve in order to determine its brightness value. In the special case of a straight line, there is a close form solution that involves projecting the point onto the line and computing the distance from that projection point to our original point.
 
+<p align="center">
 <img src="./repo_assets/distance_from_point_to_line.jpg" alt="Distance From Point to Line" href="https://www.chilimath.com/lessons/advanced-algebra/distance-between-point-and-line-formula/"/>
+</p>
 
 In the case of Bezier curves however, no closed form solution for projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and computes the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
 
 Again there is no closed form solution to uniformly sample distances along a Bézier curve, so I use a linear approximation with a couple points.
 
 ### Optimization Results ###
-<img src="./repo_assets/good_optimization_1.gif" alt="Good Optimization 1"/>
-<p align = "center">Example of the curve optimizing to a target image in blue</p>
+<p align="center">
+<img src="./repo_assets/good_optimization_1.gif" alt="Good Optimization 1" width="400"/>
+<p align="center">Example of the curve optimizing to a target image in blue</p>
+</p>
 
-<img src="./repo_assets/good_optimization_2.gif" alt="Competitive Drawing Logo"/>
-<p align = "center">The curve is capable of disentangling itself</p>
+<p align="center">
+<img src="./repo_assets/good_optimization_2.gif" alt="Good Optimization 2" width="400"/>
+<p align="center">The curve is capable of disentangling itself</p>
+</p>
 
-<img src="./repo_assets/local_minimum.gif" alt="Local Minimum"/>
-<p align = "center">Like any gradient descent algorithm, there exist local minima</p>
+<p align="center">
+<img src="./repo_assets/local_minimum.gif" alt="Local Minimum" width="400"/>
+<p align="center">Like any gradient descent algorithm, there exist local minima</p>
+</p>
 
-<img src="./repo_assets/stuck_on_edge.gif" alt="Stuck on Edge"/>
-<p align = "center">Local minima often exist at the edges. This is due to how the other key points push on the end points</p>
+<p align="center">
+<img src="./repo_assets/stuck_on_edge.gif" alt="Stuck on Edge" width="400"/>
+<p align="center">Local minima often exist at the edges. This is due to how the other key points push on the end points</p>
+</p>
 
 ### Constraints and Curve Truncation ###
 I enforce two constraints on my optimized curve.
@@ -45,7 +57,9 @@ The first is that the endpoints must stay on the canvas. This prevents situation
 
 The second is that the curve's arc length must not exceed a maximum length. As mentioned previously, the curve's length is estimated using a couple of points. I then compute the a [subdivision](https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html) that satisfies my constraint using Casteljau's algorithm for computing Bézier curves.
 
+<p align="center">
 <img src="./repo_assets/bezier_curve_subdivision.jpg" alt="Bezier Curve Subdivision" href="https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html"/>
+</p>
 
 Both of these constraints are non-differentiable, so I enforce them after each optimization step.
 
