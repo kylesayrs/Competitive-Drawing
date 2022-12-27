@@ -1,7 +1,7 @@
 import torch
 import numpy
 
-from StrokeScoreModel import StrokeScoreModel
+from models import StrokeModel
 from LineGraphic2d import LineGraphic2d
 from CurveGraphic2d import CurveGraphic2d
 from optimizer import make_hooked_optimizer
@@ -10,44 +10,42 @@ from helpers import draw_output_and_target
 
 if __name__ == "__main__":
     canvas_shape = (28, 28)
+    target = "curve"
 
-    """ sunset target
-    target_canvas = torch.zeros(canvas_shape)
-    for y in range(canvas_shape[0]):
-        target_canvas[y, :] = y / canvas_shape[0]
-    """
+    if target == "sunset":
+        target_canvas = torch.zeros(canvas_shape)
+        for y in range(canvas_shape[0]):
+            target_canvas[y, :] = y / canvas_shape[0]
 
-    """ exact line target
-    target_points = [
-        torch.tensor([0.4, 0.1]),
-        torch.tensor([0.9, 0.9]),
-    ]
-    target_canvas = LineGraphic2d(canvas_shape, width=4.0)(target_points)
-    """
+    if target == "line":
+        target_points = [
+            torch.tensor([0.4, 0.1]),
+            torch.tensor([0.9, 0.9]),
+        ]
+        target_canvas = LineGraphic2d(canvas_shape, width=4.0)(target_points)
 
-    #""" exact line curve
-    target_points = [
-        torch.tensor([0.0, 0.0]), #
-        torch.tensor([0.1, 1.0]),
-        torch.tensor([0.3, 0.8]), #
-        torch.tensor([1.0, 0.6]),
-        torch.tensor([0.8, 0.4]), #
-        torch.tensor([0.2, 0.1]),
-        torch.tensor([0.5, 0.3]), #
-    ]
-    target_canvas = CurveGraphic2d(
-        canvas_shape,
-        num_samples=30,
-        width=5.0,
-        anti_aliasing_factor=0.25,
-    )(target_points)
-    #"""
+    if target == "curve":
+        target_points = [
+            torch.tensor([0.0, 0.0]), #
+            torch.tensor([0.1, 1.0]),
+            torch.tensor([0.3, 0.8]), #
+            torch.tensor([1.0, 0.6]),
+            torch.tensor([0.8, 0.4]), #
+            torch.tensor([0.2, 0.1]),
+            torch.tensor([0.5, 0.3]), #
+        ]
+        target_canvas = CurveGraphic2d(
+            canvas_shape,
+            num_samples=30,
+            width=5.0,
+            anti_aliasing_factor=0.25,
+        )(target_points)
 
     initial_inputs = [
         torch.rand(2)
         for _ in range(7)
     ]
-    model = StrokeScoreModel(
+    model = StrokeModel(
         canvas_shape,
         initial_inputs,
         max_length=10,
@@ -59,7 +57,7 @@ if __name__ == "__main__":
     criterion = torch.nn.MSELoss()
     optimizer = make_hooked_optimizer(
         torch.optim.SGD,
-        model.constrain_endpoints,
+        model.constrain_graphic,
         model.parameters(), lr=1.5, momentum=0.9,
     )
 

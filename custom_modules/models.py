@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import torch
 
@@ -7,7 +7,8 @@ from PointGraphic2d import PointGraphic2d
 from LineGraphic2d import LineGraphic2d
 from CurveGraphic2d import CurveGraphic2d
 
-class StrokeScoreModel(torch.nn.Module):
+
+class StrokeModel(torch.nn.Module):
     """
     Given a canvas, score model, and maximum path length,
     this model finds an optimal path that maximizes the
@@ -48,9 +49,6 @@ class StrokeScoreModel(torch.nn.Module):
         if len(self.inputs) >= 3:
             self.graphic = CurveGraphic2d(canvas_shape, **path_kwargs)
 
-        # In the future we'll feed the render to the original
-        # classifier to compute our score
-
 
     def parameters(self):
         """
@@ -74,8 +72,9 @@ class StrokeScoreModel(torch.nn.Module):
         self.graphic.anti_aliasing_factor = new_factor
 
 
-    def constrain_endpoints(self):
+    def constrain_graphic(self):
         with torch.no_grad():
+            # enforce maximum length
             canvas_shape_tensor = torch.tensor(self.graphic.canvas_shape)
             key_points = [input * canvas_shape_tensor for input in self.inputs]
 
@@ -109,11 +108,27 @@ class StrokeScoreModel(torch.nn.Module):
                     for input, new_input in zip(self.inputs, new_inputs):
                         input.data = new_input.data
 
-                    curve = BezierCurve(
-                        new_key_points,
-                        sample_method="uniform",
-                        num_approximations=self.graphic.num_samples
-                    )
-
+            # clamp endpoints
             self.inputs[0].clamp_(0, 1)
             self.inputs[-1].clamp_(0, 1)
+
+
+class StrokeScoreModel(StrokeModel):
+    def __init__(
+        self,
+        score_model: torch.nn.Module,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **path_kwargs)
+
+        # freeze score model
+        self.score_model = score_model
+        for param in self.score_model.parameters():
+            param.requires_grad = False
+
+
+    def forward(self):
+        output_canvas = super().forward()
+
+        return self.score_model(output_canvas)
