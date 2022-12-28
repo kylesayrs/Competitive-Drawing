@@ -205,14 +205,15 @@ def train_model(
     )
     print(wandb.config)
 
-    # mixup
+    # transforms
     train_mixup = Mixup(
         mixup_alpha=wandb.config["mixup_alpha"],
         cutmix_alpha=wandb.config["cutmix_alpha"],
         prob=wandb.config["cutmix_prob"],
         label_smoothing=wandb.config["label_smoothing"],
-        num_classes=wandb.config["num_classes"]
+        num_classes=wandb.config["num_classes"],
     )
+    random_resize_pad = RandomResizePad(wandb.config["image_shape"], scale=(0.3, ))
 
     # load data
     all_images, all_labels, label_names = load_data("raw_data", class_names=class_names)
@@ -255,6 +256,7 @@ def train_model(
         for i, (images, raw_labels) in enumerate(train_loader):
             # mixup/ cutmix
             images, cutmix_labels = train_mixup(images, raw_labels)
+            images, _ = random_placement(images, )
 
             # to device
             images = images.to(DEVICE)
@@ -322,7 +324,7 @@ def train_model(
 
 if __name__ == "__main__":
     train_model(
-        ["golf club", "clock"],
+        ["The Eiffel Tower.npy", "The Great Wall of China.npy"],
         num_epochs=6,
         batch_size=128,
         test_batch_size=128,

@@ -130,8 +130,7 @@ def download_and_draw_strokes(
     save_path = save_path.replace("\\", "")  # JANK
     numpy.save(save_path, raster_images)
 
-    #os.remove(stroke_output_path)
-
+    os.remove(stroke_output_path)
     progress.update(0)
 
 if __name__ == "__main__":
@@ -156,16 +155,16 @@ if __name__ == "__main__":
 
         os.makedirs(args.output_dir_path, exist_ok=True)
 
-        #with ThreadPoolExecutor(max_workers=1) as executor:
-        futures = [
-            #executor.submit(download_and_draw_strokes, category_path)
-            download_and_draw_strokes(
-                category_path,
-                args.output_dir_path,
-                args.image_side,
-                args.line_diameter,
-                args.padding,
-                progress
-            )
-            for category_path in paths[:1]
-        ]
+        with ThreadPoolExecutor(max_workers=None) as executor:
+            futures = [
+                executor.submit(
+                    download_and_draw_strokes,
+                    category_path,
+                    args.output_dir_path,
+                    args.image_side,
+                    args.line_diameter,
+                    args.padding,
+                    progress
+                )
+                for category_path in paths[:2]
+            ]
