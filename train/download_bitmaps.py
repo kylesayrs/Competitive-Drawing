@@ -16,7 +16,7 @@ parser.add_argument("output_dir_path")
 parser.add_argument("--tmp_stroke_dir", default="/tmp")
 parser.add_argument("--image_side", default=50)
 parser.add_argument("--line_diameter", default=16)
-parser.add_argument("--padding", default=16)
+parser.add_argument("--padding", default=0)
 parser.add_argument("--wait_processes", default=False)
 
 
@@ -106,8 +106,8 @@ def download_and_draw_strokes(
     category_name = category_name.replace(" ", "\ ")
 
     stroke_output_path = os.path.join(args.tmp_stroke_dir, f"{category_name}.ndjson")
-    #process = subprocess.Popen(f"gsutil -m cp '{category_path}' {stroke_output_path}", shell=True)
-    #process.wait()
+    process = subprocess.Popen(f"gsutil -m cp '{category_path}' {stroke_output_path}", shell=True)
+    process.wait()
     print(stroke_output_path)
 
     stroke_output_path = stroke_output_path.replace("\\", "")  # JANK
