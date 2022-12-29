@@ -27,13 +27,13 @@ def train_model(
     momentum: float = 0.9,
     image_shape: Tuple[int, int] = (50, 50),
     mixup_alpha: float = 0.3,
-    cutmix_alpha: float = 0.0,
+    cutmix_alpha: float = 1.0,
     cutmix_prob: float = 0.8,
     label_smoothing: float = 0.1,
     resize_scale: Tuple[float, float] = (0.2, 1.0),
     patience_length: Optional[int] = 3,
     patience_threshold: Optional[float] = 0.95,
-    logging_rate: int = 100,
+    logging_rate: int = 1000,
     save_checkpoints: bool = False,
     model_name: Optional[str] = None,
     wandb_mode: str = "online",
@@ -119,7 +119,7 @@ def train_model(
     else:
         raise ValueError(f"Unknown optimizer {wandb.config['optimizer']}")
     criterion = torch.nn.CrossEntropyLoss().to(DEVICE)
-    print(model)
+    #print(model)
 
     # train
     print("begin training")
@@ -154,7 +154,7 @@ def train_model(
 
                 with torch.no_grad():
                     test_images, test_labels = next(iter(test_loader))
-                    test_images = random_resize_pad(images)
+                    test_images = random_resize_pad(test_images)
                     test_images = test_images.to(DEVICE)
                     test_labels = test_labels.to(DEVICE)
                     _, test_outputs = model(test_images)
@@ -196,20 +196,22 @@ def train_model(
             torch.save(model.state_dict(), f"./checkpoints/{run.id}/epoch{epoch}.pth")
 
     print("Finished Training")
-    upload_model(model, metrics)
+    upload_model(model, wandb.config, metrics, root_folder="static_crop_50x50")
 
 
 if __name__ == "__main__":
     train_model(
-        ["The Eiffel Tower", "The Great Wall of China"],
-        "data",
+        #["The Eiffel Tower", "The Great Wall of China"],
+        ["animal migration", "baseball bat"],
+        "images",
         num_epochs=6,
-        batch_size=128,
+        batch_size=64,
         test_batch_size=128,
-        lr=0.005,
+        lr=0.01,
         momentum=0.9,
         optimizer="SGD",
         cutmix_prob=0.8,
+        resize_scale=(0.2, 1.0),
         logging_rate=100,
         patience_length=3,
         patience_threshold=0.95,

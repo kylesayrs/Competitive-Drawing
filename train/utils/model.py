@@ -13,16 +13,15 @@ class Classifier(torch.nn.Module):
             return block
 
         self.conv = torch.nn.Sequential(
-            *conv_block(1, 16, bn=False),
-            *conv_block(16, 32),
+            *conv_block(1, 32, bn=False),
+            *conv_block(32, 32),
             *conv_block(32, 64),
-            *conv_block(64, 64),
             *conv_block(64, 128),
-            *conv_block(128, 128),
+            *conv_block(128, 64),
         )
 
         self.fc = torch.nn.Sequential(
-            torch.nn.Linear(128, self.num_classes),
+            torch.nn.Linear(256, self.num_classes),
         )
 
         self.softmax = torch.nn.Softmax(dim=1)

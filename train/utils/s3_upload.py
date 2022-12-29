@@ -7,7 +7,12 @@ import torch
 S3_CLIENT = boto3.client("s3")
 
 
-def upload_model(model: torch.nn.Module, metrics: Dict[str, float]):
+def upload_model(
+    model: torch.nn.Module,
+    wandb_config: Dict[str, any],
+    metrics: Dict[str, float],
+    root_folder: str = ""
+):
     # upload model onnx
     tmp_onnx_path = f"/tmp/model.onnx"
     tmp_metadata_path = f"/tmp/metadata.json"
@@ -15,7 +20,7 @@ def upload_model(model: torch.nn.Module, metrics: Dict[str, float]):
     model = model.to("cpu")
     torch.onnx.export(
         model,
-        torch.zeros([1, 1] + list(wandb.config["image_shape"])),
+        torch.zeros([1, 1] + list(wandb_config["image_shape"])),
         tmp_onnx_path,
         input_names=["input"],
         output_names=["logits", "output"],
@@ -26,11 +31,11 @@ def upload_model(model: torch.nn.Module, metrics: Dict[str, float]):
     S3_CLIENT.upload_file(
         tmp_onnx_path,
         "competitive-drawing-models-prod",
-        f"{wandb.config['model_name']}/model.onnx"
+        f"{root_folder}/{wandb_config['model_name']}/model.onnx"
     )
 
     # upload associated config file
-    metadata = dict(wandb.config)
+    metadata = dict(wandb_config)
     metadata.update(metrics)
     with open(tmp_metadata_path, "w") as metadata_file:
         json.dump(metadata, metadata_file)
@@ -38,7 +43,7 @@ def upload_model(model: torch.nn.Module, metrics: Dict[str, float]):
     S3_CLIENT.upload_file(
         tmp_metadata_path,
         "competitive-drawing-models-prod",
-        f"{wandb.config['model_name']}/metadata.json"
+        f"{root_folder}/{wandb_config['model_name']}/metadata.json"
     )
 
     # remove temporary files

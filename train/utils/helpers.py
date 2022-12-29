@@ -5,9 +5,9 @@ import PIL
 import numpy
 
 
-def get_all_local_labels():
+def get_all_local_labels(data_dir: str):
     label_names = []
-    for file_name in os.listdir("raw_data"):
+    for file_name in os.listdir(data_dir):
         if file_name[0] == ".": continue
 
         label_name = file_name.split(".")[0]
