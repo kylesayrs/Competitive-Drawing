@@ -17,7 +17,7 @@ parser.add_argument("--tmp_stroke_dir", default="/tmp")
 parser.add_argument("--image_side", default=50)
 parser.add_argument("--line_diameter", default=16)
 parser.add_argument("--padding", default=0)
-parser.add_argument("--wait_processes", default=False)
+parser.add_argument("--wait_processes", default=True)
 
 
 def read_28x28_paths():
