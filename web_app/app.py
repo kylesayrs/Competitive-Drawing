@@ -35,6 +35,7 @@ def create_app():
     # load model TODO move to inference.py
     inferencer = Inferencer(model_checkpoint_path)
 
+    # set up config to pass to javascript
     game_config = {
         "allLabels": json.loads(os.environ.get("ALL_LABELS")),
         "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5),
@@ -47,6 +48,7 @@ def create_app():
         os.makedirs(app.instance_path, exist_ok=True)
     except OSError:
         raise ValueError("Could not create instance folder")
+
 
     @app.route("/", methods=["GET"])
     def home():
