@@ -1,10 +1,12 @@
 from typing import Dict
 
+import os
 import json
 import boto3
 import torch
 
 S3_CLIENT = boto3.client("s3")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def upload_model(
@@ -16,6 +18,7 @@ def upload_model(
     # upload model onnx
     tmp_onnx_path = f"/tmp/model.onnx"
     tmp_metadata_path = f"/tmp/metadata.json"
+    tmp_torch_path = f"/tmp/model.pth"
 
     model = model.to("cpu")
     torch.onnx.export(
@@ -46,8 +49,18 @@ def upload_model(
         f"{root_folder}/{wandb_config['model_name']}/metadata.json"
     )
 
+    # upload torch weights
+    torch.save(model.state_dict(), tmp_torch_path)
+
+    S3_CLIENT.upload_file(
+        tmp_torch_path,
+        "competitive-drawing-models-prod",
+        f"{root_folder}/{wandb_config['model_name']}/model.pth"
+    )
+
     # remove temporary files
     os.remove(tmp_onnx_path)
     os.remove(tmp_metadata_path)
+    os.remove(tmp_torch_path)
 
     print("Uploaded model files")

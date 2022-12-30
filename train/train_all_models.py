@@ -33,7 +33,7 @@ def get_uploaded_label_pairs(root_folder: str):
     for object in bucket_objects["Contents"]:
         path_components = object["Key"].split("/")
         if path_components[0] == root_folder and path_components[-1] == "model.onnx":
-            label_one, label_two = object["Key"].split("/")[0].split("-")
+            label_one, label_two = path_components[-2].split("-")
             if label_one < label_two:
                 uploaded_label_pairs.append([label_one, label_two])
             else:
