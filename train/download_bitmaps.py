@@ -175,11 +175,14 @@ if __name__ == "__main__":
 
         else:
             for category_path in paths:
-                download_and_draw_strokes(
-                    category_path,
-                    args.output_dir_path,
-                    args.image_side,
-                    args.line_diameter,
-                    args.padding,
-                    progress
-                )
+                try:
+                    download_and_draw_strokes(
+                        category_path,
+                        args.output_dir_path,
+                        args.image_side,
+                        args.line_diameter,
+                        args.padding,
+                        progress
+                    )
+                except Exception as e:
+                    print(e)

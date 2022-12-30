@@ -73,7 +73,7 @@ if __name__ == "__main__":
             test_batch_size=128,
             lr=0.01,
             momentum=0.9,
-            optimizer="SGD",
+            optimizer="Adam",
             cutmix_prob=0.8,
             resize_scale=(0.2, 1.0),
             logging_rate=1000,
