@@ -8,15 +8,19 @@ details: The DrawingBoard controls the drawing canvas as well as the preview can
 import { resizeImageData } from "/static/scripts/helpers.js";
 
 export class DrawingBoard {
-    constructor(distanceIndicator=null, canvasSize=500) {
+    constructor(distanceIndicator, gameConfig) {
         this._distanceIndicator = distanceIndicator
-        this.canvasSize = canvasSize
+        this.canvasSize = gameConfig.canvasSize
+        this.canvasLineWidth = gameConfig.canvasLineWidth
+        this.imageSize = gameConfig.imageSize
+        this.imagePadding = gameConfig.imagePadding
+        this.staticCrop = gameConfig.staticCrop
 
         this.canvas = document.getElementById("draw");
         this.canvasContext = this.canvas.getContext("2d", {
             alpha: false,
             colorSpace: "srgb",
-            desynchronized: true,
+            desynchronized: false,
             willReadFrequently: true
         })
         this.previewCanvas = document.getElementById("preview")
@@ -34,7 +38,7 @@ export class DrawingBoard {
 
         this.canvasContext.lineCap = "round";
         this.canvasContext.miterLimit = 1;
-        this.canvasContext.lineWidth = this.canvas.width / 70;
+        this.canvasContext.lineWidth = this.canvasLineWidth;
 
         this.enabled = true
         this.mouseHolding = false
@@ -138,17 +142,18 @@ export class DrawingBoard {
             const canvasImage = new MarvinImage(this.canvas.width, this.canvas.height, MarvinImage.COLOR_MODEL_BINARY)
             canvasImage.load(canvasBlobUrl, async () => {
                 // crop canvas image to exactly bounds
-                const cropedCanvasImage = this.cropCanvasImage(canvasImage)
+                const croppedCanvasImage = this.staticCrop ? canvasImage : this.cropCanvasImage(canvasImage)
 
-                // scale to 26x26 using pica (marvinj's rescaling sucks)
-                const image26ImageData = resizeImageData(cropedCanvasImage.imageData, [26, 26])
+                // scale using pica (marvinj's rescaling sucks)
+                const imageInnerSize = this.imageSize - this.imagePadding
+                const innerImageData = resizeImageData(croppedCanvasImage.imageData, [imageInnerSize, imageInnerSize])
 
                 // TODO: technically there's some time loss here as well as
                 // a potential frame or so where the user can see a blank canvas
                 this.resetPreviewBorder();
 
-                // place onto 28x28 with 1x1 padding
-                this.previewCanvasContext.putImageData(await image26ImageData, 1, 1)
+                // place onto preview canvas with padding
+                this.previewCanvasContext.putImageData(await innerImageData, this.imagePadding, this.imagePadding)
 
                 // get image data (with border)
                 const previewImageData = this.getPreviewImageData()

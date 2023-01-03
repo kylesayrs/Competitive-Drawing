@@ -7,9 +7,7 @@ details: ConfidenceBar is used to control the confidence bar. It also does some
 import { normalize, softmax } from "/static/scripts/helpers.js";
 
 export class ConfidenceBar {
-    constructor(allLabels, targetLabels=null, softmaxFactor=7) {
-        this.allLabels = allLabels
-        this._targetLabels = targetLabels != null ? targetLabels : allLabels
+    constructor(softmaxFactor=7) {
         this.softmaxFactor = softmaxFactor
 
         this.confidenceBar = document.querySelector("#confidence-bar");
@@ -17,9 +15,6 @@ export class ConfidenceBar {
         this.rightConfidence = document.querySelector("#right-confidence");
         this.leftConfidenceLabel = document.querySelector("#left-confidence-label");
         this.rightConfidenceLabel = document.querySelector("#right-confidence-label");
-
-        this.leftConfidenceLabel.innerHTML = this._targetLabels[0] || "Left label"
-        this.rightConfidenceLabel.innerHTML = this._targetLabels[1] || "Right label"
     }
 
     get targetLabels() {
@@ -28,25 +23,27 @@ export class ConfidenceBar {
 
     set targetLabels(targetLabels) {
         this._targetLabels = targetLabels
+
+        this.leftConfidenceLabel.innerHTML = this._targetLabels[0] || "Left label"
+        this.rightConfidenceLabel.innerHTML = this._targetLabels[1] || "Right label"
     }
 
     update(modelOutputs) {
-        // normalize scores
-        const modelOutputsNormalized = normalize(modelOutputs, 0, 1)
-
         // filter to target outputs
-        // TODO use .filter()
+        // TODO use .filter() or some sort method
         var filteredOutputs = []
         var filteredLabels = []
-        for (let i = 0; i < this.allLabels.length; i++) {
-            if (this._targetLabels.includes(this.allLabels[i])) {
-                filteredOutputs.push(modelOutputsNormalized[i])
-                filteredLabels.push(this.allLabels[i])
+        for (let i = 0; i < this.targetLabels.length; i++) {
+            if (this._targetLabels.includes(this.targetLabels[i])) {
+                filteredOutputs.push(modelOutputs[i])
+                filteredLabels.push(this.targetLabels[i])
             }
         }
 
         // apply softmax
+        console.log(filteredOutputs)
         const modelConfidences = softmax(filteredOutputs, this.softmaxFactor)
+        console.log(modelConfidences)
 
         // draw data
         const firstIndex = filteredLabels.indexOf(this._targetLabels[0])

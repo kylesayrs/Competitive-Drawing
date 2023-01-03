@@ -3,18 +3,14 @@ import os
 import json
 from dotenv import load_dotenv
 
-# canvas to numpy (to be moved)
-from io import BytesIO, StringIO
-from PIL import Image
-import re
-
 # flask
 from flask import Flask
 from flask_socketio import SocketIO
 
 # implementations
 from routes import make_routes_blueprint
-from utils.models import GameState, Player, GameManager
+from sockets import make_socket_messages
+from utils.game import GameState, Player, GameManager
 
 load_dotenv(".env")
 
@@ -34,10 +30,15 @@ def create_app():
 
     # set up config to pass to javascript
     game_config = {
-        "softmaxFactor": os.environ.get("SOFTMAX_FACTOR", 5),
-        "canvasSize": os.environ.get("CANVAS_SIZE", 100),
-        "distancePerTurn": os.environ.get("DISTANCE_PER_TURN", 80)
+        "softmaxFactor": float(os.environ.get("SOFTMAX_FACTOR", 5)),
+        "canvasSize": int(os.environ.get("CANVAS_SIZE", 100)),
+        "canvasLineWidth": float(os.environ.get("CANVS_LINE_WIDTH", 1.5)),
+        "imageSize": int(os.environ.get("IMAGE_SIZE", 50)),
+        "imagePadding": int(os.environ.get("IMAGE_PADDING", 0)),
+        "distancePerTurn": float(os.environ.get("DISTANCE_PER_TURN", 80)),
+        "staticCrop": bool(os.environ.get("STATIC_CROP", 1)),
     }
+    print(game_config)
 
     # set up games manager
     games_manager = GameManager()
@@ -53,8 +54,8 @@ def create_app():
     app.register_blueprint(routes_blueprint)
 
     # socketio
-    #games_manager = GameManager()
-    #make_socket_messages(socketio, games_manager)
+    games_manager = GameManager()
+    make_socket_messages(socketio, games_manager)
 
     return app, socketio
 

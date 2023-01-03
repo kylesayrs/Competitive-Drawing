@@ -60,6 +60,15 @@ export function softmax(arr, factor=1) {
     return exponents.map((exp) => exp / total);
 }
 
+export function getRoomIdFromUrl() {
+    return 0
+
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const urlParams = Object.fromEntries(urlSearchParams.entries());
+
+    return urlParams["room_id"]
+}
+
 /*
 export function binarizeMarvinImage(marvinImage) {
     for (let pixelStart = 0; pixelStart < marvinImage.imageData.data.length; pixelStart ++) {

@@ -15,14 +15,43 @@ function imageDataToModelInputData(imageData) {
 }
 
 export class Inferencer {
-    constructor() {
-        this.inferenceSession = ort.InferenceSession.create(
-            "/static/models/model.onnx"
-        );
-        this.inferenceSession.then(() => console.log("Loaded ort"))
+    async loadModel(modelUrl, imageSize=50) {
+        this.imageSize = imageSize
+
+        return new Promise((resolve) => {
+            this.inferenceSession = ort.InferenceSession.create(modelUrl);
+            this.inferenceSession.then(() => {
+                console.log("Loaded ort")
+                resolve()
+            })
+        })
     }
 
+
     async serverInferImage(imageDataUrl, targetIndex) {
+        return [1.0, 0.0]
+        const response = await fetch(
+            "/infer",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({
+                    "imageDataUrl": imageDataUrl,
+                })
+            }
+        )
+        if (!response.ok) {
+            console.log("Invalid server inference response")
+        }
+        const responseJson = await response.json()
+        const modelOutputs = responseJson["modelOutputs"]
+        return modelOutputs
+    }
+
+
+    async serverInferImageWithGrad(imageDataUrl, targetIndex) {
         const response = await fetch(
             "/infer",
             {
@@ -45,19 +74,23 @@ export class Inferencer {
         return { modelOutputs, gradCamImage }
     }
 
+
     async clientInferImage(previewImageData) {
         // get from preview image data
         const modelInputData = imageDataToModelInputData(previewImageData)
+        console.log(modelInputData)
 
         // create input
         const modelInput = new ort.Tensor(
             modelInputData,
-            [1, 1, 28, 28]
+            [1, 1, this.imageSize, this.imageSize]
         );
 
         // perform inference
         const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
+        console.log(modelOutputsRaw)
         const modelOutputs = modelOutputsRaw.logits.data
+        console.log(modelOutputs)
 
         return modelOutputs
     }

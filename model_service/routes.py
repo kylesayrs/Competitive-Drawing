@@ -1,3 +1,9 @@
+# canvas to numpy (to be moved)
+from io import BytesIO, StringIO
+from PIL import Image
+import re
+
+
 @route.route("/infer", methods=["POST"])
 def infer():
     # TODO: move this to utils file
