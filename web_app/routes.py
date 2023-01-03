@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, redirect
+from flask import Blueprint, render_template, redirect, request
+
+from utils.game import GameType
 
 
 def make_routes_blueprint(game_config, games_manager):
@@ -18,7 +20,12 @@ def make_routes_blueprint(game_config, games_manager):
 
     @routes.route("/local_game", methods=["GET"])
     def local_game():
-        return render_template("local_game.html", game_config=game_config)
+        room_id = request.args.get("room_id")
+        if room_id is None:
+            room_id = games_manager.new_game_room(game_type=GameType.LOCAL)
+            return redirect(f"local_game?room_id={room_id}")
+        else:
+            return render_template("local_game.html", game_config=game_config)
 
     @routes.route("/game_room", methods=["GET"])
     def game_room():

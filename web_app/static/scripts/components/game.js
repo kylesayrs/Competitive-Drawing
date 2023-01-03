@@ -23,6 +23,7 @@ class MultiplayerGameBase {
         this.confidenceBar = new ConfidenceBar(this.gameConfig.softmaxFactor)
         this.drawingBoard.afterMouseEnd = this.serverInferImage.bind(this)
         this.drawingBoard.afterMouseMove = this.clientInferImage.bind(this)
+        this.distanceIndicator.onButtonClick = this.onEndTurnButtonClick.bind(this)
 
         // Inference
         this.inferenceMutex = false  // true for locked, false for unlocked
@@ -42,7 +43,6 @@ class MultiplayerGameBase {
         // Initialize inferencer
         this.inferencer = new Inferencer()
         await this.inferencer.loadModel(data["onnxUrl"])
-        console.log(this.inferencer)
 
         // update canvas and confidence bar
         const canvasImageData = imageToImageData(
@@ -193,6 +193,9 @@ export class LocalGame extends MultiplayerGameBase {
     constructor(gameConfig, debug=false) {
         super(gameConfig, debug)
 
+        // Player variables
+        this.playerId = null
+
         // Initialize components
         this.drawingBoard.enabled = true
         this.distanceIndicator.resetDistance()
@@ -202,5 +205,20 @@ export class LocalGame extends MultiplayerGameBase {
             "room_id": this.roomId,
             "game_type": 1,
         })
+
+    }
+
+
+    onStartTurn(data) {
+        super.onStartTurn(data)
+
+        this.playerId = data["turn"]
+    }
+
+
+    onEndTurnButtonClick(_event) {
+        super.onEndTurnButtonClick()
+
+        this.distanceIndicator.resetDistance()
     }
 }

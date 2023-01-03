@@ -61,8 +61,6 @@ export function softmax(arr, factor=1) {
 }
 
 export function getRoomIdFromUrl() {
-    return 0
-
     const urlSearchParams = new URLSearchParams(window.location.search);
     const urlParams = Object.fromEntries(urlSearchParams.entries());
 

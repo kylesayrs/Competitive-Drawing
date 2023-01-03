@@ -78,7 +78,6 @@ export class Inferencer {
     async clientInferImage(previewImageData) {
         // get from preview image data
         const modelInputData = imageDataToModelInputData(previewImageData)
-        console.log(modelInputData)
 
         // create input
         const modelInput = new ort.Tensor(
@@ -88,9 +87,7 @@ export class Inferencer {
 
         // perform inference
         const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
-        console.log(modelOutputsRaw)
         const modelOutputs = modelOutputsRaw.logits.data
-        console.log(modelOutputs)
 
         return modelOutputs
     }

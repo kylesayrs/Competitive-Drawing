@@ -10,7 +10,7 @@ from flask_socketio import SocketIO
 # implementations
 from routes import make_routes_blueprint
 from sockets import make_socket_messages
-from utils.game import GameState, Player, GameManager
+from utils.game import GameManager
 
 load_dotenv(".env")
 
@@ -54,7 +54,6 @@ def create_app():
     app.register_blueprint(routes_blueprint)
 
     # socketio
-    games_manager = GameManager()
     make_socket_messages(socketio, games_manager)
 
     return app, socketio

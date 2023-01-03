@@ -27,7 +27,7 @@ class Player:
         self.target = target
 
 
-class GameState:
+class Game:
     canvas: List[List[List[int]]]
     players: List[Player]
     started: bool
@@ -96,7 +96,16 @@ class GameState:
 
 
 class GameManager:
-    rooms: Dict[int, GameState]
+    rooms: Dict[str, Game]
 
     def __init__(self):
         self.rooms = {}
+
+    def new_game_room(self, *game_args, **game_kwargs):
+        new_room_id = uuid.uuid4().hex
+        new_game = Game(*game_args, **game_kwargs)
+
+        self.rooms[new_room_id] = new_game
+        return new_room_id
+
+
