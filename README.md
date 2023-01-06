@@ -11,8 +11,6 @@ This work builds upon [Tzu-Mao Li 2020 "Differentiable Vector Graphics Rasteriza
 ### Problem Statement ###
 Fundamentally, I want to building an AI that, given a base image, produces changes that increase its score as judged by a classifier. A naive attempt to build a model that can do this might involve encoding the original image and producing a learned mask that, when added to the original image, produces a high score from the classifier. However, previous work by [Dawei Zhou et al.](https://arxiv.org/abs/2109.09901) has shown that this kind of architecture produces masks that better resemble random noise rather than deliberate, discrete strokes like you'd expect from a human.
 
-<img src="./repo_assets/adversarial_noise.png" alt="Adversarial Noise" href="https://towardsdatascience.com/breaking-neural-networks-with-adversarial-attacks-f4290a9a45aa"/>  
-
 My approach is to learn a curve which resembles an actual human pen stroke while still increasing the AI's score. While this method will not produce scores that are higher than pixel perfect adversarial noise, it will produce a AI opponent that is both challenging and fun to play against.
 
 ### Bézier Curve Differentiation ###
@@ -26,28 +24,13 @@ In order to implement anti-aliasing of a vector curve, we must compute the short
 
 In the case of Bezier curves however, no closed form solution for projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and compute the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
 
-Again there is no closed form solution to uniformly sample distances along a Bézier curve, so I use a linear approximation with a couple points.
+Again, there is no closed form solution to uniformly sample distances along a Bézier curve, so I use a linear approximation with a couple points.
 
 ### Optimization Results ###
-<p align="center">
-<img src="./repo_assets/good_optimization_1.gif" alt="Good Optimization 1" width="400"/>
-<p align="center">Example of the curve optimizing to a target image in blue</p>
-</p>
-
-<p align="center">
-<img src="./repo_assets/good_optimization_2.gif" alt="Good Optimization 2" width="400"/>
-<p align="center">The curve is capable of disentangling itself</p>
-</p>
-
-<p align="center">
-<img src="./repo_assets/local_minimum.gif" alt="Local Minimum" width="400"/>
-<p align="center">Like any gradient descent algorithm, there exist local minima</p>
-</p>
-
-<p align="center">
-<img src="./repo_assets/stuck_on_edge.gif" alt="Stuck on Edge" width="400"/>
-<p align="center">Local minima often exist at the edges. This is due to how the other key points push on the end points</p>
-</p>
+| Good | Bad |
+| --- | ----------- |
+| <p align="center"><img src="./repo_assets/good_optimization_1.gif" alt="Good Optimization 1" width="300"/><p align="center">Example of the curve optimizing to a target image in blue</p></p> | <p align="center"><img src="./repo_assets/local_minimum.gif" alt="Local Minimum" width="300"/><p align="center">Like any gradient descent algorithm, there exist local minima</p></p> |
+| <p align="center"><img src="./repo_assets/good_optimization_2.gif" alt="Good Optimization 2" width="300"/><p align="center">The curve is capable of disentangling itself</p></p> | <p align="center"><img src="./repo_assets/stuck_on_edge.gif" alt="Stuck on Edge" width="300"/><p align="center">Local minima often exist at the edges</p></p> |
 
 ### Constraints and Curve Truncation ###
 I enforce two constraints on my optimized curve.
@@ -60,7 +43,7 @@ The second is that the curve's arc length must not exceed a maximum length. As m
 <img src="./repo_assets/bezier_curve_subdivision.jpg" alt="Bezier Curve Subdivision" href="https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html"/>
 </p>
 
-Both of these constraints are non-differentiable, so I enforce them after each optimization step.
+Both of these constraints are non-differentiable, so I enforce them after each optimization step. In the future I hope to find an algorithm that can find any portion of the curve that is not on the canvas and will adjust the curve accordingly, not just the endpoints.
 
 ### Todo Board ###
 https://kahl.notion.site/90a75c8cbbbe4eb1924d24e61818d2d2?v=9aeff125dd33457da8f046c1715c206a
