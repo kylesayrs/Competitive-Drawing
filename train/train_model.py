@@ -1,178 +1,48 @@
 from typing import List, Optional, Tuple, Dict
 
 import os
-import json
 import numpy
-import matplotlib.pyplot as plt
-import PIL
-import cv2
 import wandb
-import boto3
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 import torch
-import torch.nn as nn
-from torchvision import transforms
 from timm.data import Mixup
 
+from utils import load_data, QuickDrawDataset, Classifier, RandomResizePad, upload_model
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-S3_CLIENT = boto3.client("s3")
-
-
-# load data
-def load_data(root_dir: str, class_names: Optional[List[str]]=None):
-    all_images = []
-    all_labels = []
-    label_names = []
-    class_names = class_names if class_names is not None else os.listdir(root_dir)
-    for file_i, file_name in enumerate(class_names):
-        file_name += ".npy"
-        file_path = os.path.join(root_dir, file_name)
-        images = numpy.load(file_path)
-        images = images.reshape(-1, *wandb.config["image_shape"])
-        images = [PIL.Image.fromarray(array) for array in images]
-        all_images.extend(images)
-        all_labels.extend([file_i] * len(images))
-        label_names.append(os.path.splitext(os.path.basename(file_name))[0])
-
-    print(f"loaded {len(all_images)} images, {len(all_labels)} labels, from {label_names}")
-
-    return all_images, all_labels, label_names
-
-
-# dataset
-class QuickDrawDataset(torch.utils.data.Dataset):
-    def __init__(self, X, y, is_test=False):
-        self.X = X
-        self.y = y
-        if not is_test:
-            self.transform = transforms.Compose([
-                transforms.RandomRotation(15),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomAffine(5, shear=5),
-                transforms.ToTensor(),
-            ])
-        else:
-            self.transform = transforms.Compose([
-                transforms.ToTensor(),
-            ])
-
-        assert len(self.X) == len(self.y)
-
-    def __len__(self):
-        return len(self.X)
-
-    def __getitem__(self, idx):
-        image = self.X[idx]
-        label = self.y[idx]
-
-        if not self.transform:
-            return image, label
-        else:
-            return self.transform(image), label
-
-
-# model
-class Classifier(nn.Module):
-    def __init__(self, num_classes: int):
-        super(Classifier, self).__init__()
-        self.num_classes = num_classes
-
-        def conv_block(in_filters, out_filters, bn=True):
-            block = [nn.Conv2d(in_filters, out_filters, 3, 2, 1), nn.ReLU(), nn.Dropout2d(0.2)]
-            if bn:
-                block.append(nn.BatchNorm2d(out_filters, 0.8))
-            return block
-
-        self.conv = nn.Sequential(
-            *conv_block(1, 16, bn=False),
-            *conv_block(16, 32),
-            *conv_block(32, 64),
-            *conv_block(64, 64),
-            *conv_block(64, 128),
-        )
-
-        self.fc = nn.Sequential(
-            nn.Linear(128, self.num_classes),
-        )
-
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = x.view(x.shape[0], -1)
-        logits = self.fc(x)
-        confs = self.softmax(logits)
-
-        return logits, confs
-
-
-def upload_model(model: nn.Module, metrics: Dict[str, float]):
-    # upload model onnx
-    tmp_onnx_path = f"/tmp/model.onnx"
-    tmp_metadata_path = f"/tmp/metadata.json"
-
-    model = model.to("cpu")
-    torch.onnx.export(
-        model,
-        torch.zeros([1, 1] + list(wandb.config["image_shape"])),
-        tmp_onnx_path,
-        input_names=["input"],
-        output_names=["logits", "output"],
-        opset_version=14
-    )
-    model = model.to(DEVICE)
-
-    S3_CLIENT.upload_file(
-        tmp_onnx_path,
-        "competitive-drawing-models-prod",
-        f"{wandb.config['model_name']}/model.onnx"
-    )
-
-    # upload associated config file
-    metadata = dict(wandb.config)
-    metadata.update(metrics)
-    with open(tmp_metadata_path, "w") as metadata_file:
-        json.dump(metadata, metadata_file)
-
-    S3_CLIENT.upload_file(
-        tmp_metadata_path,
-        "competitive-drawing-models-prod",
-        f"{wandb.config['model_name']}/metadata.json"
-    )
-
-    # remove temporary files
-    os.remove(tmp_onnx_path)
-    os.remove(tmp_metadata_path)
-
-    print("Uploaded model files")
+DEVICE = (
+    "mps" if torch.backends.mps.is_available() else
+    "cuda" if torch.cuda.is_available() else
+    "cpu"
+)
 
 
 def train_model(
     class_names: List[str],
+    data_dir: str,
     num_epochs: int = 6,
     batch_size: int = 128,
     test_batch_size: int = 128,
     test_size: float = 0.2,
     lr: float = 0.005,
-    optimizer: str = "SGD",
+    optimizer: str = "Adam",
     momentum: float = 0.9,
-    image_shape: Tuple[int, int] = (28, 28),
+    image_shape: Tuple[int, int] = (50, 50),
     mixup_alpha: float = 0.3,
-    cutmix_alpha: float = 0.0,
+    cutmix_alpha: float = 1.0,
     cutmix_prob: float = 0.8,
     label_smoothing: float = 0.1,
+    resize_scale: Tuple[float, float] = (0.2, 1.0),
     patience_length: Optional[int] = 3,
     patience_threshold: Optional[float] = 0.95,
-    logging_rate: int = 100,
+    logging_rate: int = 1000,
     save_checkpoints: bool = False,
     model_name: Optional[str] = None,
     wandb_mode: str = "online",
 ):
-    assert class_names[0] < class_names[1]
+    assert class_names[0] < class_names[1], "class names are out of order!"
 
     # wandb
     model_name = model_name or "-".join(class_names)
@@ -200,22 +70,33 @@ def train_model(
             "cutmix_alpha": cutmix_alpha,
             "cutmix_prob": cutmix_prob,
             "label_smoothing": label_smoothing,
+            "resize_scale": resize_scale,
             "save_checkpoints": save_checkpoints,
+            "data_dir": data_dir,
         }
     )
     print(wandb.config)
 
-    # mixup
+    # transforms
     train_mixup = Mixup(
         mixup_alpha=wandb.config["mixup_alpha"],
         cutmix_alpha=wandb.config["cutmix_alpha"],
         prob=wandb.config["cutmix_prob"],
         label_smoothing=wandb.config["label_smoothing"],
-        num_classes=wandb.config["num_classes"]
+        num_classes=wandb.config["num_classes"],
+    )
+    random_resize_pad = RandomResizePad(
+        wandb.config["image_shape"],
+        scale=wandb.config["resize_scale"],
+        value=0,
     )
 
     # load data
-    all_images, all_labels, label_names = load_data("raw_data", class_names=class_names)
+    all_images, all_labels, label_names = load_data(
+        wandb.config["data_dir"],
+        wandb.config["image_shape"],
+        class_names=class_names
+    )
 
     # create datasets
     x_train, x_test, y_train, y_test = train_test_split(
@@ -241,8 +122,8 @@ def train_model(
         optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config["lr"])
     else:
         raise ValueError(f"Unknown optimizer {wandb.config['optimizer']}")
-    criterion = nn.CrossEntropyLoss().to(DEVICE)
-    print(model)
+    criterion = torch.nn.CrossEntropyLoss().to(DEVICE)
+    #print(model)
 
     # train
     print("begin training")
@@ -255,6 +136,7 @@ def train_model(
         for i, (images, raw_labels) in enumerate(train_loader):
             # mixup/ cutmix
             images, cutmix_labels = train_mixup(images, raw_labels)
+            images = random_resize_pad(images)
 
             # to device
             images = images.to(DEVICE)
@@ -276,6 +158,7 @@ def train_model(
 
                 with torch.no_grad():
                     test_images, test_labels = next(iter(test_loader))
+                    test_images = random_resize_pad(test_images)
                     test_images = test_images.to(DEVICE)
                     test_labels = test_labels.to(DEVICE)
                     _, test_outputs = model(test_images)
@@ -317,20 +200,26 @@ def train_model(
             torch.save(model.state_dict(), f"./checkpoints/{run.id}/epoch{epoch}.pth")
 
     print("Finished Training")
-    upload_model(model, metrics)
+    upload_model(model, wandb.config, metrics, root_folder="static_crop_50x50")
 
 
 if __name__ == "__main__":
     train_model(
-        ["golf club", "clock"],
-        num_epochs=6,
-        batch_size=128,
+        #["The Eiffel Tower", "The Great Wall of China"],
+        ["duck", "sheep"],
+        "images",
+        image_shape=(50, 50),
+        num_epochs=10,
+        batch_size=64,
         test_batch_size=128,
-        lr=0.005,
+        lr=0.01,
         momentum=0.9,
-        optimizer="SGD",
+        optimizer="Adam",
         cutmix_prob=0.8,
-        logging_rate=100,
+        resize_scale=(0.2, 1.0),
+        logging_rate=1000,
         patience_length=3,
         patience_threshold=0.95,
+
+        wandb_mode="online",
     )

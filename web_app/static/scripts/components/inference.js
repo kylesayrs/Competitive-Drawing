@@ -15,14 +15,50 @@ function imageDataToModelInputData(imageData) {
 }
 
 export class Inferencer {
-    constructor() {
-        this.inferenceSession = ort.InferenceSession.create(
-            "/static/models/model.onnx"
-        );
-        this.inferenceSession.then(() => console.log("Loaded ort"))
+    constructor(gameConfig, targets) {
+        this.gameConfig = gameConfig
+        this.label_pair = Object.values(targets).sort()
     }
 
+
+    async loadModel(modelUrl, imageSize=50) {
+        this.imageSize = imageSize
+
+        return new Promise((resolve) => {
+            this.inferenceSession = ort.InferenceSession.create(modelUrl);
+            this.inferenceSession.then(() => {
+                console.log("Loaded ort")
+                resolve()
+            })
+        })
+    }
+
+
     async serverInferImage(imageDataUrl, targetIndex) {
+        const response = await fetch(
+            "/infer",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({
+                    "gameConfig": this.gameConfig,
+                    "label_pair": this.label_pair,
+                    "imageDataUrl": imageDataUrl,
+                })
+            }
+        )
+        if (!response.ok) {
+            console.log("Invalid server inference response")
+        }
+        const responseJson = await response.json()
+        const modelOutputs = responseJson["modelOutputs"]
+        return modelOutputs
+    }
+
+
+    async serverInferImageWithGrad(imageDataUrl, targetIndex) {
         const response = await fetch(
             "/infer",
             {
@@ -45,6 +81,7 @@ export class Inferencer {
         return { modelOutputs, gradCamImage }
     }
 
+
     async clientInferImage(previewImageData) {
         // get from preview image data
         const modelInputData = imageDataToModelInputData(previewImageData)
@@ -52,7 +89,7 @@ export class Inferencer {
         // create input
         const modelInput = new ort.Tensor(
             modelInputData,
-            [1, 1, 28, 28]
+            [1, 1, this.imageSize, this.imageSize]
         );
 
         // perform inference

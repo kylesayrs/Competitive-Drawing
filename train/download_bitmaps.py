@@ -1,3 +1,4 @@
+# ln -s /opt/homebrew/lib/libcairo.2.dylib .
 from typing import Optional
 
 import os
@@ -17,7 +18,8 @@ parser.add_argument("--tmp_stroke_dir", default="/tmp")
 parser.add_argument("--image_side", default=50)
 parser.add_argument("--line_diameter", default=16)
 parser.add_argument("--padding", default=0)
-parser.add_argument("--wait_processes", default=False)
+parser.add_argument("--parallel", default=False)
+parser.add_argument("--keyword", default=None)
 
 
 def read_28x28_paths():
@@ -105,10 +107,15 @@ def download_and_draw_strokes(
     category_name = category_path.split("/")[-1].split(".")[0]
     category_name = category_name.replace(" ", "\ ")
 
+    save_path = os.path.join(output_dir_path, f"{category_name}.npy")
+    save_path = save_path.replace("\\", "")  # JANK
+    if os.path.exists(save_path):
+        progress.update(1)
+        return
+
     stroke_output_path = os.path.join(args.tmp_stroke_dir, f"{category_name}.ndjson")
     process = subprocess.Popen(f"gsutil -m cp '{category_path}' {stroke_output_path}", shell=True)
     process.wait()
-    print(stroke_output_path)
 
     stroke_output_path = stroke_output_path.replace("\\", "")  # JANK
     with open(stroke_output_path, "r") as stroke_file:
@@ -126,13 +133,10 @@ def download_and_draw_strokes(
     )
     raster_images = numpy.array(raster_images)
 
-    save_path = os.path.join(output_dir_path, f"{category_name}.npy")
-    save_path = save_path.replace("\\", "")  # JANK
     numpy.save(save_path, raster_images)
 
-    #os.remove(stroke_output_path)
-
-    progress.update(0)
+    os.remove(stroke_output_path)
+    progress.update(1)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -146,26 +150,43 @@ if __name__ == "__main__":
 
             output_path = os.path.join(args.output_dir_path, f"{category_name}.npy")
             process = subprocess.Popen(f"gsutil -m cp '{category_path}' {output_path}", shell=True)
-            if args.wait_processes:
+            if not args.parallel:
                 process.wait()
 
     else:
         paths = read_stroke_paths()
+        if args.keyword is not None:
+            paths = [path for path in paths if args.keyword in path]
 
         progress = tqdm.tqdm(total=len(paths))
 
         os.makedirs(args.output_dir_path, exist_ok=True)
 
-        #with ThreadPoolExecutor(max_workers=1) as executor:
-        futures = [
-            #executor.submit(download_and_draw_strokes, category_path)
-            download_and_draw_strokes(
-                category_path,
-                args.output_dir_path,
-                args.image_side,
-                args.line_diameter,
-                args.padding,
-                progress
-            )
-            for category_path in paths[:1]
-        ]
+        if args.parallel:
+            with ThreadPoolExecutor(max_workers=None) as executor:
+                futures = [
+                    executor.submit(
+                        download_and_draw_strokes,
+                        category_path,
+                        args.output_dir_path,
+                        args.image_side,
+                        args.line_diameter,
+                        args.padding,
+                        progress
+                    )
+                    for category_path in paths
+                ]
+
+        else:
+            for category_path in paths:
+                try:
+                    download_and_draw_strokes(
+                        category_path,
+                        args.output_dir_path,
+                        args.image_side,
+                        args.line_diameter,
+                        args.padding,
+                        progress
+                    )
+                except Exception as e:
+                    print(e)

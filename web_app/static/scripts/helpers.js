@@ -19,8 +19,6 @@ export function imageToImageData(image, width, height) {
         }
     }
 
-    console.log(new Uint8ClampedArray(imageDataBuffer))
-
     const imageData = new ImageData(
         new Uint8ClampedArray(imageDataBuffer),
         width,
@@ -58,6 +56,13 @@ export function softmax(arr, factor=1) {
     const exponents = arr.map((value) => Math.exp(value * factor))
     const total = exponents.reduce((a, b) => a + b, 0);
     return exponents.map((exp) => exp / total);
+}
+
+export function getRoomIdFromUrl() {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const urlParams = Object.fromEntries(urlSearchParams.entries());
+
+    return urlParams["room_id"]
 }
 
 /*

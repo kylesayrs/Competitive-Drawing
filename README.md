@@ -5,7 +5,6 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 <img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
 </p>
 
-
 ## Differentiable Graphics for AI Opponent ##
 This work builds upon [Tzu-Mao Li 2020 "Differentiable Vector Graphics Rasterization for Editing and Learning"](https://people.csail.mit.edu/tzumao/diffvg/). My purpose is to build an AI opponent that draws a curve on the given canvas that optimizes the AI's score while being constrained by the borders of the image and a maximum curve length.
 
