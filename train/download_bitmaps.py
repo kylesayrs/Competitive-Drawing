@@ -1,3 +1,4 @@
+# ln -s /opt/homebrew/lib/libcairo.2.dylib .
 from typing import Optional
 
 import os
@@ -18,6 +19,7 @@ parser.add_argument("--image_side", default=50)
 parser.add_argument("--line_diameter", default=16)
 parser.add_argument("--padding", default=0)
 parser.add_argument("--parallel", default=False)
+parser.add_argument("--keyword", default=None)
 
 
 def read_28x28_paths():
@@ -153,6 +155,8 @@ if __name__ == "__main__":
 
     else:
         paths = read_stroke_paths()
+        if args.keyword is not None:
+            paths = [path for path in paths if args.keyword in path]
 
         progress = tqdm.tqdm(total=len(paths))
 

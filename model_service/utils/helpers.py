@@ -1,4 +1,11 @@
+import os
 import torch
+import pickle
+from dotenv import load_dotenv
+
+from .s3 import get_object_file_stream
+
+load_dotenv(".env")
 
 
 class Classifier(torch.nn.Module):
@@ -33,3 +40,20 @@ class Classifier(torch.nn.Module):
         confs = self.softmax(logits)
 
         return logits, confs
+
+
+def get_model_class():
+    """
+    I can't figure out how to get pickling the original class to work
+    so this is my lazy solution
+    """
+    return Classifier
+
+
+    bucket = os.environ.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
+
+    root_folder = os.environ.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
+    key = f"{root_folder}/model.pkl"
+
+    pickled_file_stream = get_object_file_stream(bucket, key)
+    return pickle.loads(torch.load(pickled_file_stream))

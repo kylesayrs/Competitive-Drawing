@@ -12,7 +12,11 @@ from timm.data import Mixup
 
 from utils import load_data, QuickDrawDataset, Classifier, RandomResizePad, upload_model
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = (
+    "mps" if torch.backends.mps.is_available() else
+    "cuda" if torch.cuda.is_available() else
+    "cpu"
+)
 
 
 def train_model(
@@ -38,7 +42,7 @@ def train_model(
     model_name: Optional[str] = None,
     wandb_mode: str = "online",
 ):
-    assert class_names[0] < class_names[1]
+    assert class_names[0] < class_names[1], "class names are out of order!"
 
     # wandb
     model_name = model_name or "-".join(class_names)
@@ -202,7 +206,7 @@ def train_model(
 if __name__ == "__main__":
     train_model(
         #["The Eiffel Tower", "The Great Wall of China"],
-        ["camera", "coffee cup"],
+        ["duck", "sheep"],
         "images",
         image_shape=(50, 50),
         num_epochs=10,

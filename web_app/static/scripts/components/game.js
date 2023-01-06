@@ -41,7 +41,7 @@ class MultiplayerGameBase {
         }
 
         // Initialize inferencer
-        this.inferencer = new Inferencer()
+        this.inferencer = new Inferencer(this.gameConfig, data["targets"])
         await this.inferencer.loadModel(data["onnxUrl"])
 
         // update canvas and confidence bar

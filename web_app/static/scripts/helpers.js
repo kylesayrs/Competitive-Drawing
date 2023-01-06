@@ -19,8 +19,6 @@ export function imageToImageData(image, width, height) {
         }
     }
 
-    console.log(new Uint8ClampedArray(imageDataBuffer))
-
     const imageData = new ImageData(
         new Uint8ClampedArray(imageDataBuffer),
         width,

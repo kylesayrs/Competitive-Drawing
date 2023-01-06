@@ -15,6 +15,12 @@ function imageDataToModelInputData(imageData) {
 }
 
 export class Inferencer {
+    constructor(gameConfig, targets) {
+        this.gameConfig = gameConfig
+        this.label_pair = Object.values(targets).sort()
+    }
+
+
     async loadModel(modelUrl, imageSize=50) {
         this.imageSize = imageSize
 
@@ -29,7 +35,6 @@ export class Inferencer {
 
 
     async serverInferImage(imageDataUrl, targetIndex) {
-        return [1.0, 0.0]
         const response = await fetch(
             "/infer",
             {
@@ -38,6 +43,8 @@ export class Inferencer {
                     "Content-Type": "application/json"
                 },
                 "body": JSON.stringify({
+                    "gameConfig": this.gameConfig,
+                    "label_pair": this.label_pair,
                     "imageDataUrl": imageDataUrl,
                 })
             }

@@ -32,6 +32,7 @@ class Game:
     players: List[Player]
     started: bool
     _player_turn_index: int
+    label_pair: Tuple[str, str]
 
     def __init__(
         self,
@@ -69,7 +70,6 @@ class Game:
 
     @property
     def can_start_game(self):
-        print(self.game_type)
         return (
             self.game_type == GameType.FREE_PLAY.value or
             len(self.players) >= 2
@@ -78,8 +78,6 @@ class Game:
 
     @property
     def turn(self):
-        print(self.players)
-        print(self._player_turn_index)
         return self.players[self._player_turn_index]
 
 
@@ -107,5 +105,3 @@ class GameManager:
 
         self.rooms[new_room_id] = new_game
         return new_room_id
-
-

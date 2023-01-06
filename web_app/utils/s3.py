@@ -5,13 +5,14 @@ import boto3
 from dotenv import load_dotenv
 
 load_dotenv(".env")
-S3_CLIENT = boto3.client('s3')
+S3_CLIENT = boto3.client("s3")
 
 
 def get_uploaded_label_pairs():
-    root_folder = os.environ.get("MODELS_ROOT_FOLDER", "static_crop_50x50")
+    bucket = os.environ.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
+    root_folder = os.environ.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
 
-    bucket_objects = S3_CLIENT.list_objects(Bucket="competitive-drawing-models-prod")
+    bucket_objects = S3_CLIENT.list_objects(Bucket=bucket)
     if not "Contents" in bucket_objects:
         return []
 
@@ -29,7 +30,7 @@ def get_uploaded_label_pairs():
 
 
 def get_s3_dir(label_pair: Tuple[str, str]):
-    root_folder = os.environ.get("MODELS_ROOT_FOLDER", "static_crop_50x50")
+    root_folder = os.environ.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
 
     label_pair_str = "-".join(sorted(list(label_pair)))
 
@@ -39,16 +40,14 @@ def get_s3_dir(label_pair: Tuple[str, str]):
 def get_onnx_url(label_pair: Tuple[str, str]):
     s3_dir = get_s3_dir(label_pair)
     key = "/".join([s3_dir, "model.onnx"])
-    print(f"key: {key}")
 
     response = S3_CLIENT.generate_presigned_url(
         "get_object",
         Params={
-            "Bucket": os.environ.get("MODELS_S3_BUCKET", "competitive-drawing-models-prod"),
+            "Bucket": os.environ.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod"),
             "Key": key,
         },
-        ExpiresIn=os.environ.get("MODEL_URL_DURATION", 108000)  # 30 minutes
+        ExpiresIn=os.environ.get("S3_MODEL_DURATION", 108000)  # 30 minutes
     )
 
-    print(response)
     return response

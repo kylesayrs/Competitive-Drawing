@@ -1,14 +1,17 @@
+import os
 import re
+import json
 import base64
 from io import BytesIO
 from PIL import Image
 import boto3
+import requests
 from flask_socketio import join_room, leave_room, emit
 
 from utils.game import GameType
 
 
-def make_socket_messages(socketio, games_manager):
+def make_socket_messages(socketio, game_config, games_manager):
     @socketio.on("join_room")
     def on_join_room(data):
         print(f"on_join_room: {data}")
@@ -18,7 +21,8 @@ def make_socket_messages(socketio, games_manager):
         # Create new game if necessary
         if room_id not in games_manager.rooms:
             # TODO: throw some sort of error
-            pass
+            print(f"ERROR: unknown room id {room_id} not found in {games_manager.rooms}")
+            return
 
         print(games_manager.rooms)
         game_state = games_manager.rooms[room_id]
@@ -59,13 +63,14 @@ def make_socket_messages(socketio, games_manager):
                 #  TODO: start_game -> game_state that includes canvas state
                 #  send no matter what to account for refreshing
                 emit_start_game(game_state, room_id)
-
                 game_state.started = True
                 emit_start_turn(game_state, room_id)
+                start_model_service(game_state.label_pair)
 
         else:
             # resume game
             emit_start_game(game_state, room_id)
+            emit_start_turn(game_state, room_id)
 
     @socketio.on("end_turn")
     def end_turn(data):
@@ -99,7 +104,6 @@ def emit_start_turn(game_state, room_id):
 
 def emit_start_game(game_state, room_id):
     onnx_url = game_state.get_onnx_url()
-    print(onnx_url)
 
     emit("start_game", {
         "onnxUrl": onnx_url,
@@ -109,3 +113,25 @@ def emit_start_game(game_state, room_id):
             for player in game_state.players
         }
     }, to=room_id)
+
+
+def start_model_service(label_pair):
+    model_service_base = os.environ.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+    url = f"{model_service_base}/start_model"
+
+    requests.post(
+        url,
+        headers={ "Content-Type": "application/json" },
+        data=json.dumps({ "label_pair": label_pair }),
+    )
+
+
+def stop_model_service(label_pair, game_config):
+    model_service_base = os.environ.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+    url = f"{model_service_base}/start_model"
+
+    requests.post(
+        url,
+        headers={ "Content-Type": "application/json" },
+        body=json.dumps(game_config),
+    )

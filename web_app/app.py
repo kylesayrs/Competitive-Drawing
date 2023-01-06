@@ -16,16 +16,9 @@ load_dotenv(".env")
 
 
 def create_app():
-    # get environment variables
-    host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", 5000)
-    api_root = f"http://{host}:{port}"
-    secret_key = os.environ.get("SECRET_KEY", "secret!")
-    model_checkpoint_path = os.environ.get("MODEL_PATH", "./static/models/model.pth")
-
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config["SECRET_KEY"] = secret_key
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "secret!")
     socketio = SocketIO(app)
 
     # set up config to pass to javascript
@@ -50,17 +43,17 @@ def create_app():
         raise ValueError("Could not create instance folder")
 
     # routes
-    routes_blueprint = make_routes_blueprint(game_config, games_manager)
+    routes_blueprint = make_routes_blueprint(app, game_config, games_manager)
     app.register_blueprint(routes_blueprint)
 
     # socketio
-    make_socket_messages(socketio, games_manager)
+    make_socket_messages(socketio, game_config, games_manager)
 
     return app, socketio
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "localhost")
-    port = os.environ.get("PORT", 5000)
+    port = os.environ.get("PORT", 5001)
 
     app, socketio = create_app()
     socketio.run(app, host=host, port=port, debug=True)
