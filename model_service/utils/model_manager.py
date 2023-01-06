@@ -30,7 +30,10 @@ class ModelManager():
         key = f"{root_folder}/{label_pair_str}/model.pth"
         state_dict_stream = get_object_file_stream(bucket, key)
 
-        self.models[label_pair_str] = Inferencer(self.model_class, torch.load(state_dict_stream))
+        self.models[label_pair_str] = Inferencer(
+            self.model_class,
+            torch.load(state_dict_stream, map_location=torch.device("cpu")),
+        )
 
 
     def get_model(self, label_pair):

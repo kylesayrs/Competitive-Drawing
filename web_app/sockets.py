@@ -14,19 +14,19 @@ from utils.game import GameType
 def make_socket_messages(socketio, game_config, games_manager):
     @socketio.on("join_room")
     def on_join_room(data):
-        print(f"on_join_room: {data}")
-        room_id = data.get("room_id")
-        join_room(room_id)
+        game_type = GameType(data["game_type"])
+        room_id = data["room_id"]
 
         # Create new game if necessary
-        if room_id not in games_manager.rooms:
+        if room_id not in games_manager.rooms[game_type]:
             # TODO: throw some sort of error
             print(f"ERROR: unknown room id {room_id} not found in {games_manager.rooms}")
             return
 
-        print(games_manager.rooms)
-        game_state = games_manager.rooms[room_id]
-        print(game_state.started)
+        # join socket room
+        join_room(room_id)
+
+        game_state = games_manager.get_game(game_type, room_id)
 
         if not game_state.started:
             # add players
@@ -74,10 +74,9 @@ def make_socket_messages(socketio, game_config, games_manager):
 
     @socketio.on("end_turn")
     def end_turn(data):
-        print("end_turn")
-        print(data)
+        game_type = GameType(data["game_type"])
         room_id = data["roomId"]
-        game_state = games_manager.rooms[room_id]
+        game_state = games_manager.get_game(game_type, room_id)
 
         image_data_url = data["canvas"]
         image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)

@@ -23,14 +23,19 @@ def make_routes_blueprint(app, game_config, games_manager):
     def local_game():
         room_id = request.args.get("room_id")
         if room_id is None:
-            room_id = games_manager.new_game_room(game_type=GameType.LOCAL, label_pair=["duck", "sheep"])
+            room_id = games_manager.assign_game_room(GameType.LOCAL)
             return redirect(f"local_game?room_id={room_id}")
         else:
             return render_template("local_game.html", game_config=game_config)
 
     @routes.route("/game_room", methods=["GET"])
     def game_room():
-        return render_template("game_room.html", game_config=game_config)
+        room_id = request.args.get("room_id")
+        if room_id is None:
+            room_id = games_manager.assign_game_room(GameType.ONLINE)
+            return redirect(f"game_room?room_id={room_id}")
+        else:
+            return render_template("game_room.html", game_config=game_config)
 
     @routes.route("/infer", methods=["POST"])
     def infer():

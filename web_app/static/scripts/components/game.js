@@ -6,7 +6,8 @@ import { Inferencer } from "/static/scripts/components/inference.js";
 import { getRoomIdFromUrl, imageToImageData } from "/static/scripts/helpers.js";
 
 class MultiplayerGameBase {
-    constructor(gameConfig, debug=false) {
+    constructor(gameType, gameConfig, debug=false) {
+        this.gameType = gameType
         this.gameConfig = gameConfig
         this.debug = debug
 
@@ -119,9 +120,10 @@ class MultiplayerGameBase {
         const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
 
         this.socket.emit("end_turn", {
+            "game_type": this.gameType,
             "roomId": this.roomId,
             "playerId": this.playerId,
-            "canvas": imageDataUrl
+            "canvas": imageDataUrl,
             //replay data
         })
     }
@@ -129,7 +131,7 @@ class MultiplayerGameBase {
 
 export class OnlineGame extends MultiplayerGameBase {
     constructor(gameConfig, debug=false) {
-        super(gameConfig, debug)
+        super(2, gameConfig, debug)
 
         // Player specific variables
         this.playerId = null
@@ -150,7 +152,7 @@ export class OnlineGame extends MultiplayerGameBase {
         // Join online room
         this.socket.emit("join_room", {
             "room_id": this.roomId,
-            "room_type": 2
+            "game_type": this.gameType,
         })
     }
 
@@ -169,7 +171,7 @@ export class OnlineGame extends MultiplayerGameBase {
     async onStartTurn(data) {
         super.onStartTurn(data)
 
-        if (data["turn"] == playerGameState.playerId) {
+        if (data["turn"] == this.playerId) {
             this.myTurn = true
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
@@ -191,7 +193,7 @@ export class OnlineGame extends MultiplayerGameBase {
 
 export class LocalGame extends MultiplayerGameBase {
     constructor(gameConfig, debug=false) {
-        super(gameConfig, debug)
+        super(1, gameConfig, debug)
 
         // Player variables
         this.playerId = null
@@ -203,7 +205,7 @@ export class LocalGame extends MultiplayerGameBase {
         // Join local room
         this.socket.emit("join_room", {
             "room_id": this.roomId,
-            "game_type": 1,
+            "game_type": this.gameType,
         })
 
     }

@@ -28,6 +28,7 @@ class Player:
 
 
 class Game:
+    game_type: GameType
     canvas: List[List[List[int]]]
     players: List[Player]
     started: bool
@@ -36,15 +37,15 @@ class Game:
 
     def __init__(
         self,
-        game_type: Optional[GameType] = GameType.FREE_PLAY,
+        game_type: GameType,
         label_pair: Optional[Tuple[str, str]] = None,
     ):
+        self.game_type = game_type
         self.canvasSize = int(os.environ.get("CANVAS_SIZE", 50))
         self.canvasImage = Image.new("RGB", (self.canvasSize, self.canvasSize), (255, 255, 255))
         self.players = []
         self._player_turn_index = 0
         self.started = False
-        self.game_type = game_type
 
         if label_pair is None:
             label_pairs = get_uploaded_label_pairs()
@@ -71,7 +72,7 @@ class Game:
     @property
     def can_start_game(self):
         return (
-            self.game_type == GameType.FREE_PLAY.value or
+            self.game_type == GameType.FREE_PLAY or
             len(self.players) >= 2
         )
 
@@ -94,14 +95,39 @@ class Game:
 
 
 class GameManager:
-    rooms: Dict[str, Game]
+    rooms: Dict[GameType, Dict[str, Game]]
 
     def __init__(self):
-        self.rooms = {}
+        self.rooms = {
+            GameType.FREE_PLAY: {},
+            GameType.LOCAL: {},
+            GameType.ONLINE: {},
+        }
 
-    def new_game_room(self, *game_args, **game_kwargs):
+
+    def assign_game_room(self, game_type: GameType, *game_args, **game_kwargs):
+        game_rooms = self.rooms[game_type]
+        available_game_room_ids = [
+            room_id
+            for room_id, game in game_rooms.items()
+            if game.can_add_player()
+        ]
+
+        if len(available_game_room_ids) > 0:
+            random.shuffle(available_game_room_ids)
+            return available_game_room_ids[0]
+
+        else:
+            return self.new_game_room(game_type, *game_args, **game_kwargs)
+
+
+    def new_game_room(self, game_type: GameType, *game_args, **game_kwargs):
         new_room_id = uuid.uuid4().hex
-        new_game = Game(*game_args, **game_kwargs)
+        new_game = Game(game_type, *game_args, **game_kwargs)
 
-        self.rooms[new_room_id] = new_game
+        self.rooms[game_type][new_room_id] = new_game
         return new_room_id
+
+
+    def get_game(self, game_type: GameType, room_id: str):
+        return self.rooms[game_type][room_id]
