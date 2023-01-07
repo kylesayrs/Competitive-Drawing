@@ -2,8 +2,10 @@ from typing import List, Optional
 
 import torch
 
-from BezierCurve import BezierCurve
-from helpers import get_uniform_ts
+from utils.BezierCurve import BezierCurve
+from utils.helpers import get_uniform_ts
+
+EPSILON = 0.0001  # autograd has a hard time with 0.0^x
 
 
 class CurveGraphic2d(torch.nn.Module):
@@ -76,7 +78,7 @@ class CurveGraphic2d(torch.nn.Module):
                 )
 
                 if distance < self.width:
-                    canvas[y, x] = 1 - (distance / self.max_distance) ** self.anti_aliasing_factor
+                    canvas[y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
 
         return canvas
 

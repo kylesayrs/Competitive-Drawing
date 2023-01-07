@@ -2,6 +2,8 @@ from typing import List, Optional, Tuple
 
 import torch
 
+EPSILON = 0.001  # autograd has a hard time with 0.0^x
+
 
 class LineGraphic2d(torch.nn.Module):
     """
@@ -68,7 +70,7 @@ class LineGraphic2d(torch.nn.Module):
                 )
 
                 if distance < self.width:
-                    canvas[y, x] = 1 - (distance / self.max_distance) ** self.anti_aliasing_factor
+                    canvas[y, x] = 1 - (distance / self.max_distance + EPSILON) ** self.anti_aliasing_factor
 
         return canvas
 

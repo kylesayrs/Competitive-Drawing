@@ -1,12 +1,11 @@
-# TODO
-Flask==2.0.3
-Flask-SocketIO==5.2.0
-grad-cam==1.4.0
-numpy==1.19.5
-onnx==1.12.0
-Pillow==8.4.0
-python-dotenv==0.20.0
-torch==1.10.2
-tqdm==4.64.0
-ttach==0.0.3
-wandb==0.12.21
+Flask
+Flask-SocketIO
+Flask-Cors
+grad-cam
+numpy
+onnx
+Pillow
+python-dotenv
+torch
+tqdm
+wandb

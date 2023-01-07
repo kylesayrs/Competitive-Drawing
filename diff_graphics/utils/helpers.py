@@ -32,7 +32,8 @@ def make_hooked_optimizer(optimizer_class, hook, *optimizer_args, **optimizer_kw
     class HookedOptimizer(optimizer_class):
         def step(self, closure=None):
             super().step(closure)
-            hook()
+            with torch.no_grad():
+                hook()
 
     return HookedOptimizer(*optimizer_args, **optimizer_kwargs)
 

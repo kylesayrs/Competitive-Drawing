@@ -3,7 +3,7 @@ from typing import List
 import torch
 import numpy
 
-from helpers import get_uniform_ts, cumulative_sum, bernstein_polynomial
+from .helpers import get_uniform_ts, cumulative_sum, bernstein_polynomial
 
 
 class BezierCurve():
@@ -98,6 +98,11 @@ class BezierCurve():
         """
         Subdivision algorithm
         """
+        # randomly decide which endpoint to truncate
+        truncate_left = torch.rand(1)[0] > 0.5
+        if truncate_left:
+            self.key_points = list(reversed(self.key_points))
+
         with torch.no_grad():
             right_index = numpy.searchsorted(self._approx_lengths_normalized, normed_t, side="right")
             left_index = right_index - 1
@@ -123,8 +128,7 @@ class BezierCurve():
                     lerp_t
                 )
 
-            degree_key_points = []
-            degree_key_points.append(self.key_points)  # first degree
+            degree_key_points = [self.key_points]  # first degree
             for prev_degree in range(len(self.key_points) - 1):
 
                 key_points = [
@@ -142,6 +146,9 @@ class BezierCurve():
                 degree_key_points[degree][0]
                 for degree in range(len(self.key_points))
             ]
+
+        if truncate_left:
+            self.key_points = list(reversed(self.key_points))
 
         self.__init__(
             new_key_points,

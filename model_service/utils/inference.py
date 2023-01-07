@@ -42,6 +42,12 @@ class Inferencer:
         image = image.convert("RGB")
         image = ImageOps.invert(image)
         red_channel = image.split()[0]
+
+        """
+        import cv2
+        cv2.imwrite("/Users/poketopa/Desktop/image.png", numpy.array(red_channel))
+        """
+
         input = to_tensor(red_channel)
         input = torch.reshape(input, (1, 1, self.image_size, self.image_size))
         input = input.to(DEVICE)
@@ -53,7 +59,7 @@ class Inferencer:
         input = self._convert_image_to_input(image)
         with torch.no_grad():
             logits, confidences = self.model(input)
-            
+
         return logits[0].tolist()
 
 

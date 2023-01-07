@@ -2,6 +2,8 @@ from typing import List
 
 import torch
 
+EPSILON = 0.001  # autograd has a hard time with 0.0^x
+
 
 class PointGraphic2d(torch.nn.Module):
     """
@@ -45,6 +47,6 @@ class PointGraphic2d(torch.nn.Module):
                 distance = self.get_distance_to_point(p, key_points)
 
                 if distance < self.width:
-                    canvas[y, x] = 1 - (distance / self.max_distance) ** self.anti_aliasing_factor
+                    canvas[y, x] = 1 - (distance / self.max_distance + EPSILON) ** self.anti_aliasing_factor
 
         return canvas

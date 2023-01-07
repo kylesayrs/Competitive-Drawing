@@ -2,7 +2,7 @@ import torch
 import numpy
 
 from modules import LineGraphic2d, CurveGraphic2d, StrokeModel
-from helpers import make_hooked_optimizer, draw_output_and_target
+from utils.helpers import make_hooked_optimizer, draw_output_and_target
 
 
 def make_target_canvas(target: str):
@@ -30,6 +30,10 @@ def make_target_canvas(target: str):
             torch.tensor([0.2, 0.1]),
             torch.tensor([0.5, 0.3]), #
         ]
+        target_points = [
+            torch.tensor([1.0, 1.0]) - target_point
+            for target_point in target_points
+        ]
         return CurveGraphic2d(
             canvas_shape,
             num_samples=30,
@@ -48,6 +52,13 @@ if __name__ == "__main__":
         torch.rand(2)
         for _ in range(5)
     ]
+    initial_inputs = [
+        torch.tensor([0.0, 0.0]),
+        torch.tensor([0.3, 0.2]),
+        torch.tensor([0.6, 0.8]),
+        torch.tensor([0.1, 1.0]),
+    ]
+
     model = StrokeModel(
         canvas_shape,
         initial_inputs,
@@ -60,7 +71,7 @@ if __name__ == "__main__":
     criterion = torch.nn.MSELoss()
     optimizer = make_hooked_optimizer(
         torch.optim.Adam,
-        model.constrain_graphic,
+        model.constrain_keypoints,
         model.parameters(), lr=0.1#, momentum=0.85,
     )
 

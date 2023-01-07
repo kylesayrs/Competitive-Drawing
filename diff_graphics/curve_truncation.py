@@ -1,9 +1,9 @@
 import torch
 import numpy
 
-from BezierCurve import BezierCurve
 from modules import CurveGraphic2d
-from helpers import draw_output_and_target
+from utils.BezierCurve import BezierCurve
+from utils.helpers import draw_output_and_target
 
 
 if __name__ == "__main__":
