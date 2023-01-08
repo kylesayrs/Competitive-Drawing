@@ -5,7 +5,7 @@ import torch
 from utils.BezierCurve import BezierCurve
 from utils.helpers import get_uniform_ts
 
-EPSILON = 0.0001  # autograd has a hard time with 0.0^x
+EPSILON = 0.000001  # autograd has a hard time with 0.0^x
 
 
 class CurveGraphic2d(torch.nn.Module):

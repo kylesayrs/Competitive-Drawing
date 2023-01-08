@@ -8,11 +8,17 @@ from utils import load_score_model, make_hooked_optimizer, draw_output_and_targe
 if __name__ == "__main__":
     base_canvas = cv2.imread("assets/box.png", cv2.IMREAD_GRAYSCALE)
     base_canvas = torch.tensor(base_canvas / 255)
+    """
     initial_inputs = [
         torch.tensor([0.5, 0.5]),
         torch.tensor([0.57, 0.5]),
         torch.tensor([0.55, 0.57]),
         torch.tensor([0.4, 0.6]),
+    ]
+    """
+    initial_inputs = [
+        torch.rand(2)
+        for _ in range(3)
     ]
     score_model = load_score_model("assets/camera-coffee cup.pth")
 
@@ -21,17 +27,17 @@ if __name__ == "__main__":
         initial_inputs,
         score_model,
         target_index=0,
-        max_length=10.0,
-        num_samples=15,
-        width=2.5,
-        anti_aliasing_factor=0.65
+        max_length=15.0,
+        num_samples=20,
+        width=3.5,
+        anti_aliasing_factor=0.35
     )
 
     criterion = torch.nn.MSELoss()
     optimizer = make_hooked_optimizer(
-        torch.optim.SGD,
+        torch.optim.RMSprop,
         model.constrain_keypoints,
-        model.parameters(), lr=0.002, momentum=0.50,
+        model.parameters(), lr=0.01
     )
 
     while True:

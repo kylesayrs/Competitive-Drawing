@@ -39,6 +39,7 @@ class StrokeScoreModel(StrokeModel):
 
         self.base_canvas = base_canvas
         self.score_model = score_model.float()
+        self.score_model.eval()
         self.target_index = target_index
 
         # freeze score model
