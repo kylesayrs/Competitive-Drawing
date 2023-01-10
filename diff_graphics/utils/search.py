@@ -94,6 +94,7 @@ def search_stroke(
         score_model,
         target_index=target_index,
         width=max_width,
+        anti_aliasing_factor=max_aa,
         **model_kwargs
     )
     model = model.to(DEVICE)
@@ -129,7 +130,6 @@ def search_stroke(
             print(f"new_width: {new_width}")
             print(f"new_aa_factor: {new_aa_factor}")
             print(f"step_num: {step_num}")
-            print(f"initial_inputs: {initial_inputs}")
             print(list(model.parameters()))
             print(f"loss: {loss.item()}")
 
