@@ -3,7 +3,9 @@ from typing import List, Tuple
 import torch
 
 from utils.BezierCurve import BezierCurve
-from modules import PointGraphic2d, LineGraphic2d, CurveGraphic2d
+from modules.PointGraphic2d import PointGraphic2d
+from modules.LineGraphic2d import LineGraphic2d
+from modules.CurveGraphic2d import CurveGraphic2d
 
 EPSILON = 0.001
 
@@ -78,7 +80,7 @@ class StrokeModel(torch.nn.Module):
         self.graphic.width = new_width
 
 
-    def update_graph_anti_aliasing_factor(new_factor: float):
+    def update_graph_anti_aliasing_factor(self, new_factor: float):
         self.graphic.anti_aliasing_factor = new_factor
 
 

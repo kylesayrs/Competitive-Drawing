@@ -1,7 +1,6 @@
 import torch
-import numpy
 
-from modules import CurveGraphic2d
+from modules.CurveGraphic2d import CurveGraphic2d
 from utils.BezierCurve import BezierCurve
 from utils.helpers import draw_output_and_target
 
@@ -23,7 +22,7 @@ if __name__ == "__main__":
         canvas_shape,
         num_samples=15,
         width=3.0,
-        anti_aliasing_factor=0.25
+        anti_aliasing_factor=1.0
     )
 
     # target

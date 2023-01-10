@@ -1,7 +1,8 @@
 import torch
-import numpy
 
-from modules import LineGraphic2d, CurveGraphic2d, StrokeModel
+from modules.LineGraphic2d import LineGraphic2d
+from modules.CurveGraphic2d import CurveGraphic2d
+from modules.StrokeModel import StrokeModel
 from utils.helpers import make_hooked_optimizer, draw_output_and_target
 
 
@@ -30,15 +31,12 @@ def make_target_canvas(target: str):
             torch.tensor([0.2, 0.1]),
             torch.tensor([0.5, 0.3]), #
         ]
-        target_points = [
-            torch.tensor([1.0, 1.0]) - target_point
-            for target_point in target_points
-        ]
+
         return CurveGraphic2d(
             canvas_shape,
             num_samples=30,
             width=5.0,
-            anti_aliasing_factor=0.25,
+            anti_aliasing_factor=0.9,
         )(target_points)
 
 
@@ -48,10 +46,12 @@ if __name__ == "__main__":
 
     target_canvas = make_target_canvas(target)
 
+    """
     initial_inputs = [
         torch.rand(2)
         for _ in range(5)
     ]
+    """
     initial_inputs = [
         torch.tensor([0.0, 0.0]),
         torch.tensor([0.3, 0.2]),
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         max_length=50.0,
         num_samples=15,
         width=3.0,
-        anti_aliasing_factor=0.25
+        anti_aliasing_factor=0.9
     )
 
     criterion = torch.nn.MSELoss()

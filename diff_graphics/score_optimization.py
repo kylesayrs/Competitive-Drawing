@@ -1,10 +1,13 @@
 import cv2
 import torch
 
-from utils import load_score_model, global_search_stroke
+from utils.load_score_model import load_score_model
+from utils.search import search_stroke, grid_search_stroke
 
 
 if __name__ == "__main__":
+    mode = "grid"
+
     base_canvas = cv2.imread("assets/box.png", cv2.IMREAD_GRAYSCALE)
     base_canvas = torch.tensor(base_canvas / 255)
 
@@ -14,20 +17,46 @@ if __name__ == "__main__":
         "lr": 0.02
     }
 
-    initial_inputs = None
     target_index = 0
-    max_width = 15.0
-    global_search_stroke(
-        base_canvas,
-        initial_inputs,
-        score_model,
-        target_index,
-        torch.optim.RMSprop,
-        optimizer_kwargs,
-        max_width=10.0,
-        min_width=3.5,
-        max_steps=200,
-        save_best=True,
-        draw_output=True,
-        max_length=15.0,
-    )
+    max_length = 15.0
+    if mode == "global":
+        loss, keypoints = search_stroke(
+            base_canvas,
+            None,
+            score_model,
+            target_index,
+            torch.optim.RMSprop,
+            optimizer_kwargs,
+            max_width=10.0,
+            min_width=1.5,
+            max_aa=0.35,
+            min_aa=0.9,
+            max_steps=500,
+            save_best=True,
+            draw_output=True,
+            max_length=max_length,
+        )
+
+    elif mode == "grid":
+        loss, keypoints = grid_search_stroke(
+            base_canvas,
+            (3, 3),
+            score_model,
+            target_index,
+            torch.optim.Adamax,
+            optimizer_kwargs,
+            max_width=5.0,
+            min_width=1.5,
+            max_aa=0.35,
+            min_aa=0.9,
+            max_steps=100,
+            save_best=True,
+            draw_output=True,
+            max_length=max_length,
+        )
+
+    else:
+        raise ValueError(f"Unknown mode {mode}")
+
+    print(f"loss: {loss}")
+    print(f"keypoints: {keypoints}")

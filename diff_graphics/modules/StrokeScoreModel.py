@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import torch
 
-from .StrokeModel import StrokeModel
+from modules.StrokeModel import StrokeModel
 
 
 class StrokeScoreModel(StrokeModel):
@@ -49,14 +49,10 @@ class StrokeScoreModel(StrokeModel):
 
     def forward(self):
         graphic = super().forward()
-        print("forward")
-        print(graphic.device)
-        print(self.base_canvas.device)
         canvas_with_graphic = self.base_canvas + graphic
         canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (1, 1, 50, 50))
         logits, scores = self.score_model(canvas_with_graphic)
         target_score = scores[0][self.target_index]
-        print(f"target_score: {target_score}")
 
         return canvas_with_graphic, target_score
 
