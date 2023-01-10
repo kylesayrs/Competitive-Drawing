@@ -42,8 +42,8 @@ def draw_output_and_target(output_canvas: torch.tensor, target_canvas: torch.ten
     assert output_canvas.shape == target_canvas.shape
     image = numpy.zeros((*output_canvas.shape, 3))
 
-    output = output_canvas.detach().numpy()
-    target = target_canvas.detach().numpy()
+    output = output_canvas.cpu().detach().numpy()
+    target = target_canvas.cpu().detach().numpy()
 
     image[:, :, 0] = (1.0 - output) * target
     image[:, :, 1] = output * target * 2

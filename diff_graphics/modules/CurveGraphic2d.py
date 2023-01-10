@@ -17,8 +17,8 @@ class CurveGraphic2d(torch.nn.Module):
         self,
         canvas_shape: List[int],
         width: float = 1.0,
-        anti_aliasing_factor: str = 1.0,
-        num_samples: int = 10,
+        anti_aliasing_factor: str = 0.35,
+        num_samples: int = 15,
         sample_method: str = "uniform"
     ):
         super().__init__()
@@ -28,6 +28,8 @@ class CurveGraphic2d(torch.nn.Module):
         self.num_samples = num_samples
         self.sample_method = sample_method
 
+        self._device = "cpu"
+        self._canvas = torch.zeros(self.canvas_shape)
         self.max_distance = torch.norm(
             torch.tensor(canvas_shape) - torch.tensor([0.0, 0.0])
         )
@@ -60,8 +62,8 @@ class CurveGraphic2d(torch.nn.Module):
 
     def forward(self, inputs: List[torch.tensor]):
         # prepare canvas and key_points
-        canvas = torch.zeros(self.canvas_shape)
-        canvas_shape_tensor = torch.tensor(self.canvas_shape)
+        canvas = self._canvas.clone()
+        canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
         key_points = [input * canvas_shape_tensor for input in inputs]
 
         # precompute some values
@@ -70,7 +72,7 @@ class CurveGraphic2d(torch.nn.Module):
         # torch doesn't implement a map function, so a single thread will do
         for y in range(0, canvas.shape[0]):
             for x in range(0, canvas.shape[1]):
-                p = torch.tensor([y, x], dtype=torch.float32)
+                p = torch.tensor([y, x], dtype=torch.float32, device=self._device)
 
                 distance = self.sample_distance_to_path(
                     p, key_points,
@@ -81,6 +83,7 @@ class CurveGraphic2d(torch.nn.Module):
                     canvas[y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
 
         return canvas
+
 
     def get_bezier_curve_precomputations(self, key_points: List[torch.tensor]):
         bezier_curve = BezierCurve(
@@ -94,3 +97,11 @@ class CurveGraphic2d(torch.nn.Module):
         sample_points = [bezier_curve.sample(sample_t) for sample_t in sample_ts]
 
         return sample_points
+
+
+    def to(self, device):
+        super().to(device)
+        self._device = device
+        self._canvas = self._canvas.to(device)
+
+        return self

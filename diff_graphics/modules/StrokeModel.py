@@ -38,6 +38,7 @@ class StrokeModel(torch.nn.Module):
             for initial_key_point in initial_inputs
         ]
         self.max_length = max_length
+        self._device = "cpu"
 
         # path rendering
         if len(self.inputs) == 1:
@@ -87,7 +88,7 @@ class StrokeModel(torch.nn.Module):
         """
 
         # enforce maximum length
-        canvas_shape_tensor = torch.tensor(self.graphic.canvas_shape)
+        canvas_shape_tensor = torch.tensor(self.graphic.canvas_shape, device=self._device)
         key_points = [input * canvas_shape_tensor for input in self.inputs]
 
         if len(self.inputs) == 1:
@@ -123,3 +124,14 @@ class StrokeModel(torch.nn.Module):
         # clamp endpoints
         self.inputs[0].clamp_(0.0, 1.0)
         self.inputs[-1].clamp_(0.0, 1.0)
+
+
+    def to(self, device):
+        super().to(device)
+        self._device = device
+        for input in self.inputs:
+            input.data = input.data.to(device)
+
+        self.graphic = self.graphic.to(device)
+
+        return self

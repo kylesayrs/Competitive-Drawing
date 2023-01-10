@@ -16,6 +16,7 @@ class BezierCurve():
         self.key_points = key_points
         self.sample_method = sample_method
         self.num_approximations = num_approximations
+        self._device = key_points[0].data.device
 
         self._approx_ts = get_uniform_ts(num_approximations)
         self._approx_points = [
@@ -35,10 +36,10 @@ class BezierCurve():
 
 
     def _get_cumulative_distances_normalized(self):
-        return [
+        return torch.tensor([
             cumulative_sum / self.arc_length()
             for cumulative_sum in self._approx_lengths
-        ]
+        ], device=self._device)
 
 
     def _sample_directly(self, t: float):
@@ -49,7 +50,7 @@ class BezierCurve():
 
 
     def _sample_from_approximations(self, t: float):
-        right_index = numpy.searchsorted(self._approx_lengths_normalized, t, side="right")
+        right_index = torch.searchsorted(self._approx_lengths_normalized, t, side="right")
         left_index = right_index - 1
 
         # edge cases
@@ -94,7 +95,7 @@ class BezierCurve():
         return float(self._approx_lengths[-1])
 
 
-    def truncate(self, normed_t):
+    def truncate(self, normed_t: float):
         """
         Subdivision algorithm
         """
@@ -104,7 +105,7 @@ class BezierCurve():
             self.key_points = list(reversed(self.key_points))
 
         with torch.no_grad():
-            right_index = numpy.searchsorted(self._approx_lengths_normalized, normed_t, side="right")
+            right_index = torch.searchsorted(self._approx_lengths_normalized, normed_t, side="right")
             left_index = right_index - 1
 
             if right_index <= 0:
@@ -123,8 +124,8 @@ class BezierCurve():
                 )
 
                 real_t = torch.lerp(
-                    torch.tensor(self._approx_ts[left_index]),
-                    torch.tensor(self._approx_ts[right_index]),
+                    torch.tensor(self._approx_ts[left_index], device=self.key_points[0].device),
+                    torch.tensor(self._approx_ts[right_index], device=self.key_points[0].device),
                     lerp_t
                 )
 

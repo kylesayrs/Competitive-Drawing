@@ -22,7 +22,7 @@ class StrokeScoreModel(StrokeModel):
 
     def __init__(
         self,
-        base_canvas: torch.tensor,
+        base_canvas: torch.Tensor,
         initial_inputs: List[torch.Tensor],
         score_model: torch.nn.Module,
         target_index: int,
@@ -37,7 +37,7 @@ class StrokeScoreModel(StrokeModel):
             **path_kwargs,
         )
 
-        self.base_canvas = base_canvas
+        self.base_canvas = base_canvas.to(torch.float32)
         self.score_model = score_model.float()
         self.score_model.eval()
         self.target_index = target_index
@@ -49,6 +49,9 @@ class StrokeScoreModel(StrokeModel):
 
     def forward(self):
         graphic = super().forward()
+        print("forward")
+        print(graphic.device)
+        print(self.base_canvas.device)
         canvas_with_graphic = self.base_canvas + graphic
         canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (1, 1, 50, 50))
         logits, scores = self.score_model(canvas_with_graphic)
@@ -56,3 +59,11 @@ class StrokeScoreModel(StrokeModel):
         print(f"target_score: {target_score}")
 
         return canvas_with_graphic, target_score
+
+
+    def to(self, device):
+        super().to(device)
+        self.base_canvas = self.base_canvas.to(device)
+        self.score_model = self.score_model.to(device)
+
+        return self
