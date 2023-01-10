@@ -73,7 +73,7 @@ class StrokeModel(torch.nn.Module):
         return output_canvas
 
 
-    def update_graph_width(new_width: float):
+    def update_graphic_width(self, new_width: float):
         self.graphic.width = new_width
 
 

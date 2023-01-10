@@ -20,6 +20,12 @@ if __name__ == "__main__":
         torch.rand(2)
         for _ in range(3)
     ]
+    initial_inputs = [
+        torch.tensor([0.1791, 0.0679]),
+        torch.tensor([0.6804, 0.7775]),
+        torch.tensor([0.1237, 0.4318])
+    ]
+    print(initial_inputs)
     score_model = load_score_model("assets/camera-coffee cup.pth")
 
     model = StrokeScoreModel(
@@ -29,7 +35,7 @@ if __name__ == "__main__":
         target_index=0,
         max_length=15.0,
         num_samples=20,
-        width=3.5,
+        width=7,#3.5,
         anti_aliasing_factor=0.35
     )
 
@@ -37,7 +43,7 @@ if __name__ == "__main__":
     optimizer = make_hooked_optimizer(
         torch.optim.RMSprop,
         model.constrain_keypoints,
-        model.parameters(), lr=0.01
+        model.parameters(), lr=0.02
     )
 
     while True:
@@ -53,6 +59,10 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
 
+        new_width = loss.item() * 20 + 3.5
+        model.update_graphic_width(new_width)
+
+        print(initial_inputs)
         print(list(model.parameters()))
         print(f"loss: {loss.item()}")
 
