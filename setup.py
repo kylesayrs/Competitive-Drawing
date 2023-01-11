@@ -1,7 +1,16 @@
 from setuptools import setup, find_packages
 
 _deps = [
-    "numpy"
+    "Flask",
+    "Flask-SocketIO",
+    "Flask-Cors",
+    "grad-cam",
+    "numpy",
+    "onnx",
+    "Pillow",
+    "torch",
+    "tqdm",
+    "wandb",
 ]
 
 setup(
