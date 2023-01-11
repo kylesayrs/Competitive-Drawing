@@ -1,9 +1,26 @@
-# Competitive-Drawing
+# Drawnt
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
 <p align="center">
 <img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
 </p>
+
+## Set up ##
+Clone repository
+```bash
+git clone https://github.com/kylesayrs/drawnt.git
+```
+
+Install package using pip. Note that not all requirements have yet been added as dependencies
+```bash
+python -m pip install -e .
+```
+
+Launch web api and model service. Settings such as host and ports can be adjusted in drawnt/src/drawnt/settings.py
+```bash
+drawnt.launch_web_app
+drawnt.launch_model_service
+```
 
 ## Differentiable Graphics for AI Opponent ##
 This work builds upon [Tzu-Mao Li 2020 "Differentiable Vector Graphics Rasterization for Editing and Learning"](https://people.csail.mit.edu/tzumao/diffvg/). My purpose is to build an AI opponent that draws a curve on the given canvas that optimizes the AI's score while being constrained by the borders of the image and a maximum curve length.

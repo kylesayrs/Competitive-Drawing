@@ -1,0 +1,38 @@
+from typing import Optional, Any
+
+class Settings:
+    WEB_APP_HOST="localhost"
+    WEB_APP_PORT=5001
+    WEB_APP_SECRET_KEY="somesecrets"
+    MODEL_SERVICE_BASE="http://localhost:5002"
+
+    MODEL_SERVICE_HOST="localhost"
+    MODEL_SERVICE_PORT=5002
+    MODEL_SERVICE_SECRET_KEY="somesecrets"
+    ALLOWED_ORIGIN="localhost:5001"
+
+    SOFTMAX_FACTOR=1.0
+    DISTANCE_PER_TURN=80
+    DISTANCE_PER_TURN=30
+
+    CANVAS_SIZE=100
+    IMAGE_SIZE=50
+    IMAGE_PADDING=0
+    STATIC_CROP=1
+
+    S3_MODELS_BUCKET="competitive-drawing-models-prod"
+    S3_MODELS_ROOT_FOLDER="static_crop_50x50"
+    S3_MODEL_URL_DURATION=108000 # 30 minutes in seconds
+    S3_MODEL_DURATION=108000 # 30 minutes in seconds
+
+    @classmethod
+    def get(cls, key: str, default_value: Optional[Any] = None):
+        if hasattr(cls, key):
+            return getattr(cls, key)
+
+        elif default_value is not None:
+            print(f"Warning: falling back on default value for key {key}")
+            return default_value
+
+        else:
+            raise ValueError(f"Could not find setting for {key}")
