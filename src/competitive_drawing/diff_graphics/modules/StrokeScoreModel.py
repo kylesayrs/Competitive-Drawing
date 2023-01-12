@@ -3,6 +3,7 @@ from typing import List, Tuple
 import torch
 
 from .StrokeModel import StrokeModel
+from competitive_drawing import Settings
 
 
 class StrokeScoreModel(StrokeModel):
@@ -51,7 +52,10 @@ class StrokeScoreModel(StrokeModel):
         graphic = super().forward()
         canvas_with_graphic = self.base_canvas + graphic
         canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (1, 1, 50, 50))
-        logits, scores = self.score_model(canvas_with_graphic)
+        logits, _scores = self.score_model(canvas_with_graphic)
+
+        scores = torch.nn.Softmax(dim=1)(logits * Settings.get("SOFTMAX_FACTOR", 0.5))
+
         target_score = scores[0][self.target_index]
 
         return canvas_with_graphic, target_score

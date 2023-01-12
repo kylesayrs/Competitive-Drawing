@@ -236,9 +236,7 @@ export class DrawingBoard {
 
 
     _moveMouse(mouseEvent) {
-        //console.log(mouseEvent)
         let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
-        console.log({ mouseX, mouseY })
         let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
 
         // if overreach, interpolate on line to match remaining distance

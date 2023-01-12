@@ -52,7 +52,7 @@ export function normalize(arr, minNorm=0, maxNorm=1) {
     return arr
 }
 
-export function softmax(arr, factor=1) {
+export function softmax(arr, factor=1.0) {
     const exponents = arr.map((value) => Math.exp(value * factor))
     const total = exponents.reduce((a, b) => a + b, 0);
     return exponents.map((exp) => exp / total);

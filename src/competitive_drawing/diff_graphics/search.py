@@ -32,6 +32,8 @@ def grid_search_stroke(
 ):
     best_loss = float("Inf")
     best_keypoints = None
+
+    # TODO: parallelize
     for grid_x in range(grid_shape[0]):
         for grid_y in range(grid_shape[1]):
             initial_inputs = [
@@ -56,7 +58,7 @@ def grid_search_stroke(
                 **model_kwargs,
             )
 
-            if loss < best_loss:
+            if save_best and loss < best_loss:
                 best_loss = loss
                 best_keypoints = keypoints
 
@@ -142,6 +144,9 @@ def search_stroke(
             image = draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
             cv2.imshow("output and target", image)
             cv2.waitKey(0)
+
+        image = draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
+        cv2.imwrite(f"/tmp/images/{step_num}.png", image * 255)
 
     if save_best:
         return best_loss, best_keypoints

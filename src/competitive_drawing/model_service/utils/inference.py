@@ -105,7 +105,7 @@ class Inferencer:
             self.model,
             target_index,
             torch.optim.Adamax,
-            { "lr": 0.02 },
+            { "lr": 0.08 },
             max_width=line_width * 8,
             min_width=line_width * 2,
             max_aa=0.35,

@@ -36,6 +36,9 @@ export class SinglePlayerGame extends GameBase {
             console.log("user turn")
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
+            if (this.debug) {
+                this.distanceIndicator.mouseDistance = -2000
+            }
         } else if (data["turn"] == this.aiId) {
             console.log("ai turn")
             this.drawingBoard.enabled = false
@@ -47,7 +50,7 @@ export class SinglePlayerGame extends GameBase {
             console.log(strokeSamples)
 
             // Simulate drawing the stroke on the drawingBoard
-            await this.drawingBoard.replayStroke(strokeSamples)
+            await this.drawingBoard.replayStroke(strokeSamples, 3000)
 
             // End AI turn
             this.onEndTurnButtonClick()
