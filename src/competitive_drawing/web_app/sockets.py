@@ -40,7 +40,7 @@ def make_socket_messages(socketio, game_config, games_manager):
                     "playerId": player_two.id
                 })
 
-            if game_state.game_type == GameType.LOCAL:
+            elif game_state.game_type == GameType.LOCAL:
                 player_one = game_state.add_player()
                 player_two = game_state.add_player()
                 emit("assign_player", {
@@ -50,13 +50,26 @@ def make_socket_messages(socketio, game_config, games_manager):
                     "playerId": player_two.id
                 })
 
-            if game_state.game_type == GameType.ONLINE:
+            elif game_state.game_type == GameType.ONLINE:
                 if game_state.can_add_player():
                     new_player = game_state.add_player()
 
                     emit("assign_player", {
                         "playerId": new_player.id
                     })
+
+            elif game_state.game_type == GameType.SINGLE_PLAYER:
+                player_one = game_state.add_player()
+                player_two = game_state.add_player()
+                emit("assign_player", {
+                    "playerId": player_one.id
+                })
+                emit("assign_player", {
+                    "playerId": player_two.id
+                })
+
+            else:
+                print(f"WARNING: Unknown game type {game_state.game_type}")
 
             # attempt to start game
             if game_state.can_start_game:

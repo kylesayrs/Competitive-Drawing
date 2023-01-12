@@ -5,7 +5,7 @@ import { DrawingBoard } from "/static/scripts/components/drawing_board.js";
 import { Inferencer } from "/static/scripts/components/inference.js";
 import { getRoomIdFromUrl, imageToImageData } from "/static/scripts/helpers.js";
 
-class MultiplayerGameBase {
+export class GameBase {
     constructor(gameType, gameConfig, debug=false) {
         this.gameType = gameType
         this.gameConfig = gameConfig
@@ -29,6 +29,15 @@ class MultiplayerGameBase {
         // Inference
         this.inferenceMutex = false  // true for locked, false for unlocked
         this.inferencer = null
+
+        // Players
+        this.playerId = null
+
+        // Join room
+        this.socket.emit("join_room", {
+            "room_id": this.roomId,
+            "game_type": this.gameType,
+        })
     }
 
 
@@ -126,101 +135,5 @@ class MultiplayerGameBase {
             "canvas": imageDataUrl,
             //replay data
         })
-    }
-}
-
-export class OnlineGame extends MultiplayerGameBase {
-    constructor(gameConfig, debug=false) {
-        super(2, gameConfig, debug)
-
-        // Player specific variables
-        this.playerId = null
-        this.playerTargetIndex = null
-        this.myTurn = false
-
-        // Hook with drawing board
-        this.drawingBoard.afterMouseEnd = async () => {
-            if (this.myTurn) {
-                this.serverInferImage()
-            }
-        }
-
-        // Initialize components
-        this.drawingBoard.enabled = false
-        this.distanceIndicator.emptyDistance()
-
-        // Join online room
-        this.socket.emit("join_room", {
-            "room_id": this.roomId,
-            "game_type": this.gameType,
-        })
-    }
-
-    onAssignPlayer(data) {
-        this.playerId = data["playerId"]
-    }
-
-    onStartGame(data) {
-        super.onStartGame(data)
-
-        // assign target index
-        this.playerTargetIndex = data["targets"][this.playerId]
-    }
-
-
-    async onStartTurn(data) {
-        super.onStartTurn(data)
-
-        if (data["turn"] == this.playerId) {
-            this.myTurn = true
-            this.drawingBoard.enabled = true
-            this.distanceIndicator.resetDistance()
-        } else {
-            this.myTurn = false
-            this.drawingBoard.enabled = false
-        }
-    }
-
-
-    onEndTurnButtonClick(_event) {
-        super.onEndTurnButtonClick(_event)
-
-        this.drawingBoard.enabled = false
-        this.distanceIndicator.emptyDistance()
-    }
-}
-
-
-export class LocalGame extends MultiplayerGameBase {
-    constructor(gameConfig, debug=false) {
-        super(1, gameConfig, debug)
-
-        // Player variables
-        this.playerId = null
-
-        // Initialize components
-        this.drawingBoard.enabled = true
-        this.distanceIndicator.resetDistance()
-
-        // Join local room
-        this.socket.emit("join_room", {
-            "room_id": this.roomId,
-            "game_type": this.gameType,
-        })
-
-    }
-
-
-    onStartTurn(data) {
-        super.onStartTurn(data)
-
-        this.playerId = data["turn"]
-    }
-
-
-    onEndTurnButtonClick(_event) {
-        super.onEndTurnButtonClick()
-
-        this.distanceIndicator.resetDistance()
     }
 }

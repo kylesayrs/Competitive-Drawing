@@ -14,7 +14,7 @@ class GameType(Enum):
     FREE_PLAY = 0
     LOCAL = 1
     ONLINE = 2
-    AI_OPPONENT = 3
+    SINGLE_PLAYER = 3
 
 
 class Player:
