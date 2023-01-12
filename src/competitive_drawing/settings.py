@@ -12,13 +12,12 @@ class Settings:
     ALLOWED_ORIGIN="localhost:5001"
 
     SOFTMAX_FACTOR=0.1
-    DISTANCE_PER_TURN=80
     DISTANCE_PER_TURN=30
 
     CANVAS_SIZE=100
     IMAGE_SIZE=50
     IMAGE_PADDING=0
-    CANVS_LINE_WIDTH=1.5
+    CANVAS_LINE_WIDTH=1.5
     STATIC_CROP=1
 
     S3_MODELS_BUCKET="competitive-drawing-models-prod"

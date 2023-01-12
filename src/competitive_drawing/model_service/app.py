@@ -35,11 +35,12 @@ def create_app():
 
 
 def start_app():
-    host = Settings.get("MODEL_SERVICE_HOST", "localhost")
-    port = Settings.get("MODEL_SERVICE_PORT", 5002)
-
     app = create_app()
-    app.run(host=host, port=port, debug=True)
+    app.run(
+        host=Settings.get("MODEL_SERVICE_HOST", "localhost"),
+        port=Settings.get("MODEL_SERVICE_PORT", 5002),
+        debug=True
+    )
 
 
 if __name__ == "__main__":

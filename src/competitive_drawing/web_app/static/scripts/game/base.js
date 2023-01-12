@@ -96,14 +96,16 @@ export class GameBase {
             return
         }
 
-        this.inferenceMutex = true
+        if (!this.inferenceMutex) {
+            this.inferenceMutex = true
 
-        await this.drawingBoard.updatePreview()
-        const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
-        const modelOutputs = await this.inferencer.serverInferImage(imageDataUrl, this.playerTargetIndex)
-        this.confidenceBar.update(modelOutputs)
+            await this.drawingBoard.updatePreview()
+            const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
+            const modelOutputs = await this.inferencer.serverInferImage(imageDataUrl, this.playerTargetIndex)
+            this.confidenceBar.update(modelOutputs)
 
-        this.inferenceMutex = false
+            this.inferenceMutex = false
+        }
     }
 
 

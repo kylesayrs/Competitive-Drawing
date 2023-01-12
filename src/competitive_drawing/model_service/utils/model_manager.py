@@ -24,7 +24,7 @@ class ModelManager():
             raise Exception("Model is already started")
 
         bucket = Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
-        root_folder = Settings.get("S3_ROOT_FOLDER", "static_crop_50x50")
+        root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
         key = f"{root_folder}/{label_pair_str}/model.pth"
         state_dict_stream = get_object_file_stream(bucket, key)
 
@@ -39,8 +39,8 @@ class ModelManager():
 
         if label_pair_str not in self.inferencers:
             raise ValueError(
-                f"Cannot inferencer for {label_pair_str}. Available inferencers are "
-                f"{self.inferencers.keys()}"
+                f"Cannot get inferencer for {label_pair_str}. "
+                f"Available inferencers are {self.inferencers.keys()}"
             )
 
         return self.inferencers[label_pair_str]

@@ -41,9 +41,9 @@ export class ConfidenceBar {
         }
 
         // apply softmax
-        console.log(filteredOutputs)
+        //console.log(filteredOutputs)
         const modelConfidences = softmax(filteredOutputs, this.softmaxFactor)
-        console.log(modelConfidences)
+        //console.log(modelConfidences)
 
         // draw data
         const firstIndex = filteredLabels.indexOf(this._targetLabels[0])

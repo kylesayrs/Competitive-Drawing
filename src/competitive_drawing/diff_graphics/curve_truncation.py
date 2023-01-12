@@ -43,4 +43,6 @@ if __name__ == "__main__":
     truncated_canvas = graphic(new_inputs)
 
     # draw
-    draw_output_and_target(truncated_canvas, target_canvas)
+    image = draw_output_and_target(truncated_canvas, target_canvas)
+    cv2.imshow("output and target", image)
+    cv2.waitKey(0)

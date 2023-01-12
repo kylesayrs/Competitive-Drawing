@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image
 import re
 
+
 def make_routes_blueprint(app, model_manager):
     routes = Blueprint("routes", __name__)
 
@@ -54,7 +55,6 @@ def make_routes_blueprint(app, model_manager):
         return json.dumps(response_data), 200
 
 
-    """
     @routes.route("/infer_stroke", methods=["POST"])
     def infer_stroke():
         # TODO: move this to utils file
@@ -62,42 +62,29 @@ def make_routes_blueprint(app, model_manager):
         image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
-        base_canvas = Image.open(image_data_io)
+        image = Image.open(image_data_io)
 
+        print(request.json)
         target_index = request.json["targetIndex"]
-        max_length = request.json["maxLength"]
-
-        inferencer = model_manager.get_inferencer(request.json["label_pair"])
-        score_model = inferencer.model
+        line_width = (
+            request.json["gameConfig"]["canvasLineWidth"] /
+            request.json["gameConfig"]["canvasSize"] *
+            request.json["gameConfig"]["imageSize"]
+        )
+        max_length = (
+            request.json["gameConfig"]["distancePerTurn"] /
+            request.json["gameConfig"]["canvasSize"] *
+            request.json["gameConfig"]["imageSize"]
+        )
 
         # TODO: Cheat detection
 
-        loss, keypoints = grid_search_stroke(
-            base_canvas,
-            (3, 3),
-            score_model,
-            request.json["targetIndex"],
-            torch.optim.Adamax,
-            { "lr": 0.02 },
-            max_width=5.0,
-            min_width=1.5,
-            max_aa=0.35,
-            min_aa=0.9,
-            max_steps=100,
-            save_best=True,
-            draw_output=True,
-            max_length=max_length,
-        )
+        print(model_manager.inferencers)
+        inferencer = model_manager.get_inferencer(request.json["label_pair"])
+        stroke_samples = inferencer.infer_stroke(image, target_index, line_width, max_length)
+        print(model_manager.inferencers)
 
-        curve = BezierCurve(
-            keypoints,
-            sample_method="uniform",
-            num_approximations=20
-        )
-        curve_points = [curve.sample(t) for t in get_uniform_ts(20)]
-
-        return json.dumps({"curve_points": curve_points}), 200
-    """
+        return json.dumps({"strokeSamples": stroke_samples}), 200
 
 
     @routes.route("/stop_model", methods=["POST"])

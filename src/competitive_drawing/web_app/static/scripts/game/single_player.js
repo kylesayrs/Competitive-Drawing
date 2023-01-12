@@ -8,42 +8,68 @@ export class SinglePlayerGame extends GameBase {
         // Player variables
         this.playerId = null
         this.humanId = null
+        this.humanTargetIndex = null
         this.aiId = null
+        this.aiTargetIndex = null
     }
 
 
-    onAssignPlayer(data) {
-        // Assign human player the first player id
-        if (this.humanId == null) {
-            this.humanId = data["playerId"]
-        } else {
-            this.aiId = data["playerId"]
-        }
+    onStartGame(data) {
+        super.onStartGame(data)
+        console.log(data)
+
+        // TODO: randomize
+        this.humanId = Object.keys(data["targets"])[0]
+        this.aiId = Object.keys(data["targets"])[1]
+
+        // assign target index
+        this.humanTargetIndex = data["targetIndices"][this.humanId]
+        this.aiTargetIndex = data["targetIndices"][this.aiId]
     }
 
 
     async onStartTurn(data) {
         super.onStartTurn(data)
 
-        if (this.humanId == data["turn"]) {
+        this.playerId = data["turn"]
+        if (data["turn"] == this.humanId) {
             console.log("user turn")
-            this.playerId = this.humanId
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
-        } else {
+        } else if (data["turn"] == this.aiId) {
             console.log("ai turn")
-            this.playerId = this.aiId
             this.drawingBoard.enabled = false
-            this.distanceIndicator.emptyDistance()
+            this.distanceIndicator.resetDistance()
 
-            // TODO: Integrate with model service
-            // await API request to get stroke data
+            // Await API request to get stroke data
+            const strokeSamples = await this.serverInferAIStroke()
+            console.log("strokeSamples")
+            console.log(strokeSamples)
 
             // Simulate drawing the stroke on the drawingBoard
-            // drawingBoard.replay_stroke(keypoints)
+            await this.drawingBoard.replayStroke(strokeSamples)
 
+            // End AI turn
             this.onEndTurnButtonClick()
             console.log("ended ai turn")
+        } else {
+            console.log("WARNING: Unknown turn " + data["turn"])
+            console.log(
+                "WARNING: Known ids are human: " + this.playerId + "and " +
+                "ai: " + this.aiId
+            )
         }
+    }
+
+
+    async serverInferAIStroke() {
+        if (!this.inferencer) {
+            console.log("ERROR: Inferencer not initialized yet!")
+            return
+        }
+
+        await this.drawingBoard.updatePreview()
+        const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
+        return this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex)
     }
 }

@@ -34,6 +34,24 @@ export class Inferencer {
     }
 
 
+    async clientInferImage(previewImageData) {
+        // get from preview image data
+        const modelInputData = imageDataToModelInputData(previewImageData)
+
+        // create input
+        const modelInput = new ort.Tensor(
+            modelInputData,
+            [1, 1, this.imageSize, this.imageSize]
+        );
+
+        // perform inference
+        const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
+        const modelOutputs = modelOutputsRaw.logits.data
+
+        return modelOutputs
+    }
+
+
     async serverInferImage(imageDataUrl, targetIndex) {
         const response = await fetch(
             "/infer",
@@ -52,9 +70,9 @@ export class Inferencer {
         if (!response.ok) {
             console.log("Invalid server inference response")
         }
+
         const responseJson = await response.json()
-        const modelOutputs = responseJson["modelOutputs"]
-        return modelOutputs
+        return responseJson["modelOutputs"]
     }
 
 
@@ -75,6 +93,7 @@ export class Inferencer {
         if (!response.ok) {
             console.log("Invalid server inference response")
         }
+
         const responseJson = await response.json()
         const modelOutputs = responseJson["modelOutputs"]
         const gradCamImage = responseJson["gradCamImage"]
@@ -82,20 +101,27 @@ export class Inferencer {
     }
 
 
-    async clientInferImage(previewImageData) {
-        // get from preview image data
-        const modelInputData = imageDataToModelInputData(previewImageData)
+    async serverInferStroke(imageDataUrl, targetIndex) {
+        const response = await fetch(
+            "/infer_stroke",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({
+                    "gameConfig": this.gameConfig,
+                    "label_pair": this.label_pair,
+                    "targetIndex": targetIndex,
+                    "imageDataUrl": imageDataUrl,
+                })
+            }
+        )
+        if (!response.ok) {
+            console.log("Invalid server inference response")
+        }
 
-        // create input
-        const modelInput = new ort.Tensor(
-            modelInputData,
-            [1, 1, this.imageSize, this.imageSize]
-        );
-
-        // perform inference
-        const modelOutputsRaw = await (await this.inferenceSession).run({ "input": modelInput })
-        const modelOutputs = modelOutputsRaw.logits.data
-
-        return modelOutputs
+        const responseJson = await response.json()
+        return responseJson["strokeSamples"]
     }
 }

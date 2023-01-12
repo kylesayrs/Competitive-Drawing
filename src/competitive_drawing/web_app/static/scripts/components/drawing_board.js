@@ -66,16 +66,18 @@ export class DrawingBoard {
         this.previewCanvasContext.fill();
     }
 
+
     getMousePosition(mouseEvent) {
         const canvasBoundingRect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / canvasBoundingRect.width
         const scaleY = this.canvas.height / canvasBoundingRect.height
-        const canvasX = event.clientX - canvasBoundingRect.left
-        const canvasY = event.clientY - canvasBoundingRect.top
-        const mouseX = scaleX * canvasX;
-        const mouseY = scaleY * canvasY;
+        const canvasX = mouseEvent.clientX - canvasBoundingRect.left
+        const canvasY = mouseEvent.clientY - canvasBoundingRect.top
+        const mouseX = canvasX * scaleX;
+        const mouseY = canvasY * scaleY;
         return { mouseX, mouseY };
     }
+
 
     cropCanvasImage(canvasImage) {
         const canvasImageWidth = canvasImage.getWidth();
@@ -126,6 +128,7 @@ export class DrawingBoard {
         }
     }
 
+
     resetPreviewBorder() {
         this.previewCanvasContext.beginPath();
         this.previewCanvasContext.rect(0, 0, this.previewCanvas.width, 1);
@@ -135,6 +138,7 @@ export class DrawingBoard {
         this.previewCanvasContext.fillStyle = "white";
         this.previewCanvasContext.fill();
     }
+
 
     async updatePreview() {
         return new Promise(async (resolve) => {
@@ -162,17 +166,21 @@ export class DrawingBoard {
         })
     }
 
+
     getPreviewImageData() {
         return this.previewCanvasContext.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height)
     }
+
 
     getPreviewImageDataUrl() {
         return this.previewCanvas.toDataURL()
     }
 
+
     getCanvasImageDataUrl() {
         return this.canvas.toDataURL()
     }
+
 
     async putPreviewImageData(previewCanvasImageData, updateCanvas=false) {
         this.previewCanvasContext.putImageData(previewCanvasImageData, 0, 0)
@@ -186,23 +194,31 @@ export class DrawingBoard {
         this.previewCanvasContext
     }
 
+
     putCanvasImageData(canvasImageData) {
         this.canvasContext.putImageData(canvasImageData, 0, 0)
     }
 
+
     onMouseDown(mouseEvent) {
         if (this._distanceIndicator == null || this._distanceIndicator.distanceRemaining > 1) {
-            let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
-
-            // send socket, then move
-            this.canvasContext.beginPath();
-            this.canvasContext.moveTo(mouseX, mouseY);
-
-            this.mouseHolding = true;
-            this.lastMouseX = mouseX;
-            this.lastMouseY = mouseY;
+            this._mouseDown(mouseEvent)
         }
     }
+
+
+    _mouseDown(mouseEvent) {
+        let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
+
+        // send socket, then move
+        this.canvasContext.beginPath();
+        this.canvasContext.moveTo(mouseX, mouseY);
+
+        this.mouseHolding = true;
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
+    }
+
 
     onMouseEnd(_mouseEvent) {
         this.mouseHolding = false;
@@ -211,39 +227,96 @@ export class DrawingBoard {
         }
     }
 
-    async onMouseMove(mouseEvent) {
+
+    onMouseMove(mouseEvent) {
         if (this.enabled && this.mouseHolding) {
-            let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
-            let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
-
-            // if overreach, interpolate on line to match remaining distance
-            if (this._distanceIndicator && this._distanceIndicator.mouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
-                const distanceRemaining = this._distanceIndicator.distanceRemaining
-                const theta = Math.asin((mouseY - this.lastMouseY) / strokeDistance)
-
-                mouseX = Math.cos(theta) * distanceRemaining + this.lastMouseX
-                mouseY = Math.sin(theta) * distanceRemaining + this.lastMouseY
-
-                // theoretically this should match perfectly
-                strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
-                //strokeDistance = distanceRemaining
-
-                this.mouseHolding = false;
-            }
-
-            this.canvasContext.lineTo(mouseX, mouseY);
-            this.canvasContext.stroke();
-
-            if (this._distanceIndicator) {
-                this._distanceIndicator.mouseDistance += strokeDistance
-            }
-
-            this.lastMouseX = mouseX;
-            this.lastMouseY = mouseY;
-
-            if (this.afterMouseMove) {
-                this.afterMouseMove()
-            }
+            this._moveMouse(mouseEvent)
         }
+    }
+
+
+    _moveMouse(mouseEvent) {
+        //console.log(mouseEvent)
+        let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
+        console.log({ mouseX, mouseY })
+        let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
+
+        // if overreach, interpolate on line to match remaining distance
+        if (this._distanceIndicator && this._distanceIndicator.mouseDistance + strokeDistance > this._distanceIndicator.mouseDistanceLimit) {
+            const distanceRemaining = this._distanceIndicator.distanceRemaining
+            const theta = Math.asin((mouseY - this.lastMouseY) / strokeDistance)
+
+            mouseX = Math.cos(theta) * distanceRemaining + this.lastMouseX
+            mouseY = Math.sin(theta) * distanceRemaining + this.lastMouseY
+
+            strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
+            // if all is well, then these should match with high precision
+            // assert(strokeDistance == distanceRemaining)
+
+            this.mouseHolding = false;
+        }
+
+        this.canvasContext.lineTo(mouseX, mouseY);
+        this.canvasContext.stroke();
+
+        if (this._distanceIndicator) {
+            this._distanceIndicator.mouseDistance += strokeDistance
+        }
+
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
+
+        if (this.afterMouseMove) {
+            this.afterMouseMove()
+        }
+    }
+
+
+    strokeSampleToMouseEvent(strokeSample) {
+        /*
+        const canvasBoundingRect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / canvasBoundingRect.width
+        const scaleY = this.canvas.height / canvasBoundingRect.height
+        const canvasX = mouseEvent.clientX - canvasBoundingRect.left
+        const canvasY = mouseEvent.clientY - canvasBoundingRect.top
+        const mouseX = scaleX * canvasX;
+        const mouseY = scaleY * canvasY;
+        return { mouseX, mouseY };
+        */
+
+
+        //scaleX = (this.canvas.width / canvasBoundingRect.width)
+        //mouseX = strokeSample[1] * this.canvas.width
+        //mouseX = (mouseEvent.clientX - canvasBoundingRect.left) * scaleX
+
+        //mouseEvent.clientX = mouseX / scaleX + canvasBoundingRect.left
+        //mouseEvent.clientX = (strokeSample[1] * this.canvas.width) / scaleX + canvasBoundingRect.left
+
+        const canvasBoundingRect = this.canvas.getBoundingClientRect()
+
+        const scaleX = (this.canvas.width / canvasBoundingRect.width)
+        const scaleY = (this.canvas.height / canvasBoundingRect.height)
+
+        const tmp = {
+            clientX: (strokeSample[1] * this.canvas.width) / scaleX + canvasBoundingRect.left,
+            clientY: (strokeSample[0] * this.canvas.height) / scaleY + canvasBoundingRect.top,
+        }
+
+        return tmp
+    }
+
+
+    async replayStroke(strokeSamples, strokeDurationMS) {
+        this.onMouseEnd(this.strokeSampleToMouseEvent(strokeSamples[0]))
+        this._mouseDown(this.strokeSampleToMouseEvent(strokeSamples[0]))
+
+        const sampleDurationMS = strokeDurationMS / strokeSamples.length
+        for (const i in strokeSamples) {
+            this._moveMouse(this.strokeSampleToMouseEvent(strokeSamples[i]))
+            await new Promise(r => setTimeout(r, sampleDurationMS));
+        }
+
+        const lastSample = strokeSamples[strokeSamples.length - 1]
+        this.onMouseEnd(this.strokeSampleToMouseEvent(lastSample))
     }
 }

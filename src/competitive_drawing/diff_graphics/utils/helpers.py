@@ -1,6 +1,5 @@
 from typing import List
 
-import cv2
 import math
 import torch
 import numpy
@@ -49,5 +48,4 @@ def draw_output_and_target(output_canvas: torch.tensor, target_canvas: torch.ten
     image[:, :, 1] = output * target * 2
     image[:, :, 2] = output * (1.0 - target)
 
-    cv2.imshow("output and target", image)
-    cv2.waitKey(0)
+    return image

@@ -1,9 +1,10 @@
 from typing import Optional, List, Dict, Any, Tuple
 
+import cv2
 import torch
 
-from modules.StrokeScoreModel import StrokeScoreModel
-from utils.helpers import make_hooked_optimizer, draw_output_and_target
+from competitive_drawing.diff_graphics import StrokeScoreModel
+from .utils.helpers import make_hooked_optimizer, draw_output_and_target
 
 DEVICE = (
     #"mps" if torch.backends.mps.is_available() else
@@ -138,7 +139,9 @@ def search_stroke(
             best_keypoints = list(model.parameters()).copy()
 
         if draw_output:
-            draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
+            image = draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
+            cv2.imshow("output and target", image)
+            cv2.waitKey(0)
 
     if save_best:
         return best_loss, best_keypoints

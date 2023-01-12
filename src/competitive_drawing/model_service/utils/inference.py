@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy
 from PIL import Image, ImageOps
 
@@ -9,11 +11,13 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from competitive_drawing import Settings
+from competitive_drawing.diff_graphics.search import grid_search_stroke
+from competitive_drawing.diff_graphics.utils import BezierCurve, get_uniform_ts
 
 
 DEVICE = (
+    #"mps" if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
     "cpu"
 )
 
@@ -37,7 +41,7 @@ class Inferencer:
         return model
 
 
-    def _convert_image_to_input(self, image: Image):
+    def convert_image_to_input(self, image: Image):
         image = image.convert("RGB")
         image = ImageOps.invert(image)
         red_channel = image.split()[0]
@@ -55,7 +59,7 @@ class Inferencer:
 
 
     def infer_image(self, image: Image):
-        input = self._convert_image_to_input(image)
+        input = self.convert_image_to_input(image)
         with torch.no_grad():
             logits, confidences = self._model(input)
 
@@ -70,7 +74,7 @@ class Inferencer:
 
 
     def infer_image_with_cam(self, image: Image, target_index: int):
-        input = self._convert_image_to_input(image)
+        input = self.convert_image_to_input(image)
 
         targets = [ClassifierOutputTarget(target_index)]
 
@@ -84,6 +88,46 @@ class Inferencer:
         with torch.no_grad():
             logits, confidences = self._model(input)
         return logits[0].tolist(), grad_cam_image.tolist()
+
+
+    def infer_stroke(
+        self,
+        image: Image,
+        target_index: int,
+        line_width: float,
+        max_length: float,
+    ):
+        base_canvas = self.convert_image_to_input(image)[0][0]
+
+        loss, keypoints = grid_search_stroke(
+            base_canvas,
+            (3, 3),
+            self.model,
+            target_index,
+            torch.optim.Adamax,
+            { "lr": 0.02 },
+            max_width=line_width * 8,
+            min_width=line_width * 2,
+            max_aa=0.35,
+            min_aa=0.9,
+            max_steps=20,#100,
+            save_best=True,
+            draw_output=False,
+            max_length=max_length,
+        )
+
+        curve = BezierCurve(
+            keypoints,
+            sample_method="uniform",
+            num_approximations=20
+        )
+        stroke_samples = [
+            curve.sample(t).cpu().detach().tolist()
+            for t in get_uniform_ts(20)
+        ]
+
+        print(f"stroke_samples: {stroke_samples}")
+        return stroke_samples
 
 
     @property

@@ -123,6 +123,10 @@ def emit_start_game(game_state, room_id):
         "targets": {
             player.id: player.target
             for player in game_state.players
+        },
+        "targetIndices": {
+            player.id: game_state.label_pair.index(player.target)
+            for player in game_state.players
         }
     }, to=room_id)
 

@@ -29,7 +29,7 @@ export class OnlineGame extends GameBase {
         super.onStartGame(data)
 
         // assign target index
-        this.playerTargetIndex = data["targets"][this.playerId]
+        this.playerTargetIndex = data["targetIndices"][this.playerId]
     }
 
 

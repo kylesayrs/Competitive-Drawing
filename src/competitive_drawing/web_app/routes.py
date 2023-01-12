@@ -21,14 +21,14 @@ def make_routes_blueprint(app, game_config, games_manager):
     def free_draw():
         return render_template("free_draw.html", game_config=game_config)
 
-    @routes.route("/local_game", methods=["GET"])
+    @routes.route("/local", methods=["GET"])
     def local_game():
         room_id = request.args.get("room_id")
         if room_id is None:
             room_id = games_manager.assign_game_room(GameType.LOCAL)
-            return redirect(f"local_game?room_id={room_id}")
+            return redirect(f"local?room_id={room_id}")
         else:
-            return render_template("local_game.html", game_config=game_config)
+            return render_template("local.html", game_config=game_config)
 
     @routes.route("/online", methods=["GET"])
     def online():
@@ -53,6 +53,11 @@ def make_routes_blueprint(app, game_config, games_manager):
     def infer():
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         return redirect(f"{model_service_base}/infer", code=307)
+
+    @routes.route("/infer_stroke", methods=["POST"])
+    def infer_stroke():
+        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+        return redirect(f"{model_service_base}/infer_stroke", code=307)
 
 
     return routes

@@ -1,7 +1,8 @@
+import cv2
 import torch
 
 from competitive_drawing.diff_graphics import LineGraphic2d, CurveGraphic2d, StrokeModel
-from competitive_drawing.diff_graphics.utils.helpers import make_hooked_optimizer, draw_output_and_target
+from .utils.helpers import make_hooked_optimizer, draw_output_and_target
 
 
 def make_target_canvas(target: str):
@@ -87,4 +88,6 @@ if __name__ == "__main__":
 
         print(list(model.parameters()))
         print(f"loss: {loss.item()}")
-        draw_output_and_target(output_canvas, target_canvas)
+        image = draw_output_and_target(output_canvas, target_canvas)
+        cv2.imshow("output and target", image)
+        cv2.waitKey(0)

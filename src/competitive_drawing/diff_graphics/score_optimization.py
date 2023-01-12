@@ -2,7 +2,7 @@ import cv2
 import torch
 
 from competitive_drawing.diff_graphics.utils.load_score_model import load_score_model
-from competitive_drawing.diff_graphics.utils.search import search_stroke, grid_search_stroke
+from .search import search_stroke, grid_search_stroke
 
 
 if __name__ == "__main__":

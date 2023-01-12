@@ -23,7 +23,7 @@ def create_app():
     game_config = {
         "softmaxFactor": float(Settings.get("SOFTMAX_FACTOR", 5)),
         "canvasSize": int(Settings.get("CANVAS_SIZE", 100)),
-        "canvasLineWidth": float(Settings.get("CANVS_LINE_WIDTH", 1.5)),
+        "canvasLineWidth": float(Settings.get("CANVAS_LINE_WIDTH", 1.5)),
         "imageSize": int(Settings.get("IMAGE_SIZE", 50)),
         "imagePadding": int(Settings.get("IMAGE_PADDING", 0)),
         "distancePerTurn": float(Settings.get("DISTANCE_PER_TURN", 80)),
@@ -51,11 +51,13 @@ def create_app():
 
 
 def start_app():
-    host = Settings.get("WEB_APP_HOST", "localhost")
-    port = Settings.get("WEB_APP_PORT", 5001)
-
     app, socketio = create_app()
-    socketio.run(app, host=host, port=port, debug=True)
+    socketio.run(
+        app,
+        host=Settings.get("WEB_APP_HOST", "localhost"),
+        port=Settings.get("WEB_APP_PORT", 5001),
+        debug=True
+    )
 
 
 if __name__ == "__main__":

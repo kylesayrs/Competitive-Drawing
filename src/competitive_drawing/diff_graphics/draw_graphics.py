@@ -28,4 +28,6 @@ if __name__ == "__main__":
 
     output_canvas = model()
 
-    draw_output_and_target(base_canvas, output_canvas)
+    image = draw_output_and_target(base_canvas, output_canvas)
+    cv2.imshow("output and target", image)
+    cv2.waitKey(0)

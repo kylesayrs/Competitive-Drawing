@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import torch
 
-from modules.StrokeModel import StrokeModel
+from .StrokeModel import StrokeModel
 
 
 class StrokeScoreModel(StrokeModel):
