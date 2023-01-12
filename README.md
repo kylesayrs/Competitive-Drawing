@@ -1,4 +1,4 @@
-# TrickDraw
+# Competitive Drawing
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
 <p align="center">
@@ -8,7 +8,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 ## Set up ##
 Clone repository
 ```bash
-git clone https://github.com/kylesayrs/drawnt.git
+git clone https://github.com/kylesayrs/Competitive-Drawing.git
 ```
 
 Install package using pip. Note that not all requirements have yet been added as dependencies
@@ -16,10 +16,10 @@ Install package using pip. Note that not all requirements have yet been added as
 python -m pip install -e .
 ```
 
-Launch web api and model service. Settings such as host and ports can be adjusted in drawnt/src/drawnt/settings.py
+Launch web api and model service. Settings such as host and ports can be adjusted in `src/competitive_drawing/settings.py`
 ```bash
-drawnt.launch_web_app
-drawnt.launch_model_service
+competitive_drawing.launch_web_app
+competitive_drawing.launch_model_service
 ```
 
 ## Differentiable Graphics for AI Opponent ##
