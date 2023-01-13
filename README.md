@@ -5,7 +5,7 @@ A game where players compete to draw differing prompts on a shared canvas, as ju
 <img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
 </p>
 
-## Set up ##
+## Set-up ##
 Clone repository
 ```bash
 git clone https://github.com/kylesayrs/Competitive-Drawing.git
@@ -48,6 +48,8 @@ Again, there is no closed form solution to uniformly sample distances along a BÃ
 | --- | ----------- |
 | <p align="center"><img src="./repo_assets/good_optimization_1.gif" alt="Good Optimization 1" width="300"/><p align="center">Example of the curve optimizing to a target image in blue</p></p> | <p align="center"><img src="./repo_assets/local_minimum.gif" alt="Local Minimum" width="300"/><p align="center">Like any gradient descent algorithm, there exist local minima</p></p> |
 | <p align="center"><img src="./repo_assets/good_optimization_2.gif" alt="Good Optimization 2" width="300"/><p align="center">The curve is capable of disentangling itself</p></p> | <p align="center"><img src="./repo_assets/stuck_on_edge.gif" alt="Stuck on Edge" width="300"/><p align="center">Local minima often exist at the edges</p></p> |
+
+Because of these local minimums and limits to how wide I can make the strokes before they become out of domain for the classifier, I search for the best stroke by optimizing multiple curves from different initial positions on the image and then taking the stroke with the lowest loss.
 
 ### Constraints and Curve Truncation ###
 I enforce two constraints on my optimized curve.

@@ -1,10 +1,8 @@
 from flask import Blueprint, request
 
 import json
-import base64
-from io import BytesIO
-from PIL import Image
-import re
+
+from .utils import imageDataUrlToImage
 
 
 def make_routes_blueprint(app, model_manager):
@@ -23,14 +21,13 @@ def make_routes_blueprint(app, model_manager):
 
     @routes.route("/infer", methods=["POST"])
     def infer():
-        # TODO: move this to utils file
-        image_data_url = request.json["imageDataUrl"]
-        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
-        image_data = base64.b64decode(image_data_str)
-        image_data_io = BytesIO(image_data)
-        image = Image.open(image_data_io)
+        image = imageDataUrlToImage(request.json["imageDataUrl"])
 
-        inferencer = model_manager.get_inferencer(request.json["label_pair"])
+        try:
+            inferencer = model_manager.get_inferencer(request.json["label_pair"])
+        except Exception as exception:
+            print(exception)
+            return str(exception), 409
 
         # TODO: Cheat detection
 
@@ -57,14 +54,7 @@ def make_routes_blueprint(app, model_manager):
 
     @routes.route("/infer_stroke", methods=["POST"])
     def infer_stroke():
-        # TODO: move this to utils file
-        image_data_url = request.json["imageDataUrl"]
-        image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
-        image_data = base64.b64decode(image_data_str)
-        image_data_io = BytesIO(image_data)
-        image = Image.open(image_data_io)
-
-        print(request.json)
+        image = imageDataUrlToImage(request.json["imageDataUrl"])
         target_index = request.json["targetIndex"]
         line_width = (
             request.json["gameConfig"]["canvasLineWidth"] /
@@ -79,10 +69,8 @@ def make_routes_blueprint(app, model_manager):
 
         # TODO: Cheat detection
 
-        print(model_manager.inferencers)
         inferencer = model_manager.get_inferencer(request.json["label_pair"])
         stroke_samples = inferencer.infer_stroke(image, target_index, line_width, max_length)
-        print(model_manager.inferencers)
 
         return json.dumps({"strokeSamples": stroke_samples}), 200
 
