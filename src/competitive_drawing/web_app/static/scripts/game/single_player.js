@@ -17,12 +17,12 @@ export class SinglePlayerGame extends GameBase {
 
 
     get aiInferenceMutex() {
-        return JSON.parse(window.localStorage.getItem("aiInferenceMutex"))
+        return JSON.parse(window.sessionStorage.getItem("aiInferenceMutex"))
     }
 
 
     set aiInferenceMutex(value) {
-        window.localStorage.setItem("aiInferenceMutex", JSON.stringify(value))
+        window.sessionStorage.setItem("aiInferenceMutex", JSON.stringify(value))
     }
 
 

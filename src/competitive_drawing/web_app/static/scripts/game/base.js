@@ -40,12 +40,12 @@ export class GameBase {
 
 
     get playerId() {
-        return window.localStorage.getItem("playerId")
+        return window.sessionStorage.getItem("playerId")
     }
 
 
     set playerId(value) {
-        window.localStorage.setItem("playerId", value)
+        window.sessionStorage.setItem("playerId", value)
     }
 
 
