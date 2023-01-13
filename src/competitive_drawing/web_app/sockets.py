@@ -29,7 +29,6 @@ def make_socket_messages(socketio, game_config, games_manager):
         game_state = games_manager.get_game(game_type, room_id)
 
         if not game_state.started:
-            # add players
             if game_state.game_type == GameType.FREE_PLAY:
                 player_one = game_state.add_player()
                 player_two = game_state.add_player()
@@ -53,7 +52,6 @@ def make_socket_messages(socketio, game_config, games_manager):
             elif game_state.game_type == GameType.ONLINE:
                 if game_state.can_add_player():
                     new_player = game_state.add_player()
-
                     emit("assign_player", {
                         "playerId": new_player.id
                     })
@@ -61,29 +59,31 @@ def make_socket_messages(socketio, game_config, games_manager):
             elif game_state.game_type == GameType.SINGLE_PLAYER:
                 player_one = game_state.add_player()
                 player_two = game_state.add_player()
-                emit("assign_player", {
-                    "playerId": player_one.id
-                })
-                emit("assign_player", {
-                    "playerId": player_two.id
-                })
 
             else:
                 print(f"WARNING: Unknown game type {game_state.game_type}")
 
-            # attempt to start game
+            # start game
             if game_state.can_start_game:
-                #  TODO: start_game -> game_state that includes canvas state
-                #  send no matter what to account for refreshing
+                game_state.start_game()
                 emit_start_game(game_state, room_id)
-                game_state.started = True
                 emit_start_turn(game_state, room_id)
                 start_model_service(game_state.label_pair)
 
         else:
-            # resume game
-            emit_start_game(game_state, room_id)
-            emit_start_turn(game_state, room_id)
+            # resume game if player id is valid
+            if game_state.has_player(data["cachedPlayerId"]):
+                emit_start_game(game_state, room_id)
+                emit("assign_player", {
+                    "playerId": data["cachedPlayerId"]
+                })
+                emit_start_turn(game_state, room_id)
+
+            else:
+                print(
+                    f"WARNING: Unknown player with id {data['cachedPlayerId']} tried "
+                    f"to join game with players {game_state.players}"
+                )
 
     @socketio.on("end_turn")
     def end_turn(data):
@@ -91,6 +91,7 @@ def make_socket_messages(socketio, game_config, games_manager):
         room_id = data["roomId"]
         game_state = games_manager.get_game(game_type, room_id)
 
+        # TODO: break out into utils.helpers
         image_data_url = data["canvas"]
         image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
@@ -125,7 +126,7 @@ def emit_start_game(game_state, room_id):
             for player in game_state.players
         },
         "targetIndices": {
-            player.id: game_state.label_pair.index(player.target)
+            player.id: player.target_index
             for player in game_state.players
         }
     }, to=room_id)

@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 from enum import Enum
 
 import uuid
@@ -20,10 +20,12 @@ class GameType(Enum):
 class Player:
     id: str
     target: str
+    target_index: int
 
-    def __init__(self, id, target):
+    def __init__(self, id, target, target_index):
         self.id = id
         self.target = target
+        self.target_index = target_index
 
 
 class Game:
@@ -63,6 +65,7 @@ class Game:
         new_player = Player(
             id=uuid.uuid4().hex,
             target=self.label_pair[target_index],
+            target_index=target_index,
         )
         self.players.append(new_player)
         return new_player
@@ -91,6 +94,15 @@ class Game:
 
     def get_onnx_url(self):
         return get_onnx_url(self.label_pair)
+
+
+    def has_player(self, player_id: Union[str, None]):
+        player_ids = [player.id for player in self.players]
+        return player_id is not None and player_id in player_ids
+
+
+    def start_game(self):
+        self.started = True
 
 
 class GameManager:

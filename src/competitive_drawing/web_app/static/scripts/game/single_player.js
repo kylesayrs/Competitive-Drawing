@@ -6,21 +6,47 @@ export class SinglePlayerGame extends GameBase {
         super(3, gameConfig, debug)
 
         // Player variables
-        this.playerId = null
         this.humanId = null
         this.humanTargetIndex = null
         this.aiId = null
         this.aiTargetIndex = null
+
+        // custom socket
+        this.socket.on("ai_stroke", this.onAIStroke.bind(this))
     }
+
+
+    get aiInferenceMutex() {
+        return JSON.parse(window.localStorage.getItem("aiInferenceMutex"))
+    }
+
+
+    set aiInferenceMutex(value) {
+        window.localStorage.setItem("aiInferenceMutex", JSON.stringify(value))
+    }
+
+
+    onAssignPlayer(data) {}  // ignore player assignment messages
 
 
     onStartGame(data) {
         super.onStartGame(data)
-        console.log(data)
 
-        // TODO: randomize
-        this.humanId = Object.keys(data["targets"])[0]
-        this.aiId = Object.keys(data["targets"])[1]
+        if (Object.keys(data["targets"]).includes(this.playerId)) {
+            // resuming game
+            console.log("resuming game " + this.playerId)
+            this.humanId = this.playerId
+            const humanIdIndex = Object.keys(data["targets"]).indexOf(this.humanId)
+            this.aiId = Object.keys(data["targets"])[1 - humanIdIndex]
+        } else {
+            // new game
+            // TODO: randomize
+            console.log("new game")
+            this.humanId = Object.keys(data["targets"])[0]
+            this.aiId = Object.keys(data["targets"])[1]
+            this.playerId = this.humanId
+            this.aiInferenceMutex = false
+        }
 
         // assign target index
         this.humanTargetIndex = data["targetIndices"][this.humanId]
@@ -28,10 +54,9 @@ export class SinglePlayerGame extends GameBase {
     }
 
 
-    async onStartTurn(data) {
+    onStartTurn(data) {
         super.onStartTurn(data)
 
-        this.playerId = data["turn"]
         if (data["turn"] == this.humanId) {
             console.log("user turn")
             this.drawingBoard.enabled = true
@@ -39,29 +64,40 @@ export class SinglePlayerGame extends GameBase {
             if (this.debug) {
                 this.distanceIndicator.mouseDistance = -2000
             }
+
         } else if (data["turn"] == this.aiId) {
-            console.log("ai turn")
             this.drawingBoard.enabled = false
             this.distanceIndicator.resetDistance()
+            if (!this.aiInferenceMutex) {
+                this.aiInferenceMutex = true
+                this.serverInferAIStroke()
+            }
 
-            // Await API request to get stroke data
-            const strokeSamples = await this.serverInferAIStroke()
-            console.log("strokeSamples")
-            console.log(strokeSamples)
-
-            // Simulate drawing the stroke on the drawingBoard
-            await this.drawingBoard.replayStroke(strokeSamples, 3000)
-
-            // End AI turn
-            this.onEndTurnButtonClick()
-            console.log("ended ai turn")
         } else {
             console.log("WARNING: Unknown turn " + data["turn"])
             console.log(
-                "WARNING: Known ids are human: " + this.playerId + "and " +
-                "ai: " + this.aiId
+                "WARNING: Known ids are human: " + this.humanId +
+                " and ai: " + this.aiId
             )
         }
+    }
+
+
+    async onAIStroke(data) {
+        // Simulate drawing the stroke on the drawingBoard
+        await this.drawingBoard.replayStroke(data["strokeSamples"], 3000)
+
+        // End AI turn
+        const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
+        this.socket.emit("end_turn", {
+            "game_type": this.gameType,
+            "roomId": this.roomId,
+            "playerId": this.aiId,
+            "canvas": imageDataUrl,
+            //replay data
+        })
+        console.log("ended ai turn")
+        this.aiInferenceMutex = false
     }
 
 
@@ -73,6 +109,14 @@ export class SinglePlayerGame extends GameBase {
 
         await this.drawingBoard.updatePreview()
         const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
-        return this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex)
+        this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex, this.roomId)
+    }
+
+
+    onEndTurnButtonClick(_event) {
+        // Only press if it is not the AI's turn
+        if (!this.aiInferenceMutex) {
+            super.onEndTurnButtonClick(_event);
+        }
     }
 }

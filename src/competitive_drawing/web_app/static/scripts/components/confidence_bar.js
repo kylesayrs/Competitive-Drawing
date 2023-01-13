@@ -7,7 +7,7 @@ details: ConfidenceBar is used to control the confidence bar. It also does some
 import { normalize, softmax } from "/static/scripts/helpers.js";
 
 export class ConfidenceBar {
-    constructor(softmaxFactor=7, debug=true) {
+    constructor(softmaxFactor=7, debug=false) {
         this.softmaxFactor = softmaxFactor
         this.debug = debug
 

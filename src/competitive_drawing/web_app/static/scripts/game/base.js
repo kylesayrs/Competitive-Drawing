@@ -30,18 +30,32 @@ export class GameBase {
         this.inferenceMutex = false  // true for locked, false for unlocked
         this.inferencer = null
 
-        // Players
-        this.playerId = null
-
         // Join room
         this.socket.emit("join_room", {
             "room_id": this.roomId,
             "game_type": this.gameType,
+            "cachedPlayerId": this.playerId,
         })
     }
 
 
-    onAssignPlayer(data) {}
+    get playerId() {
+        return window.localStorage.getItem("playerId")
+    }
+
+
+    set playerId(value) {
+        window.localStorage.setItem("playerId", value)
+    }
+
+
+    onAssignPlayer(data) {
+        if (self.debug) {
+            console.log("onAssignPlayer")
+            console.log(data)
+        }
+        this.playerId = data["playerId"]
+    }
 
 
     async onStartGame(data) {
@@ -130,6 +144,8 @@ export class GameBase {
     onEndTurnButtonClick(_event) {
         const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
 
+        console.log("onEndTurnButtonClick")
+        console.log(this.playerId)
         this.socket.emit("end_turn", {
             "game_type": this.gameType,
             "roomId": this.roomId,

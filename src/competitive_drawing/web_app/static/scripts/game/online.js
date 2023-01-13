@@ -21,9 +21,6 @@ export class OnlineGame extends GameBase {
         this.distanceIndicator.emptyDistance()
     }
 
-    onAssignPlayer(data) {
-        this.playerId = data["playerId"]
-    }
 
     onStartGame(data) {
         super.onStartGame(data)

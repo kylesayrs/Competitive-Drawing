@@ -1,8 +1,11 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, copy_current_request_context
 
 import json
+import requests
+from threading import Thread
 
 from .utils import imageDataUrlToImage
+from competitive_drawing import Settings
 
 
 def make_routes_blueprint(app, model_manager):
@@ -66,13 +69,33 @@ def make_routes_blueprint(app, model_manager):
             request.json["gameConfig"]["canvasSize"] *
             request.json["gameConfig"]["imageSize"]
         )
+        room_id = request.json["roomId"]
 
         # TODO: Cheat detection
 
-        inferencer = model_manager.get_inferencer(request.json["label_pair"])
-        stroke_samples = inferencer.infer_stroke(image, target_index, line_width, max_length)
+        @copy_current_request_context
+        def _send_stroke(model_manager, room_id, *args):
+            inferencer = model_manager.get_inferencer(request.json["label_pair"])
+            stroke_samples = inferencer.infer_stroke(*args)
 
-        return json.dumps({"strokeSamples": stroke_samples}), 200
+            host = Settings.get("WEB_APP_HOST")
+            port = Settings.get("WEB_APP_PORT")
+            req = requests.post(
+                f"http://{host}:{port}/ai_stroke",
+                headers={"Content-type": "application/json"},
+                data=json.dumps({
+                    "strokeSamples": stroke_samples,
+                    "roomId": room_id,
+                })
+            )
+
+        thread = Thread(
+            target=_send_stroke,
+            args=(model_manager, room_id, image, target_index, line_width, max_length)
+        )
+        thread.start()
+
+        return "", 200
 
 
     @routes.route("/stop_model", methods=["POST"])

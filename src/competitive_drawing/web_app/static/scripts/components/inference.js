@@ -101,7 +101,7 @@ export class Inferencer {
     }
 
 
-    async serverInferStroke(imageDataUrl, targetIndex) {
+    async serverInferStroke(imageDataUrl, targetIndex, roomId) {
         const response = await fetch(
             "/infer_stroke",
             {
@@ -114,14 +114,12 @@ export class Inferencer {
                     "label_pair": this.label_pair,
                     "targetIndex": targetIndex,
                     "imageDataUrl": imageDataUrl,
+                    "roomId": roomId,
                 })
             }
         )
         if (!response.ok) {
-            console.log("Invalid server inference response")
+            console.log("Invalid server stroke inference response")
         }
-
-        const responseJson = await response.json()
-        return responseJson["strokeSamples"]
     }
 }

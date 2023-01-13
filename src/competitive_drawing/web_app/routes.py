@@ -1,5 +1,6 @@
 import os
 from flask import Blueprint, render_template, redirect, request
+from flask_socketio import emit
 
 from .utils.game import GameType
 from competitive_drawing import Settings
@@ -58,6 +59,15 @@ def make_routes_blueprint(app, game_config, games_manager):
     def infer_stroke():
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         return redirect(f"{model_service_base}/infer_stroke", code=307)
+
+
+    @routes.route("/ai_stroke", methods=["POST"])
+    def ai_stroke():
+        # TODO: assert it's coming from model service
+        emit("ai_stroke", {
+            "strokeSamples": request.json["strokeSamples"]
+        }, namespace="/", to=request.json["roomId"])
+        return "", 200
 
 
     return routes
