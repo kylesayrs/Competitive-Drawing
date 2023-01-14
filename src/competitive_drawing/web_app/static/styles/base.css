@@ -75,9 +75,15 @@ div#left-confidence {
 div#right-confidence-underneath {
     height: 100%;
     width: 100%;
-    float: right;
     background: #F01A27;
-    transition: 0.5s ease;
+}
+
+div.confidence-tick {
+    width: 5px;
+    background-color: black;
+    position:absolute;
+    z-index: 10;
+    translate: translateX(-50%);
 }
 
 p#left-confidence-label {

@@ -209,7 +209,7 @@ def train_model(
 if __name__ == "__main__":
     train_model(
         #["The Eiffel Tower", "The Great Wall of China"],
-        ["brain", "steak"],
+        ["brain", "sheep"],
         "images",
         image_shape=(50, 50),
         num_epochs=10,

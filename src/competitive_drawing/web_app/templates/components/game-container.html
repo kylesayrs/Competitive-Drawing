@@ -1,0 +1,24 @@
+<!-- game-container.html -->
+<div id="game-container">
+    <div id="game-controls">
+        <div id="left-controls">
+            {% include "components/distance-bar.html" %}
+        </div>
+
+        <div id="draw-container">
+            <canvas id="draw" width={{game_config.canvasSize}} height={{game_config.canvasSize}}>
+                Update your browser to support HTML5 Canvas
+            </canvas>
+        </div>
+
+        <div id="right-controls">
+            <button id="distanceIndicatorButton" type="button">End Turn</button>
+            <canvas id="preview" width={{game_config.imageSize}} height={{game_config.imageSize}}>
+                Update your browser to support HTML5 Canvas
+            </canvas>
+        </div>
+    </div>
+
+    {% include "components/confidence-bar.html" %}
+
+</div>

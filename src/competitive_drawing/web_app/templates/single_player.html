@@ -13,45 +13,12 @@
         <a href="/">
             <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
         </a>
-        <div id="game-container">
-            <div id="game-controls">
-                <div id="left-controls">
-                    <div id="distance-bar">
-                        <div id="distance-bottom"></div>
-                    </div>
-                </div>
-
-                <div id="draw-container">
-                    <canvas id="draw" width={{game_config.canvasSize}} height={{game_config.canvasSize}}>
-                        Update your browser to support HTML5 Canvas
-                    </canvas>
-                </div>
-
-                <div id="right-controls">
-                    <button id="distanceIndicatorButton" type="button">End Turn</button>
-                    <canvas id="preview" width={{game_config.imageSize}} height={{game_config.imageSize}}>
-                        Update your browser to support HTML5 Canvas
-                    </canvas>
-                </div>
-            </div>
-
-            <div id="confidence-bar">
-                <p id="left-confidence-label"></p>
-                <p id="right-confidence-label"></p>
-                <div id="left-confidence"></div>
-                <div id="right-confidence-underneath"></div>
-            </div>
-        </div>
+        {% include "components/game-container.html" %}
     </body>
 
-    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
-    <script src="http://www.marvinj.org/releases/marvinj-1.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-
+    {% include "components/third-party-scripts.html" %}
     <script type="text/javascript">
         gameConfig = {{ game_config | tojson }}
     </script>
-
     <script type="module" src="{{url_for('static', filename='scripts/single_player.js')}}"></script>
 </html>
