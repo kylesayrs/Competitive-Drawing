@@ -1,9 +1,11 @@
 from typing import List, Dict, Optional, Tuple, Union
 from enum import Enum
 
+import json
 import uuid
 import random
 import numpy
+import requests
 from PIL import Image
 
 from .s3 import get_uploaded_label_pairs, get_onnx_url
@@ -19,11 +21,13 @@ class GameType(Enum):
 
 class Player:
     id: str
+    sid: str
     target: str
     target_index: int
 
-    def __init__(self, id, target, target_index):
+    def __init__(self, id, sid, target, target_index):
         self.id = id
+        self.sid = sid
         self.target = target
         self.target_index = target_index
 
@@ -51,19 +55,20 @@ class Game:
         if label_pair is None:
             label_pairs = get_uploaded_label_pairs()
             random.shuffle(label_pairs)
-            self.label_pair = label_pairs[0]
+            self.label_pair = tuple(label_pairs[0])
         else:
-            self.label_pair = label_pair
+            self.label_pair = tuple(label_pair)
 
 
     def can_add_player(self):
         return len(self.players) < 2
 
 
-    def add_player(self):
+    def add_player(self, sid):
         target_index = len(self.players)
         new_player = Player(
             id=uuid.uuid4().hex,
+            sid=sid,
             target=self.label_pair[target_index],
             target_index=target_index,
         )
@@ -105,14 +110,24 @@ class Game:
         self.started = True
 
 
+    def remove_player(self, sid):
+        self.players = [
+            player
+            for player in self.players
+            if player.sid != sid
+        ]
+
+
 class GameManager:
     rooms: Dict[GameType, Dict[str, Game]]
+    label_pair_rooms: Dict[Tuple[str, str], List[str]]
 
     def __init__(self):
         self.rooms = {
             game_type: {}
             for game_type in GameType
         }
+        self.label_pair_rooms = {}
 
 
     def assign_game_room(self, game_type: GameType, *game_args, **game_kwargs):
@@ -136,8 +151,66 @@ class GameManager:
         new_game = Game(game_type, *game_args, **game_kwargs)
 
         self.rooms[game_type][new_room_id] = new_game
+
+        if new_game.label_pair not in self.label_pair_rooms.keys():
+            self.start_model_service(new_game.label_pair, new_room_id)
+
+        if new_game.label_pair not in self.label_pair_rooms:
+            self.label_pair_rooms[new_game.label_pair] = []
+
+        self.label_pair_rooms[new_game.label_pair].append(new_room_id)
+
         return new_room_id
 
 
     def get_game(self, game_type: GameType, room_id: str):
         return self.rooms[game_type][room_id]
+
+
+    def has_label_pair(self, label_pair):
+        for game_type_rooms in self.rooms.values():
+            for room_id, game in game_type_rooms.items():
+                if game.label_pair == label_pair:
+                    return True
+
+        return False
+
+
+    def remove_player_from_game_room(self, sid):
+        for game_type_rooms in self.rooms.values():
+            for room_id, game in game_type_rooms.items():
+                game.remove_player(sid)
+
+                if len(game.players) <= 0:
+                    label_pair = game.label_pair
+                    del game_type_rooms[room_id]
+
+                    print(label_pair)
+
+                    self.label_pair_rooms[label_pair].remove(room_id)
+
+                    if len(self.label_pair_rooms[label_pair]) <= 0:
+                        self.stop_model_service(game.label_pair)
+                        del self.label_pair_rooms[game.label_pair]
+
+                    return
+
+        print(f"WARNING: Could not find sid {sid} in game rooms {self.rooms}")
+
+
+    def start_model_service(self, label_pair, room_id):
+        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+        requests.post(
+            f"{model_service_base}/start_model",
+            headers={ "Content-Type": "application/json" },
+            data=json.dumps({ "label_pair": label_pair }),
+        )
+
+
+    def stop_model_service(self, label_pair):
+        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+        requests.post(
+            f"{model_service_base}/stop_model",
+            headers={ "Content-Type": "application/json" },
+            data=json.dumps({ "label_pair": label_pair }),
+        )

@@ -1,3 +1,6 @@
+from flask import request
+from flask_socketio import join_room, leave_room, emit
+
 import re
 import json
 import base64
@@ -5,9 +8,8 @@ from io import BytesIO
 from PIL import Image
 import boto3
 import requests
-from flask_socketio import join_room, leave_room, emit
 
-from .utils.game import GameType
+from competitive_drawing.web_app.utils.game import GameType
 from competitive_drawing import Settings
 
 
@@ -16,6 +18,7 @@ def make_socket_messages(socketio, game_config, games_manager):
     def on_join_room(data):
         game_type = GameType(data["game_type"])
         room_id = data["room_id"]
+        sid = request.sid
 
         # Create new game if necessary
         if room_id not in games_manager.rooms[game_type]:
@@ -30,8 +33,8 @@ def make_socket_messages(socketio, game_config, games_manager):
 
         if not game_state.started:
             if game_state.game_type == GameType.FREE_PLAY:
-                player_one = game_state.add_player()
-                player_two = game_state.add_player()
+                player_one = game_state.add_player(sid)
+                player_two = game_state.add_player(sid)
                 emit("assign_player", {
                     "playerId": player_one.id
                 })
@@ -40,8 +43,8 @@ def make_socket_messages(socketio, game_config, games_manager):
                 })
 
             elif game_state.game_type == GameType.LOCAL:
-                player_one = game_state.add_player()
-                player_two = game_state.add_player()
+                player_one = game_state.add_player(sid)
+                player_two = game_state.add_player(sid)
                 emit("assign_player", {
                     "playerId": player_one.id
                 })
@@ -51,14 +54,14 @@ def make_socket_messages(socketio, game_config, games_manager):
 
             elif game_state.game_type == GameType.ONLINE:
                 if game_state.can_add_player():
-                    new_player = game_state.add_player()
+                    new_player = game_state.add_player(sid)
                     emit("assign_player", {
                         "playerId": new_player.id
                     })
 
             elif game_state.game_type == GameType.SINGLE_PLAYER:
-                player_one = game_state.add_player()
-                player_two = game_state.add_player()
+                player_one = game_state.add_player(sid)
+                player_two = game_state.add_player(sid)
 
             else:
                 print(f"WARNING: Unknown game type {game_state.game_type}")
@@ -68,7 +71,6 @@ def make_socket_messages(socketio, game_config, games_manager):
                 game_state.start_game()
                 emit_start_game(game_state, room_id)
                 emit_start_turn(game_state, room_id)
-                start_model_service(game_state.label_pair)
 
         else:
             # resume game if player id is valid
@@ -108,6 +110,12 @@ def make_socket_messages(socketio, game_config, games_manager):
             print("WARNING: Received wrong player id for end turn")
 
 
+    @socketio.on("disconnect")
+    def disconnect():
+        print(request.sid)
+        games_manager.remove_player_from_game_room(request.sid)
+
+
 def emit_start_turn(game_state, room_id):
     emit("start_turn", {
         "canvas": game_state.canvasImageToSerial(),
@@ -130,25 +138,3 @@ def emit_start_game(game_state, room_id):
             for player in game_state.players
         }
     }, to=room_id)
-
-
-def start_model_service(label_pair):
-    model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
-    url = f"{model_service_base}/start_model"
-
-    requests.post(
-        url,
-        headers={ "Content-Type": "application/json" },
-        data=json.dumps({ "label_pair": label_pair }),
-    )
-
-
-def stop_model_service(label_pair, game_config):
-    model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
-    url = f"{model_service_base}/start_model"
-
-    requests.post(
-        url,
-        headers={ "Content-Type": "application/json" },
-        body=json.dumps(game_config),
-    )

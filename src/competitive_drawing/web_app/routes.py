@@ -26,7 +26,7 @@ def make_routes_blueprint(app, game_config, games_manager):
     def local_game():
         room_id = request.args.get("room_id")
         if room_id is None:
-            room_id = games_manager.assign_game_room(GameType.LOCAL)
+            room_id = games_manager.assign_game_room(GameType.LOCAL, label_pair=("duck", "sheep"))
             return redirect(f"local?room_id={room_id}")
         else:
             return render_template("local.html", game_config=game_config)

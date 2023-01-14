@@ -15,10 +15,12 @@ def make_routes_blueprint(app, model_manager):
     def start_model():
         try:
             model_manager.start_model(request.json["label_pair"])
+            print(model_manager.inferencers.keys())
             return "", 200
 
         except Exception as exception:
             print(exception)
+            print(model_manager.inferencers.keys())
             return str(exception), 409
 
 
@@ -102,10 +104,12 @@ def make_routes_blueprint(app, model_manager):
     def stop_model():
         try:
             model_manager.stop_model(request.json["label_pair"])
+            print(model_manager.inferencers.keys())
             return "", 200
 
         except Exception as exception:
             print(exception)
+            print(model_manager.inferencers.keys())
             return str(exception), 409
 
 

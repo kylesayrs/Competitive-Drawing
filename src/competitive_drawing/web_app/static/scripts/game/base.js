@@ -142,7 +142,7 @@ export class GameBase {
 
     onEndTurnButtonClick(_event) {
         this.serverInferImage()
-        
+
         const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
         this.socket.emit("end_turn", {
             "game_type": this.gameType,
@@ -152,4 +152,7 @@ export class GameBase {
             //replay data
         })
     }
+
+
+    // TODO: When the game ends, send a disconnect socket message
 }
