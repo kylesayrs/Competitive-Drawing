@@ -79,6 +79,10 @@ if __name__ == "__main__":
             logging_rate=1000,
             patience_length=3,
             patience_threshold=0.95,
+            temperature=0.05,
+
+            do_upload=True,
+            wandb_mode="online",
         )
 
         label_pair = get_label_to_train("images", "static_crop_50x50")

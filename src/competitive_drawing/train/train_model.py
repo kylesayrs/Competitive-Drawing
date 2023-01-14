@@ -225,6 +225,6 @@ if __name__ == "__main__":
         patience_threshold=0.95,
         temperature=0.05,
 
-        do_upload=True,
+        do_upload=False,
         wandb_mode="disabled",
     )

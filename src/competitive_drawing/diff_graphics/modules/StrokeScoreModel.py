@@ -54,7 +54,7 @@ class StrokeScoreModel(StrokeModel):
         canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (1, 1, 50, 50))
         logits, _scores = self.score_model(canvas_with_graphic)
 
-        scores = torch.nn.Softmax(dim=1)(logits * Settings.get("SOFTMAX_FACTOR", 0.5))
+        scores = torch.nn.Softmax(dim=1)(logits)
 
         target_score = scores[0][self.target_index]
 

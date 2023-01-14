@@ -11,7 +11,7 @@ class Settings:
     MODEL_SERVICE_SECRET_KEY="somesecrets"
     ALLOWED_ORIGIN="localhost:5001"
 
-    SOFTMAX_FACTOR=0.1
+    SOFTMAX_FACTOR=2.0
     DISTANCE_PER_TURN=30
 
     CANVAS_SIZE=100

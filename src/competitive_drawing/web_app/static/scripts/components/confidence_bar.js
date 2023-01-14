@@ -47,7 +47,7 @@ export class ConfidenceBar {
         }
 
         // apply softmax
-        const modelConfidences = softmax(filteredOutputs, 1.0)
+        const modelConfidences = softmax(filteredOutputs, this.softmaxFactor)
         if (this.debug) {
             console.log(filteredOutputs)
             console.log(modelConfidences)
