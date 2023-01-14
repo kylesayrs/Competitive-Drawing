@@ -135,7 +135,7 @@ class GameManager:
         available_game_room_ids = [
             room_id
             for room_id, game in game_rooms.items()
-            if game.can_add_player()
+            if not game.started and game.can_add_player()
         ]
 
         if len(available_game_room_ids) > 0:
@@ -185,8 +185,6 @@ class GameManager:
                     label_pair = game.label_pair
                     del game_type_rooms[room_id]
 
-                    print(label_pair)
-
                     self.label_pair_rooms[label_pair].remove(room_id)
 
                     if len(self.label_pair_rooms[label_pair]) <= 0:
@@ -194,8 +192,6 @@ class GameManager:
                         del self.label_pair_rooms[game.label_pair]
 
                     return
-
-        print(f"WARNING: Could not find sid {sid} in game rooms {self.rooms}")
 
 
     def start_model_service(self, label_pair, room_id):
