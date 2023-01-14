@@ -7,7 +7,7 @@ details: ConfidenceBar is used to control the confidence bar. It also does some
 import { normalize, softmax } from "/static/scripts/helpers.js";
 
 export class ConfidenceBar {
-    constructor(softmaxFactor=7, debug=false) {
+    constructor(softmaxFactor=1.0, debug=false) {
         this.softmaxFactor = softmaxFactor
         this.debug = debug
 
@@ -41,11 +41,18 @@ export class ConfidenceBar {
             }
         }
 
+        function normalize(vector) {
+            const magnitude = Math.sqrt(Math.pow(vector[0], 2) + Math.pow(vector[1], 2))
+            return [vector[0] / magnitude, vector[1] / magnitude]
+        }
+
         // apply softmax
-        const modelConfidences = softmax(filteredOutputs, this.softmaxFactor)
+        const modelConfidences = softmax(filteredOutputs, 1.0)
         if (this.debug) {
             console.log(filteredOutputs)
             console.log(modelConfidences)
+            const magnitude = Math.sqrt(Math.pow(filteredOutputs[0], 2) + Math.pow(filteredOutputs[1], 2))
+            console.log(magnitude)
         }
 
         // draw data

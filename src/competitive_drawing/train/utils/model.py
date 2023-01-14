@@ -2,9 +2,10 @@ import torch
 
 
 class Classifier(torch.nn.Module):
-    def __init__(self, num_classes: int = 2):
+    def __init__(self, num_classes: int = 2, temperature: float = 0.05):
         super(Classifier, self).__init__()
         self.num_classes = num_classes
+        self.temperature = torch.nn.Parameter(torch.tensor(temperature, dtype=torch.float32), requires_grad=False)
 
         def conv_block(in_filters, out_filters, bn=True):
             block = [torch.nn.Conv2d(in_filters, out_filters, 3, 2, 1), torch.nn.ReLU(), torch.nn.Dropout2d(0.2)]
@@ -30,6 +31,10 @@ class Classifier(torch.nn.Module):
         x = self.conv(x)
         x = x.view(x.shape[0], -1)
         logits = self.fc(x)
-        confs = self.softmax(logits)
 
-        return logits, confs
+        norms = torch.norm(logits, p=2, dim=-1, keepdim=True) + 1e-7
+        logits_normed = torch.div(logits, norms) / self.temperature
+        scores = self.softmax(logits_normed)
+
+        #return logits, confs
+        return logits_normed, scores

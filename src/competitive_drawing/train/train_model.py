@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score
 import torch
 from timm.data import Mixup
 
-from .utils import load_data, QuickDrawDataset, Classifier, RandomResizePad, upload_model
+from competitive_drawing.train.utils import load_data, QuickDrawDataset, Classifier, RandomResizePad, upload_model
 
 DEVICE = (
     "mps" if torch.backends.mps.is_available() else
@@ -37,9 +37,11 @@ def train_model(
     resize_scale: Tuple[float, float] = (0.2, 1.0),
     patience_length: Optional[int] = 3,
     patience_threshold: Optional[float] = 0.95,
+    temperature: float = 0.05,
     logging_rate: int = 1000,
     save_checkpoints: bool = False,
     model_name: Optional[str] = None,
+    do_upload: bool = True,
     wandb_mode: str = "online",
 ):
     assert class_names[0] < class_names[1], "class names are out of order!"
@@ -63,6 +65,7 @@ def train_model(
             "momentum": momentum,
             "patience_length": patience_length,
             "patience_threshold": patience_threshold,
+            "temperature": temperature,
             "logging_rate": logging_rate,
             "test_batch_size": test_batch_size,
             "test_size": test_size,
@@ -115,7 +118,7 @@ def train_model(
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=wandb.config["test_batch_size"],
                                               shuffle=True, num_workers=0, drop_last=True)
 
-    model = Classifier(wandb.config["num_classes"]).to(DEVICE)
+    model = Classifier(wandb.config["num_classes"], temperature=temperature).to(DEVICE)
     if wandb.config["optimizer"] == "SGD":
         optimizer = torch.optim.SGD(model.parameters(), lr=wandb.config["lr"], momentum=wandb.config["momentum"])
     elif wandb.config["optimizer"] == "Adam":
@@ -146,24 +149,24 @@ def train_model(
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            _, outputs = model(images)
-            loss = criterion(outputs, cutmix_labels)
+            logits_normed, scores = model(images)
+            loss = criterion(logits_normed, cutmix_labels)
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
             if i % wandb.config["logging_rate"] == wandb.config["logging_rate"] - 1:
-                train_accuracy = accuracy_score(raw_labels.cpu(), numpy.argmax(outputs.cpu().detach().numpy(), axis=1))
+                train_accuracy = accuracy_score(numpy.argmax(cutmix_labels.cpu(), axis=1), numpy.argmax(scores.cpu().detach().numpy(), axis=1))
 
                 with torch.no_grad():
                     test_images, test_labels = next(iter(test_loader))
                     test_images = random_resize_pad(test_images)
                     test_images = test_images.to(DEVICE)
                     test_labels = test_labels.to(DEVICE)
-                    _, test_outputs = model(test_images)
-                    test_accuracy = accuracy_score(test_labels.cpu(), numpy.argmax(test_outputs.cpu(), axis=1))
-                    test_loss = criterion(test_outputs, test_labels)
+                    test_logits_normed, test_scores = model(test_images)
+                    test_accuracy = accuracy_score(test_labels.cpu(), numpy.argmax(test_scores.cpu(), axis=1))
+                    test_loss = criterion(test_logits_normed, test_labels)
 
                 print(
                     f"[{epoch + 1}, {i + 1:5d}] "
@@ -192,7 +195,6 @@ def train_model(
         ):
             break
 
-
         # save each epoch
         if wandb.config["save_checkpoints"]:
             os.makedirs(f"./checkpoints/{run.id}", exist_ok=True)
@@ -200,7 +202,8 @@ def train_model(
             torch.save(model.state_dict(), f"./checkpoints/{run.id}/epoch{epoch}.pth")
 
     print("Finished Training")
-    upload_model(model, wandb.config, metrics, root_folder="static_crop_50x50")
+    if do_upload:
+        upload_model(model, wandb.config, metrics, root_folder="static_crop_50x50")
 
 
 if __name__ == "__main__":
@@ -220,6 +223,8 @@ if __name__ == "__main__":
         logging_rate=1000,
         patience_length=3,
         patience_threshold=0.95,
+        temperature=0.05,
 
-        wandb_mode="online",
+        do_upload=True,
+        wandb_mode="disabled",
     )
