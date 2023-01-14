@@ -5,6 +5,7 @@ import os
 import json
 import tqdm
 import numpy
+import random
 import argparse
 import subprocess
 import cairocffi as cairo
@@ -156,6 +157,7 @@ if __name__ == "__main__":
         paths = read_stroke_paths()
         if args.keyword is not None:
             paths = [path for path in paths if args.keyword in path]
+        random.shuffle(paths)
 
         progress = tqdm.tqdm(total=len(paths))
 
