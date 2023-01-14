@@ -2,7 +2,7 @@ import os
 import sys
 import torch
 
-from .train_model import Classifier
+from competitive_drawing.train.train_model import Classifier
 
 if __name__ == "__main__":
     checkpoint_path = sys.argv[1]
