@@ -108,4 +108,5 @@ def make_routes_blueprint(app, model_manager):
             print(exception)
             return str(exception), 409
 
+
     return routes

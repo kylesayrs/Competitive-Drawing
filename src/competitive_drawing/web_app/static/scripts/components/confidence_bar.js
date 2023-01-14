@@ -13,7 +13,6 @@ export class ConfidenceBar {
 
         this.confidenceBar = document.querySelector("#confidence-bar");
         this.leftConfidence = document.querySelector("#left-confidence");
-        this.rightConfidence = document.querySelector("#right-confidence");
         this.leftConfidenceLabel = document.querySelector("#left-confidence-label");
         this.rightConfidenceLabel = document.querySelector("#right-confidence-label");
     }
@@ -59,6 +58,5 @@ export class ConfidenceBar {
         const firstIndex = filteredLabels.indexOf(this._targetLabels[0])
         const secondIndex = filteredLabels.indexOf(this._targetLabels[1])
         this.leftConfidence.style.width = modelConfidences[firstIndex] * 100 + "%";
-        this.rightConfidence.style.width = modelConfidences[secondIndex] * 100 + "%";
     }
 }

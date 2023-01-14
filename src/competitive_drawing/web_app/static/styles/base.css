@@ -72,8 +72,9 @@ div#left-confidence {
     transition: 0.5s ease;
 }
 
-div#right-confidence {
+div#right-confidence-underneath {
     height: 100%;
+    width: 100%;
     float: right;
     background: #F01A27;
     transition: 0.5s ease;
