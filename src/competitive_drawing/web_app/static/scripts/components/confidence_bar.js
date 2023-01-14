@@ -15,6 +15,8 @@ export class ConfidenceBar {
         this.leftConfidence = document.querySelector("#left-confidence");
         this.leftConfidenceLabel = document.querySelector("#left-confidence-label");
         this.rightConfidenceLabel = document.querySelector("#right-confidence-label");
+
+        this.leftConfidence.style.width = "50%";
     }
 
     get targetLabels() {

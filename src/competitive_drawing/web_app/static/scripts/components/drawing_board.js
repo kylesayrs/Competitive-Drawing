@@ -271,25 +271,6 @@ export class DrawingBoard {
 
 
     strokeSampleToMouseEvent(strokeSample) {
-        /*
-        const canvasBoundingRect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / canvasBoundingRect.width
-        const scaleY = this.canvas.height / canvasBoundingRect.height
-        const canvasX = mouseEvent.clientX - canvasBoundingRect.left
-        const canvasY = mouseEvent.clientY - canvasBoundingRect.top
-        const mouseX = scaleX * canvasX;
-        const mouseY = scaleY * canvasY;
-        return { mouseX, mouseY };
-        */
-
-
-        //scaleX = (this.canvas.width / canvasBoundingRect.width)
-        //mouseX = strokeSample[1] * this.canvas.width
-        //mouseX = (mouseEvent.clientX - canvasBoundingRect.left) * scaleX
-
-        //mouseEvent.clientX = mouseX / scaleX + canvasBoundingRect.left
-        //mouseEvent.clientX = (strokeSample[1] * this.canvas.width) / scaleX + canvasBoundingRect.left
-
         const canvasBoundingRect = this.canvas.getBoundingClientRect()
 
         const scaleX = (this.canvas.width / canvasBoundingRect.width)

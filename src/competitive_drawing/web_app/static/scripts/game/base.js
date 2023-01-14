@@ -22,7 +22,7 @@ export class GameBase {
         this.distanceIndicator = new DistanceIndicator(this.gameConfig.distancePerTurn)
         this.drawingBoard = new DrawingBoard(this.distanceIndicator, this.gameConfig)
         this.confidenceBar = new ConfidenceBar(this.gameConfig.softmaxFactor)
-        this.drawingBoard.afterMouseEnd = this.serverInferImage.bind(this)
+        //this.drawingBoard.afterMouseEnd = this.serverInferImage.bind(this)
         this.drawingBoard.afterMouseMove = this.clientInferImage.bind(this)
         this.distanceIndicator.onButtonClick = this.onEndTurnButtonClick.bind(this)
 
@@ -68,7 +68,7 @@ export class GameBase {
         this.inferencer = new Inferencer(this.gameConfig, data["targets"])
         await this.inferencer.loadModel(data["onnxUrl"])
 
-        // update canvas and confidence bar
+        // initialize canvas and confidence bar
         const canvasImageData = imageToImageData(
             data["canvas"],
             this.drawingBoard.canvasSize,
@@ -77,11 +77,9 @@ export class GameBase {
         this.drawingBoard.putPreviewImageData(canvasImageData, true)
         this.confidenceBar.targetLabels = Object.values(data["targets"])
 
-        // initialize bar
+        // initialize preview and preview (not confidence bar)
         await this.drawingBoard.updatePreview()
-        const previewImageData = this.drawingBoard.getPreviewImageData()
-        const modelOutputs = await this.inferencer.clientInferImage(previewImageData)
-        this.confidenceBar.update(modelOutputs)
+        //this.serverInferImage()
     }
 
 
@@ -91,16 +89,17 @@ export class GameBase {
             console.log(data)
         }
 
-        // update canvas
+        // update canvas and preview
         const canvasImageData = imageToImageData(
             data["canvas"],
             this.drawingBoard.canvasSize,
             this.drawingBoard.canvasSize
         )
         this.drawingBoard.putCanvasImageData(canvasImageData, true)
+        await this.drawingBoard.updatePreview()
 
         // update confidences and preview image
-        this.clientInferImage()
+        //this.clientInferImage()
     }
 
 
@@ -142,10 +141,9 @@ export class GameBase {
     }
 
     onEndTurnButtonClick(_event) {
+        this.serverInferImage()
+        
         const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
-
-        console.log("onEndTurnButtonClick")
-        console.log(this.playerId)
         this.socket.emit("end_turn", {
             "game_type": this.gameType,
             "roomId": this.roomId,
