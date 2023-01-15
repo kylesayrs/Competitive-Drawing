@@ -10,6 +10,9 @@ BORDER = 30
 RAND_PLACEMENT = False
 OUTFILE_PATH = "background.png"
 
+STROKE_COLOR = [0, 0, 0]
+BACKGROUND_COLOR = [229, 245, 251]
+
 if __name__ == "__main__":
     # read images
     images = []
@@ -23,7 +26,7 @@ if __name__ == "__main__":
     for file_name in file_names[:total_num_samples]:
         file_path = os.path.join(SAMPLES_DIR_PATH, file_name)
 
-        image = cv2.imread(file_path)
+        image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
         images.append(image)
 
     # calculate sizes
@@ -38,16 +41,27 @@ if __name__ == "__main__":
     # create background
     width = NUM_ROWS * image_shape_with_border[1]
     height = NUM_COLUMNS * image_shape_with_border[0]
-    background = numpy.zeros((height, width, 3))
+    background = numpy.full((height, width, 3), BACKGROUND_COLOR)
 
     # place images
     for image_index, image in enumerate(images):
+        image_bgr = numpy.array([
+            [
+                (
+                    numpy.array(STROKE_COLOR) * (image[y, x] / 255) +
+                    numpy.array(BACKGROUND_COLOR) * ((255 - image[y, x]) / 255)
+                )
+                for x in range(image.shape[1])
+            ]
+            for y in range(image.shape[0])
+        ], dtype=numpy.int32)
+
         random_x = random.randint(0, BORDER * 2) if RAND_PLACEMENT else BORDER
         random_y = random.randint(0, BORDER * 2) if RAND_PLACEMENT else BORDER
         image_with_border = cv2.copyMakeBorder(
-            image,
+            image_bgr,
             random_y, BORDER * 2 - random_y, random_x, BORDER * 2 - random_x,
-            cv2.BORDER_CONSTANT, value=0
+            cv2.BORDER_CONSTANT, value=BACKGROUND_COLOR
         )
 
         x_position = image_index % NUM_ROWS

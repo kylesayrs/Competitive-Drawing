@@ -5,16 +5,12 @@ details: Shows whose turn it is, how many turns are left, and who is the winner
 */
 
 export class TurnIndicator {
-    constructor(totalNumTurns, currentTurnTarget, debug=false) {
-        this.totalNumTurns = totalNumTurns
+    constructor(debug=false) {
         this.debug = debug
 
         this.turnsLeftIndicator = document.querySelector("#turns-left-indicator");
         this.playerTurnIndicator = document.querySelector("#player-turn-indicator");
         this.endTurnButton = document.querySelector("#endTurnButton");
-
-        this.turnsLeft = totalNumTurns
-        this.currentTurnTarget = currentTurnTarget
     }
 
     get turnsLeft() {
@@ -41,7 +37,7 @@ export class TurnIndicator {
     }
 
     showEndTurnButton() {
-        this.endTurnButton.setAttribute("hidden", false)
+        this.endTurnButton.removeAttribute("hidden")
     }
 
     hideEndTurnButton() {
@@ -50,7 +46,7 @@ export class TurnIndicator {
 
     showWinner(winnerTarget) {
         this.turnsLeftIndicator.setAttribute("hidden", true)
-        this.playerTurnIndicator.innerHTML = "Winner: " + winnerTarget
+        this.playerTurnIndicator.innerHTML = "Winner: " + winnerTarget + "!"
         this.hideEndTurnButton()
     }
 }

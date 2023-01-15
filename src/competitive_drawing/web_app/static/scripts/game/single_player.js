@@ -46,6 +46,16 @@ export class SinglePlayerGame extends GameBase {
             this.aiId = Object.keys(data["targets"])[1]
             this.playerId = this.humanId
             this.aiInferenceMutex = false
+
+            Toastify({
+                text: "Your target is " + data["targets"][this.humanId],
+                duration: 10000,
+                className: "info",
+                gravity: "toastify-top",
+                style: {
+                    background: "linear-gradient(to right, #2ec1cc, #0074d9)",
+                }
+            }).showToast();
         }
 
         // assign target index
@@ -61,13 +71,13 @@ export class SinglePlayerGame extends GameBase {
             console.log("user turn")
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
-            if (this.debug) {
-                this.distanceIndicator.mouseDistance = -2000
-            }
+            this.turnIndicator.showEndTurnButton()
 
         } else if (data["turn"] == this.aiId) {
             this.drawingBoard.enabled = false
             this.distanceIndicator.resetDistance()
+            this.turnIndicator.hideEndTurnButton()
+            
             if (!this.aiInferenceMutex) {
                 this.aiInferenceMutex = true
                 this.serverInferAIStroke()

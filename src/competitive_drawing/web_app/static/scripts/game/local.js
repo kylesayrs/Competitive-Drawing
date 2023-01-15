@@ -8,6 +8,7 @@ export class LocalGame extends GameBase {
         // Initialize components
         this.drawingBoard.enabled = true
         this.distanceIndicator.resetDistance()
+        this.turnIndicator.showEndTurnButton()
     }
 
 

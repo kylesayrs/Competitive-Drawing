@@ -127,8 +127,9 @@ class Game:
 
 
     def assign_player_sid(self, player_id, new_sid):
+        # For single player games, the ai shares the same sid
         for player_index, player in enumerate(self.players):
-            if player.id == player_id:
+            if player.id == player_id or self.game_type == GameType.SINGLE_PLAYER:
                 player.sid = new_sid
 
     def get_player_by_sid(self, player_sid):
@@ -202,8 +203,9 @@ class GameManager:
         for game_type_rooms in self.rooms.values():
             for room_id, game in game_type_rooms.items():
                 found_player = game.get_player_by_sid(sid)
+
                 if found_player:
-                    found_player.sid = None
+                    break
 
             if found_player: break
 
@@ -211,9 +213,17 @@ class GameManager:
             print(f"WARNING: Could not find player with sid {sid}")
             return
 
+        # remove player with buffer time
+        found_player.sid = None
         time.sleep(Settings.get("PAGE_REFRESH_BUFFER_TIME"))
         if found_player.sid == None:
+
+            # accounts for players with duplicate sids
+            # as is the case with local play
+            found_player.sid = sid
             game.remove_player(sid)
+
+            # check for room removal and service stoppage
             if len(game.players) <= 0:
                 label_pair = game.label_pair
                 del game_type_rooms[room_id]

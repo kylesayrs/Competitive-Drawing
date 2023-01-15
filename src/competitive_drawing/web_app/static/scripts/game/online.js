@@ -21,6 +21,17 @@ export class OnlineGame extends GameBase {
         // Initialize components
         this.drawingBoard.enabled = false
         this.distanceIndicator.emptyDistance()
+
+        Toastify({
+            text: "Waiting for game...",
+            duration: 5000,
+            className: "info",
+            gravity: "top",
+            oldestFirst: true,
+            style: {
+                background: "linear-gradient(to right, #2ec1cc, #0074d9)",
+            }
+        }).showToast()
     }
 
 
@@ -29,6 +40,28 @@ export class OnlineGame extends GameBase {
 
         // assign target index
         this.playerTargetIndex = data["targetIndices"][this.playerId]
+
+        Toastify({
+            text: "Joined game!",
+            duration: 3000,
+            className: "info",
+            gravity: "top",
+            oldestFirst: true,
+            style: {
+                background: "linear-gradient(to right, #00b09b, #96c93d)",
+            }
+        }).showToast();
+
+        Toastify({
+            text: "Your target is " + data["target"][this.humanId],
+            duration: 10000,
+            className: "info",
+            gravity: "top",
+            oldestFirst: true,
+            style: {
+                background: "linear-gradient(to right, #2ec1cc, #0074d9)",
+            }
+        }).showToast();
     }
 
 
@@ -39,12 +72,14 @@ export class OnlineGame extends GameBase {
             this.myTurn = true
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
+            this.turnIndicator.showEndTurnButton()
 
             Toastify({
                 text: "Your turn",
                 duration: 3000,
                 className: "info",
-                gravity: "toastify-top",
+                gravity: "top",
+                oldestFirst: true,
                 style: {
                     background: "linear-gradient(to right, #2ec1cc, #0074d9)",
                 }
@@ -53,6 +88,7 @@ export class OnlineGame extends GameBase {
             this.myTurn = false
             this.drawingBoard.enabled = false
             this.distanceIndicator.emptyDistance()
+            this.turnIndicator.hideEndTurnButton()
         }
     }
 }
