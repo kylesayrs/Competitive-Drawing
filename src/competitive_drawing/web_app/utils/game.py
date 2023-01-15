@@ -39,6 +39,8 @@ class Game:
     started: bool
     _player_turn_index: int
     label_pair: Tuple[str, str]
+    total_num_turns: int
+    turns_left: int
 
     def __init__(
         self,
@@ -51,6 +53,8 @@ class Game:
         self.players = []
         self._player_turn_index = 0
         self.started = False
+        self.total_num_turns = int(Settings.get("TOTAL_NUM_TURNS"))
+        self.turns_left = self.total_num_turns
 
         if label_pair is None:
             label_pairs = get_uploaded_label_pairs()
@@ -91,7 +95,7 @@ class Game:
 
     def next_turn(self):
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
-
+        self.turns_left -= 1
 
     def canvasImageToSerial(self):
         return numpy.array(self.canvasImage).tolist()
@@ -116,6 +120,9 @@ class Game:
             for player in self.players
             if player.sid != sid
         ]
+
+    def can_end_game(self):
+        return self.turns_left <= 0
 
 
 class GameManager:

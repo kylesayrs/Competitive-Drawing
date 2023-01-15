@@ -82,7 +82,7 @@ def make_routes_blueprint(app, model_manager):
 
             host = Settings.get("WEB_APP_HOST")
             port = Settings.get("WEB_APP_PORT")
-            req = requests.post(
+            requests.post(
                 f"http://{host}:{port}/ai_stroke",
                 headers={"Content-type": "application/json"},
                 data=json.dumps({

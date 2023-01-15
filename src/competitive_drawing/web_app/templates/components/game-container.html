@@ -12,8 +12,8 @@
         </div>
 
         <div id="right-controls">
-            <button id="distanceIndicatorButton" type="button">End Turn</button>
-            <canvas id="preview" width={{game_config.imageSize}} height={{game_config.imageSize}}>
+            {% include "components/turn-indicator.html" %}
+            <canvas hidden id="preview" width={{game_config.imageSize}} height={{game_config.imageSize}}>
                 Update your browser to support HTML5 Canvas
             </canvas>
         </div>

@@ -4,7 +4,7 @@ import { GameBase } from "/static/scripts/game/base.js";
 export class LocalGame extends GameBase {
     constructor(gameConfig, debug=false) {
         super(1, gameConfig, debug)
-        
+
         // Initialize components
         this.drawingBoard.enabled = true
         this.distanceIndicator.resetDistance()
@@ -54,8 +54,7 @@ export class SinglePlayerGame extends GameBase {
 
 
     onEndTurnButtonClick(_event) {
-        super.onEndTurnButtonClick()
-
         this.distanceIndicator.resetDistance()
+        super.onEndTurnButtonClick()
     }
 }

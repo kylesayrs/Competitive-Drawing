@@ -88,12 +88,15 @@ export class SinglePlayerGame extends GameBase {
         await this.drawingBoard.replayStroke(data["strokeSamples"], 3000)
 
         // End AI turn
-        const imageDataUrl = this.drawingBoard.getCanvasImageDataUrl()
+        const canvasDataUrl = this.drawingBoard.getCanvasImageDataUrl()
+        await this.drawingBoard.updatePreview()
+        const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
         this.socket.emit("end_turn", {
             "game_type": this.gameType,
             "roomId": this.roomId,
             "playerId": this.aiId,
-            "canvas": imageDataUrl,
+            "canvas": canvasDataUrl,
+            "preview": imageDataUrl,
             //replay data
         })
         console.log("ended ai turn")
@@ -113,7 +116,7 @@ export class SinglePlayerGame extends GameBase {
 
         Toastify({
             text: "AI is computing, please wait...",
-            duration: 3000,
+            duration: 10000,
             className: "info",
             gravity: "toastify-top",
             style: {

@@ -98,28 +98,32 @@ def make_socket_messages(socketio, game_config, games_manager):
         image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
         image_data = base64.b64decode(image_data_str)
         image_data_io = BytesIO(image_data)
-        image = Image.open(image_data_io)
+        canvas_image = Image.open(image_data_io)
 
-        game_state.canvasImage = image
+        game_state.canvasImage = canvas_image
 
-        if data["playerId"] == game_state.turn.id:
-            game_state.next_turn()
-            emit_start_turn(game_state, room_id)
-
-        else:
+        if data["playerId"] != game_state.turn.id:
             print("WARNING: Received wrong player id for end turn")
+            return
+
+        game_state.next_turn()
+        emit_start_turn(game_state, room_id)
+
+        if game_state.can_end_game():
+            emit_end_game(game_state, game_config, data["preview"], room_id)
 
 
     @socketio.on("disconnect")
     def disconnect():
-        print(request.sid)
         games_manager.remove_player_from_game_room(request.sid)
 
 
 def emit_start_turn(game_state, room_id):
     emit("start_turn", {
         "canvas": game_state.canvasImageToSerial(),
-        "turn": game_state.turn.id
+        "turn": game_state.turn.id,
+        "target": game_state.turn.target,
+        "turnsLeft": game_state.turns_left,
     }, to=room_id)
 
 
@@ -136,5 +140,27 @@ def emit_start_game(game_state, room_id):
         "targetIndices": {
             player.id: player.target_index
             for player in game_state.players
-        }
+        },
+        "totalNumTurns": game_state.total_num_turns,
+    }, to=room_id)
+
+
+def emit_end_game(game_state, game_config, image_data, room_id):
+    model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
+
+    response = requests.post(
+        f"{model_service_base}/infer",
+        headers={ "Content-Type": "application/json" },
+        data=json.dumps({
+            "gameConfig": game_config,
+            "label_pair": game_state.label_pair,
+            "imageDataUrl": image_data
+        })
+    )
+
+    winner_index = int(response.json()["modelOutputs"][1] > response.json()["modelOutputs"][0])
+    winner_target = game_state.label_pair[winner_index]
+
+    emit("end_game", {
+        "winnerTarget": winner_target,
     }, to=room_id)

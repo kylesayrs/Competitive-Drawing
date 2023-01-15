@@ -13,6 +13,7 @@ class Settings:
 
     SOFTMAX_FACTOR=2.0
     DISTANCE_PER_TURN=30
+    TOTAL_NUM_TURNS=2  # should be an even number
 
     CANVAS_SIZE=100
     IMAGE_SIZE=50
@@ -22,8 +23,9 @@ class Settings:
 
     S3_MODELS_BUCKET="competitive-drawing-models-prod"
     S3_MODELS_ROOT_FOLDER="static_crop_50x50"
-    S3_MODEL_URL_DURATION=108000 # 30 minutes in seconds
-    S3_MODEL_DURATION=108000 # 30 minutes in seconds
+    S3_MODEL_URL_DURATION=108000  # 30 minutes in seconds
+    S3_MODEL_DURATION=108000  # 30 minutes in seconds
+
 
     @classmethod
     def get(cls, key: str, default_value: Optional[Any] = None):

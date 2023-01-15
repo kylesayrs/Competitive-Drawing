@@ -10,11 +10,13 @@ export class OnlineGame extends GameBase {
         this.myTurn = false
 
         // Hook with drawing board
+        /*
         this.drawingBoard.afterMouseEnd = async () => {
             if (this.myTurn) {
                 this.serverInferImage()
             }
         }
+        */
 
         // Initialize components
         this.drawingBoard.enabled = false
@@ -46,7 +48,7 @@ export class OnlineGame extends GameBase {
                 style: {
                     background: "linear-gradient(to right, #2ec1cc, #0074d9)",
                 }
-            }).showToast();
+            }).showToast()
         } else {
             this.myTurn = false
             this.drawingBoard.enabled = false

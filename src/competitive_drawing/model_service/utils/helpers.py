@@ -27,8 +27,7 @@ def get_model_class():
     return pickle.loads(torch.load(pickled_file_stream))
 
 
-def imageDataUrlToImage(imageDataUrl):
-    image_data_url = imageDataUrl
+def imageDataUrlToImage(image_data_url):
     image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)
     image_data = base64.b64decode(image_data_str)
     image_data_io = BytesIO(image_data)

@@ -9,7 +9,7 @@ details : The DistanceIndicator is responsible for controlling and keeping track
 export class DistanceIndicator {
     constructor(mouseDistanceLimit, mouseDistance=0) {
         this.distanceBottom = document.querySelector("#distance-bottom")
-        this.buttonElement = document.querySelector("#distanceIndicatorButton")
+        this.buttonElement = document.querySelector("#endTurnButton")
 
         this._mouseDistanceLimit = mouseDistanceLimit
         this._mouseDistance = mouseDistance
