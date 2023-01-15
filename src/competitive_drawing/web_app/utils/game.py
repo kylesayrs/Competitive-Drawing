@@ -1,7 +1,6 @@
 from typing import List, Dict, Optional, Tuple, Union
 from enum import Enum
 
-import time
 import json
 import uuid
 import random
@@ -31,6 +30,13 @@ class Player:
         self.sid = sid
         self.target = target
         self.target_index = target_index
+
+
+    def __str__(self):
+        return (
+            "Player(id = {self.id}, sid = {self.sid}, "
+            "target = {self.target}, target_index = {self.target_index})"
+        )
 
 
 class Game:
@@ -123,7 +129,7 @@ class Game:
         ]
 
     def can_end_game(self):
-        return self.turns_left <= 0
+        return self.turns_left <= 0 or self.players <= 1
 
 
     def assign_player_sid(self, player_id, new_sid):
@@ -198,41 +204,25 @@ class GameManager:
         return False
 
 
-    def delayed_remove_player(self, sid):
+    def get_player_location_by_sid(self, sid):
         found_player = None
         for game_type_rooms in self.rooms.values():
             for room_id, game in game_type_rooms.items():
                 found_player = game.get_player_by_sid(sid)
 
                 if found_player:
-                    break
+                    return found_player, game, room_id
 
             if found_player: break
 
         else:
-            print(f"WARNING: Could not find player with sid {sid}")
-            return
+            return None, None, None
 
-        # remove player with buffer time
-        found_player.sid = None
-        time.sleep(Settings.get("PAGE_REFRESH_BUFFER_TIME"))
-        if found_player.sid == None:
 
-            # accounts for players with duplicate sids
-            # as is the case with local play
-            found_player.sid = sid
-            game.remove_player(sid)
-
-            # check for room removal and service stoppage
-            if len(game.players) <= 0:
-                label_pair = game.label_pair
+    def remove_room(self, room_id):
+        for game_type_rooms in self.rooms.values():
+            if room_id in game_type_rooms:
                 del game_type_rooms[room_id]
-
-                self.label_pair_rooms[label_pair].remove(room_id)
-
-                if len(self.label_pair_rooms[label_pair]) <= 0:
-                    self.stop_model_service(game.label_pair)
-                    del self.label_pair_rooms[game.label_pair]
 
 
     def start_model_service(self, label_pair, room_id):

@@ -2,6 +2,7 @@ from flask import request
 from flask_socketio import join_room, leave_room, emit
 
 import re
+import time
 import json
 import base64
 from io import BytesIO
@@ -102,7 +103,9 @@ def make_socket_messages(socketio, game_config, games_manager):
         image_data_io = BytesIO(image_data)
         canvas_image = Image.open(image_data_io)
 
+        # save state
         game_state.canvasImage = canvas_image
+        # TODO: save preview data
 
         if data["playerId"] != game_state.turn.id:
             print("WARNING: Received wrong player id for end turn")
@@ -118,7 +121,35 @@ def make_socket_messages(socketio, game_config, games_manager):
     @socketio.on("disconnect")
     def disconnect():
         print(f"Disconnection: {request.sid}")
-        games_manager.delayed_remove_player(request.sid)
+        found_player, game, room_id = games_manager.get_player_location_by_sid(request.sid)
+        if found_player is None:
+            print(f"WARNING: Could not find player with sid {request.sid}")
+            return
+
+        # check if player reconnects in time
+        found_player.sid = None
+        time.sleep(Settings.get("PAGE_REFRESH_BUFFER_TIME"))
+        if found_player.sid is not None:
+            return
+
+        # remove player
+        found_player.sid = request.sid   # accounts for players with duplicate sids
+        game.remove_player(request.sid)  # as is the case with local play
+
+        # TODO: check for game ending
+        #if game.can_end_game():
+        #    emit_end_game(game_state, game_config, data["preview"], room_id)
+
+        # check for room removal and service stoppage
+        if len(game.players) <= 0:
+            label_pair = game.label_pair
+            games_manager.remove_room(room_id)
+
+            games_manager.label_pair_rooms[label_pair].remove(room_id)
+
+            if len(games_manager.label_pair_rooms[label_pair]) <= 0:
+                games_manager.stop_model_service(label_pair)
+                del games_manager.label_pair_rooms[label_pair]
 
 
 def emit_start_turn(game_state, room_id):
