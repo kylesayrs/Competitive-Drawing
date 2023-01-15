@@ -75,11 +75,13 @@ def make_socket_messages(socketio, game_config, games_manager):
         else:
             # resume game if player id is valid
             if game_state.has_player(data["cachedPlayerId"]):
+                game_state.assign_player_sid(data["cachedPlayerId"], request.sid)
                 emit_start_game(game_state, room_id)
                 emit("assign_player", {
                     "playerId": data["cachedPlayerId"]
                 })
                 emit_start_turn(game_state, room_id)
+                # TODO: what if we're resuming an ended game?
 
             else:
                 print(
@@ -115,7 +117,8 @@ def make_socket_messages(socketio, game_config, games_manager):
 
     @socketio.on("disconnect")
     def disconnect():
-        games_manager.remove_player_from_game_room(request.sid)
+        print(f"Disconnection: {request.sid}")
+        games_manager.delayed_remove_player(request.sid)
 
 
 def emit_start_turn(game_state, room_id):

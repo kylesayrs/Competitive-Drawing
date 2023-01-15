@@ -49,6 +49,12 @@ export class DrawingBoard {
         this.canvas.onmousemove = this.onMouseMove.bind(this)
         this.canvas.onmouseup = this.onMouseEnd.bind(this)
         this.canvas.onmouseout = this.onMouseEnd.bind(this)
+        /*
+        this.canvas.addEventListener("touchstart", this.canvas.onmousedown, false)
+        this.canvas.addEventListener("touchmove", this.canvas.onmousemove, false)
+        this.canvas.addEventListener("touchend", this.canvas.onmouseup, false);
+        this.canvas.addEventListener("touchcancel", this.canvas.onmouseout, false);
+        */
 
         this.afterMouseEnd = null
         this.afterMouseMove = null
