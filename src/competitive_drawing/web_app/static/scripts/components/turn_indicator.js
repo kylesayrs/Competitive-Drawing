@@ -23,7 +23,7 @@ export class TurnIndicator {
 
     set turnsLeft(newTurnsLeft) {
         this._turnsLeft = newTurnsLeft
-        this.turnsLeftIndicator.innerHTML = newTurnsLeft
+        this.turnsLeftIndicator.innerHTML = "Turns left: " + newTurnsLeft
     }
 
     get currentTurnTarget() {
@@ -32,7 +32,7 @@ export class TurnIndicator {
 
     set currentTurnTarget(newTurnTarget) {
         this._currentTurnTarget = newTurnTarget
-        this.playerTurnIndicator.innerHTML = "Turn: " + newTurnTarget
+        this.playerTurnIndicator.innerHTML = newTurnTarget + "'s turn"
     }
 
     update(turnsLeft, newTurnTarget) {

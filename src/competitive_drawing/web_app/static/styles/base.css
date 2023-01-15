@@ -120,3 +120,11 @@ div#distance-bottom {
     background: linear-gradient(#303030, #000000);
     transition: 0.1s ease;
 }
+
+p#turns-left-indicator {
+    font-size: 40px
+}
+
+p#player-turn-indicator {
+    font-size: 30px
+}
