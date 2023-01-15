@@ -91,6 +91,7 @@ p#left-confidence-label {
     left: 2%;
     top: 20%;
     margin: auto;
+    text-shadow: 0 0 5px white;
 }
 
 p#right-confidence-label {
@@ -98,6 +99,7 @@ p#right-confidence-label {
     right: 2%;
     top: 20%;
     margin: auto;
+    text-shadow: 0 0 5px white;
 }
 
 div#distance-bar {
