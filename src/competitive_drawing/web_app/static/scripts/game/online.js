@@ -37,6 +37,16 @@ export class OnlineGame extends GameBase {
             this.myTurn = true
             this.drawingBoard.enabled = true
             this.distanceIndicator.resetDistance()
+
+            Toastify({
+                text: "Your turn",
+                duration: 3000,
+                className: "info",
+                gravity: "toastify-top",
+                style: {
+                    background: "linear-gradient(to right, #2ec1cc, #0074d9)",
+                }
+            }).showToast();
         } else {
             this.myTurn = false
             this.drawingBoard.enabled = false

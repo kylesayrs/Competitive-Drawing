@@ -110,6 +110,16 @@ export class SinglePlayerGame extends GameBase {
         await this.drawingBoard.updatePreview()
         const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
         this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex, this.roomId)
+
+        Toastify({
+            text: "AI is computing, please wait...",
+            duration: 3000,
+            className: "info",
+            gravity: "toastify-top",
+            style: {
+                background: "linear-gradient(to right, #00b09b, #96c93d)",
+            }
+        }).showToast();
     }
 
 
