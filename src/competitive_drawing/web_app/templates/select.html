@@ -11,19 +11,31 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
     </head>
     <body>
-        <!--a href="/free_draw">
-            <button id="freeDrawButton">Free Draw</button>
-        </a-->
-        <a href="/local">
-            <button id="localGameButton">Local Game</button>
+        <a href="/">
+            <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
         </a>
-        <a href="/single_player">
-            <button id="singlePlayerButton">Play Against AI</button>
-        </a>
-        <a href="/online">
-            <button id="onlineButton">Multiplayer</button>
-        </a>
-        
+
+        <div style="left:50%; position: fixed; transform: translateX(-50%)">
+            <a href="/tutorial">
+                <button id="tutorialButton">Tutorial</button>
+            </a>
+            <!--a>
+                <button disabled id="freeDrawButton">Free Draw (disabled)</button>
+            </a-->
+            <a href="/local">
+                <button id="localGameButton">Local Game</button>
+            </a>
+            <a href="/single_player">
+                <button id="singlePlayerButton">
+                    Play Against AI
+                    <img src="static/assets/experimental.png" style="height: 20px; vertical-align: sub;">
+                </button>
+            </a>
+            <a href="/online">
+                <button id="onlineButton">Online Multiplayer</button>
+            </a>
+        </div>
+
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
         <script type="module" src="{{url_for('static', filename='scripts/select.js')}}"></script>

@@ -1,0 +1,48 @@
+<!-- tutorial.html -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Competitive Drawing</title>
+        <!-- TODO meta property="og:image" content="mycustomimage.png"-->
+        <link rel="shortcut icon" href="{{ url_for('static', filename='assets/flavicons/favicon.ico') }}">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/base.css') }}">
+    </head>
+    <body style="background: rgb(250, 245, 231)">
+        <a href="/">
+            <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
+        </a>
+
+        <p align="center" style="margin-top: 5%">
+            <img
+                src="static/assets/cactus_candle.gif"
+                alt="Cactus Vs Candle"
+                width="40%"
+                style="left: 50%; border: 5px solid black"
+            />
+
+            <p align="center" style="text-align: center; margin-left: 20%; margin-right: 20%">
+                Competitive drawing is a game where players compete to draw differing
+                prompts on a shared canvas. The winner is judged by a artificial intelligence
+                trained on Google's <a href="https://quickdraw.withgoogle.com/data">Quickdraw Dataset</a>.
+            </p>
+
+            <p align="center" style="text-align: left; margin-top: 3%; margin-left: 20%; margin-right: 20%">
+                Each turn you can draw on the canvas to make the image look more like your
+                prompt (if my prompt was "cat", then I would draw whiskers). The black bar
+                on the left show how much ink you have left before your turn is over. When
+                you are done with your turn, press the blue "End Turn" button to the right
+                of the canvas.
+            </p>
+
+            <p align="center" style="text-align: left; margin-top: 3%; margin-left: 20%; margin-right: 20%">
+                As your draw, an AI will judge the canvas and determine how much it resembles
+                your prompt. Many prompts have special features that make them unique that
+                the AI is extra likely to pay attention to (if you're drawing a bunny, make
+                sure it has big ears!) Once there are no turns left, the person with the
+                higher score wins!
+            </p>
+        </p>
+    </body>
+</html>

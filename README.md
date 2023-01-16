@@ -2,7 +2,7 @@
 A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
 
 <p align="center">
-<img src="repo_assets/clock_spider.gif" alt="Competitive Drawing Logo"/>
+<img src="repo_assets/cactus_candle.gif" alt="Competitive Drawing Logo"/>
 </p>
 
 ## Set-up ##

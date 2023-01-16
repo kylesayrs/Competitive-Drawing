@@ -9,11 +9,15 @@ NUM_COLUMNS = 18
 BORDER = 30
 RAND_PLACEMENT = False
 OUTFILE_PATH = "background.png"
+SEED = 42
 
 STROKE_COLOR = [0, 0, 0]
 BACKGROUND_COLOR = [229, 245, 251]
 
 if __name__ == "__main__":
+    # seed randomness
+    random.seed(SEED)
+
     # read images
     images = []
     total_num_samples = NUM_ROWS * NUM_COLUMNS

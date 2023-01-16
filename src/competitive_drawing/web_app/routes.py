@@ -18,6 +18,10 @@ def make_routes_blueprint(app, game_config, games_manager):
         return render_template("select.html")
 
 
+    @routes.route("/tutorial", methods=["GET"])
+    def tutorial():
+        return render_template("tutorial.html")
+
     @routes.route("/free_draw", methods=["GET"])
     def free_draw():
         return render_template("free_draw.html", game_config=game_config)
