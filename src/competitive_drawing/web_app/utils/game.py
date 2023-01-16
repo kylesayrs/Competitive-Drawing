@@ -129,7 +129,7 @@ class Game:
         ]
 
     def can_end_game(self):
-        return self.turns_left <= 0 or self.players <= 1
+        return self.turns_left <= 0# or self.players <= 1
 
 
     def assign_player_sid(self, player_id, new_sid):
