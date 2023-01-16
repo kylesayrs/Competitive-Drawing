@@ -14,27 +14,7 @@
         <a href="/">
             <img id="home-button" src="static/assets/logo.png" alt="Competitive Drawing">
         </a>
-
-        <div style="left:50%; position: fixed; transform: translateX(-50%)">
-            <a href="/tutorial">
-                <button id="tutorialButton">Tutorial</button>
-            </a>
-            <!--a>
-                <button disabled id="freeDrawButton">Free Draw (disabled)</button>
-            </a-->
-            <a href="/local">
-                <button id="localGameButton">Local Game</button>
-            </a>
-            <a href="/single_player">
-                <button id="singlePlayerButton">
-                    Play Against AI
-                    <img src="static/assets/experimental.png" style="height: 20px; vertical-align: sub;">
-                </button>
-            </a>
-            <a href="/online">
-                <button id="onlineButton">Online Multiplayer</button>
-            </a>
-        </div>
+        {% include "components/game-selector.html" %}
 
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
