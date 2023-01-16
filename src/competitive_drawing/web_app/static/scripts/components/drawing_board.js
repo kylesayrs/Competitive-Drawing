@@ -49,12 +49,10 @@ export class DrawingBoard {
         this.canvas.onmousemove = this.onMouseMove.bind(this)
         this.canvas.onmouseup = this.onMouseEnd.bind(this)
         this.canvas.onmouseout = this.onMouseEnd.bind(this)
-        /*
         this.canvas.addEventListener("touchstart", this.canvas.onmousedown, false)
         this.canvas.addEventListener("touchmove", this.canvas.onmousemove, false)
         this.canvas.addEventListener("touchend", this.canvas.onmouseup, false);
-        this.canvas.addEventListener("touchcancel", this.canvas.onmouseout, false);
-        */
+        this.canvas.addEventListener("touchcancel", this.canvas.onmouseup, false);
 
         this.afterMouseEnd = null
         this.afterMouseMove = null
@@ -73,12 +71,15 @@ export class DrawingBoard {
     }
 
 
-    getMousePosition(mouseEvent) {
+    getMousePosition(event) {
+        const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+        const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY
+
         const canvasBoundingRect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / canvasBoundingRect.width
         const scaleY = this.canvas.height / canvasBoundingRect.height
-        const canvasX = mouseEvent.clientX - canvasBoundingRect.left
-        const canvasY = mouseEvent.clientY - canvasBoundingRect.top
+        const canvasX = clientX - canvasBoundingRect.left
+        const canvasY = clientY - canvasBoundingRect.top
         const mouseX = canvasX * scaleX;
         const mouseY = canvasY * scaleY;
         return { mouseX, mouseY };
@@ -206,15 +207,15 @@ export class DrawingBoard {
     }
 
 
-    onMouseDown(mouseEvent) {
+    onMouseDown(event) {
         if (this._distanceIndicator == null || this._distanceIndicator.distanceRemaining > 1) {
-            this._mouseDown(mouseEvent)
+            this._mouseDown(event)
         }
     }
 
 
-    _mouseDown(mouseEvent) {
-        let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
+    _mouseDown(event) {
+        let { mouseX, mouseY } = this.getMousePosition(event);
 
         // send socket, then move
         this.canvasContext.beginPath();
@@ -226,7 +227,7 @@ export class DrawingBoard {
     }
 
 
-    onMouseEnd(_mouseEvent) {
+    onMouseEnd(_event) {
         this.mouseHolding = false;
         if (this.afterMouseEnd) {
             this.afterMouseEnd()
@@ -234,15 +235,15 @@ export class DrawingBoard {
     }
 
 
-    onMouseMove(mouseEvent) {
+    onMouseMove(event) {
         if (this.enabled && this.mouseHolding) {
-            this._moveMouse(mouseEvent)
+            this._moveMouse(event)
         }
     }
 
 
-    _moveMouse(mouseEvent) {
-        let { mouseX, mouseY } = this.getMousePosition(mouseEvent);
+    _moveMouse(event) {
+        let { mouseX, mouseY } = this.getMousePosition(event);
         let strokeDistance = Math.hypot(mouseX - this.lastMouseX, mouseY - this.lastMouseY)
 
         // if overreach, interpolate on line to match remaining distance

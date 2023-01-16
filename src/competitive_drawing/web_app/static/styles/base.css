@@ -10,6 +10,17 @@ img#home-button {
     height: 100px;
 }
 
+div#game-selector {
+    top: 0px;
+    left:50%;
+    position: absolute;
+    transform: translateX(-50%);
+
+    overflow: auto;
+    white-space: nowrap;
+    display: inline-block;
+}
+
 div#game-controls {
     display: grid;
     align-items: center;
@@ -37,12 +48,14 @@ canvas#draw {
     border: 5px solid #000000;
     width: 100%;
     height: 100%;
+    touch-action: none;
 }
 
 canvas#preview {
     border: 5px solid #000000;
     width: 100%;
     aspect-ratio: 1 / 1;
+    touch-action: none;
 }
 
 div#confidence-chart {
