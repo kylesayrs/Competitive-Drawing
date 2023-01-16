@@ -12,6 +12,7 @@ _deps = [
     "tqdm",
     "wandb",
     "boto3",
+    "simple-websocket"
 ]
 
 setup(
