@@ -13,12 +13,11 @@ def make_routes_blueprint(app, game_config, games_manager):
 
     @routes.route("/", methods=["GET"])
     def home():
-        return redirect("/select")
+        return redirect("/tutorial")
 
     @routes.route("/select", methods=["GET"])
     def select():
         return render_template("select.html")
-
 
     @routes.route("/tutorial", methods=["GET"])
     def tutorial():
