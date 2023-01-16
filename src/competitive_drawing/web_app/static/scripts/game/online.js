@@ -23,7 +23,7 @@ export class OnlineGame extends GameBase {
         this.distanceIndicator.emptyDistance()
 
         Toastify({
-            text: "Waiting for game...",
+            text: "Waiting for other players to join...",
             duration: 5000,
             className: "info",
             gravity: "top",
