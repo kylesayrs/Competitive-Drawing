@@ -77,7 +77,7 @@ export class SinglePlayerGame extends GameBase {
             this.drawingBoard.enabled = false
             this.distanceIndicator.resetDistance()
             this.turnIndicator.hideEndTurnButton()
-            
+
             if (!this.aiInferenceMutex) {
                 this.aiInferenceMutex = true
                 this.serverInferAIStroke()
@@ -125,7 +125,7 @@ export class SinglePlayerGame extends GameBase {
         this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex, this.roomId)
 
         Toastify({
-            text: "AI is computing, please wait...",
+            text: "AI is computing (~60 seconds)...",
             duration: 10000,
             className: "info",
             gravity: "toastify-top",
