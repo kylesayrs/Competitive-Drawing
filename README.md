@@ -1,5 +1,5 @@
-# Competitive Drawing
-A game where players compete to draw differing prompts on a shared canvas, as judged by a computer vision model
+# What if Drawing was a Competition?
+Competitive Drawing is a game where players compete to draw two different prompts on the same shared canvas. The winner is determined by a artificial intelligence trained on Google's [Quickdraw Dataset](https://quickdraw.withgoogle.com/data)
 
 <p align="center">
 <img src="repo_assets/cactus_candle.gif" alt="Competitive Drawing Logo"/>

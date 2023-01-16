@@ -11,6 +11,7 @@ _deps = [
     "torch",
     "tqdm",
     "wandb",
+    "boto3",
 ]
 
 setup(
