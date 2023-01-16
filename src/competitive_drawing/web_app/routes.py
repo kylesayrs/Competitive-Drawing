@@ -1,6 +1,8 @@
-import os
-from flask import Blueprint, render_template, redirect, request
+from flask import Blueprint, render_template, redirect, request, Response
 from flask_socketio import emit
+
+import os
+import requests
 
 from .utils.game import GameType
 from competitive_drawing import Settings
@@ -57,13 +59,36 @@ def make_routes_blueprint(app, game_config, games_manager):
     @routes.route("/infer", methods=["POST"])
     def infer():
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
-        return redirect(f"{model_service_base}/infer", code=307)
+        service_response = requests.post(
+            f"{model_service_base}/infer",
+            headers={"Content-Type": "application/json"},
+            data=request.get_data(),
+        )
+
+        excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
+        service_headers = [
+            (k,v) for k,v in service_response.raw.headers.items()
+            if k.lower() not in excluded_headers
+        ]
+
+        return Response(service_response.content, service_response.status_code, service_headers)
 
     @routes.route("/infer_stroke", methods=["POST"])
     def infer_stroke():
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
-        return redirect(f"{model_service_base}/infer_stroke", code=307)
+        service_response = requests.post(
+            f"{model_service_base}/infer_stroke",
+            headers={"Content-Type": "application/json"},
+            data=request.get_data(),
+        )
 
+        excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
+        service_headers = [
+            (k,v) for k,v in service_response.raw.headers.items()
+            if k.lower() not in excluded_headers
+        ]
+
+        return Response(service_response.content, service_response.status_code, service_headers)
 
     @routes.route("/ai_stroke", methods=["POST"])
     def ai_stroke():
