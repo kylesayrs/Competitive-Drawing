@@ -57,14 +57,16 @@ class CurveGraphic2d(torch.nn.Module):
             else b_curve_precomputations
         )
 
-        return min([torch.norm(p - sample_point) for sample_point in sample_points])
+        distances = torch.norm(p - sample_points.reshape((-1, 2)), dim=1)
+
+        return torch.min(distances, dim=0).values
 
 
     def forward(self, inputs: List[torch.tensor]):
         # prepare canvas and key_points
-        canvas = self._canvas.clone()
+        canvas = self._canvas.repeat(inputs.shape[0], 1, 1)
         canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
-        key_points = [input * canvas_shape_tensor for input in inputs]
+        key_points = inputs * canvas_shape_tensor[None, None, :]
 
         # precompute some values
         b_curve_precomputations = self.get_bezier_curve_precomputations(key_points)
@@ -80,12 +82,13 @@ class CurveGraphic2d(torch.nn.Module):
                 )
 
                 if distance < self.width:
-                    canvas[y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
+                    print(f"Draw! {distance}")
+                    canvas[:, y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
 
         return canvas
 
 
-    def get_bezier_curve_precomputations(self, key_points: List[torch.tensor]):
+    def get_bezier_curve_precomputations(self, key_points: torch.tensor):
         bezier_curve = BezierCurve(
             key_points,
             sample_method=self.sample_method,
@@ -94,7 +97,10 @@ class CurveGraphic2d(torch.nn.Module):
 
         sample_ts = get_uniform_ts(self.num_samples)
 
-        sample_points = [bezier_curve.sample(sample_t) for sample_t in sample_ts]
+        sample_points = torch.cat([
+            bezier_curve.sample(sample_t)
+            for sample_t in sample_ts
+        ])
 
         return sample_points
 

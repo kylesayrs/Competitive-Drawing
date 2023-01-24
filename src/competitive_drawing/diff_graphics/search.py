@@ -34,33 +34,29 @@ def grid_search_stroke(
     best_keypoints = None
 
     # TODO: parallelize
-    for grid_x in range(grid_shape[0]):
-        for grid_y in range(grid_shape[1]):
-            initial_inputs = [
-                (torch.rand(2) + torch.tensor([grid_x, grid_y])) / torch.tensor(list(grid_shape))
-                for _ in range(4)
-            ]
+    initial_inputs = torch.rand((2, 4, 2))
+    print(initial_inputs)
 
-            loss, keypoints = search_stroke(
-                base_canvas,
-                initial_inputs,
-                score_model,
-                target_index,
-                optimizer_class,
-                optimizer_kwargs,
-                max_width=max_width,
-                min_width=min_width,
-                max_aa=max_aa,
-                min_aa=min_aa,
-                max_steps=max_steps,
-                save_best=save_best,
-                draw_output=draw_output,
-                **model_kwargs,
-            )
+    loss, keypoints = search_stroke(
+        base_canvas,
+        initial_inputs,
+        score_model,
+        target_index,
+        optimizer_class,
+        optimizer_kwargs,
+        max_width=max_width,
+        min_width=min_width,
+        max_aa=max_aa,
+        min_aa=min_aa,
+        max_steps=max_steps,
+        save_best=save_best,
+        draw_output=draw_output,
+        **model_kwargs,
+    )
 
-            if save_best and loss < best_loss:
-                best_loss = loss
-                best_keypoints = keypoints
+    if save_best and loss < best_loss:
+        best_loss = loss
+        best_keypoints = keypoints
 
     if DEBUG:
         print(f"best_loss: {best_loss}")
@@ -117,6 +113,7 @@ def search_stroke(
 
         # forward
         canvas_with_graphic, score = model()
+        print(canvas_with_graphic.shape)
 
         # backwards and optimize
         target_score = torch.tensor(1.0, dtype=torch.float32, device=DEVICE)

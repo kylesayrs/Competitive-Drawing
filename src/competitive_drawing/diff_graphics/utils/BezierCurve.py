@@ -3,50 +3,46 @@ from typing import List
 import torch
 import numpy
 
-from .helpers import get_uniform_ts, cumulative_sum, bernstein_polynomial
+from .helpers import get_uniform_ts, bernstein_polynomial
 
 
 class BezierCurve():
     def __init__(
         self,
-        key_points: List[torch.tensor],
+        key_points: torch.tensor, # shape = (num_batches, num_key_points, 2)
         sample_method: str = "uniform",
         num_approximations: int = 20
     ):
         self.key_points = key_points
         self.sample_method = sample_method
         self.num_approximations = num_approximations
-        self._device = key_points[0].data.device
+        self._device = key_points.data.device
 
         self._approx_ts = get_uniform_ts(num_approximations)
-        self._approx_points = [
+        self._approx_points = torch.cat([
             self._sample_directly(approx_t)
             for approx_t in self._approx_ts
-        ]
-        self._approx_lengths = self._get_cumulative_distances()
-        self._approx_lengths_normalized = self._get_cumulative_distances_normalized()
+        ])
+        self._approx_lengths = self._get_cumulative_distances(self._approx_points)
+        self._approx_lengths_normalized = self._approx_lengths / self.arc_lengths
 
 
-    def _get_cumulative_distances(self):
+    def _get_cumulative_distances(self, approx_points):
         with torch.no_grad():
-            return cumulative_sum([
-                torch.norm(self._approx_points[i] - self._approx_points[i + 1])
-                for i in range(len(self._approx_points) - 1)
+            distances = torch.cat([torch.zeros(approx_points.shape[1], 1)] + [
+                torch.norm(approx_points[i] - approx_points[i + 1], dim=1, keepdim=True)
+                for i in range(len(approx_points) - 1)
             ])
-
-
-    def _get_cumulative_distances_normalized(self):
-        return torch.tensor([
-            cumulative_sum / self.arc_length()
-            for cumulative_sum in self._approx_lengths
-        ], device=self._device)
+            return torch.cumsum(distances, dim=0)
 
 
     def _sample_directly(self, t: float):
-        return sum([
-            key_point * bernstein_polynomial(len(self.key_points) - 1, key_point_i, t)
-            for key_point_i, key_point in enumerate(self.key_points)
+        coefficients = torch.tensor([
+            bernstein_polynomial(self.key_points.shape[1] - 1, key_point_i, t)
+            for key_point_i in range(self.key_points.shape[1])
         ])
+
+        return torch.sum(self.key_points * coefficients[None, :, None], dim=1, keepdim=True)
 
 
     def _sample_from_approximations(self, t: float):
@@ -81,7 +77,7 @@ class BezierCurve():
 
 
     def sample(self, t: float):
-        if self.sample_method == "uniform_t":
+        if True:#self.sample_method == "uniform_t":
             return self._sample_directly(t)
 
         elif self.sample_method == "uniform":
@@ -91,8 +87,9 @@ class BezierCurve():
             raise ValueError(f"Unknown sampling method {self.sample_method}")
 
 
-    def arc_length(self):
-        return float(self._approx_lengths[-1])
+    @property
+    def arc_lengths(self):
+        return self._approx_lengths[-1]
 
 
     def truncate(self, normed_t: float):
