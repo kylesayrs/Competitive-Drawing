@@ -2,7 +2,7 @@ import cv2
 import torch
 
 from competitive_drawing.diff_graphics.utils.load_score_model import load_score_model
-from .search import search_stroke, grid_search_stroke
+from competitive_drawing.diff_graphics.search import search_stroke, grid_search_stroke
 
 
 if __name__ == "__main__":
@@ -12,9 +12,11 @@ if __name__ == "__main__":
     base_canvas = torch.tensor(base_canvas / 255)
 
     score_model = load_score_model("assets/camera-coffee cup.pth")
+    #print(score_model.parameters())
+    #exit(0)
 
     optimizer_kwargs = {
-        "lr": 0.02
+        "lr": 0.08
     }
 
     target_index = 0
@@ -49,7 +51,7 @@ if __name__ == "__main__":
             min_width=1.5,
             max_aa=0.35,
             min_aa=0.9,
-            max_steps=100,
+            max_steps=50,
             save_best=True,
             draw_output=True,
             max_length=max_length,

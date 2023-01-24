@@ -10,12 +10,13 @@ if __name__ == "__main__":
     base_canvas = cv2.imread("assets/box.png", cv2.IMREAD_GRAYSCALE)
     base_canvas = torch.tensor(base_canvas / 255)
 
-    initial_inputs = [
-        torch.tensor([0.6140, 0.3890]),
-        torch.tensor([0.5048, 0.4737]),
-        torch.tensor([0.3519, 0.5020]),
-        torch.tensor([0.5758, 0.4939])
-    ]
+    initial_inputs = torch.tensor([
+        [0.6140, 0.3890],
+        [0.5048, 0.4737],
+        [0.3519, 0.5020],
+        [0.5758, 0.4939]
+    ]).reshape(1, 4, 2)
+    initial_inputs = torch.cat([initial_inputs, initial_inputs])
 
     model = StrokeModel(
         canvas_shape,
@@ -28,6 +29,6 @@ if __name__ == "__main__":
 
     output_canvas = model()
 
-    image = draw_output_and_target(base_canvas, output_canvas)
+    image = draw_output_and_target(base_canvas, output_canvas[0] * 255)
     cv2.imshow("output and target", image)
     cv2.waitKey(0)

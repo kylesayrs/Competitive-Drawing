@@ -28,22 +28,19 @@ class StrokeModel(torch.nn.Module):
     def __init__(
         self,
         canvas_shape: Tuple[float, float],
-        initial_inputs: List[torch.Tensor],
+        initial_inputs: torch.Tensor, # shape = (num_batches, num_key_points, 2)
         max_length: float,
         **path_kwargs,
     ):
         super().__init__()
 
         # note inputs are optimized
-        self.inputs = [
-            torch.nn.Parameter(initial_key_point, requires_grad=True)
-            for initial_key_point in initial_inputs
-        ]
+        self.inputs = torch.nn.Parameter(initial_inputs, requires_grad=True)
         self.max_length = max_length
         self._device = "cpu"
 
         # path rendering
-        if len(self.inputs) == 1:
+        if self.inputs.shape[1] == 1:
             point_kwargs = {
                 kwarg: path_kwargs[kwarg]
                 for kwarg in path_kwargs
@@ -51,7 +48,7 @@ class StrokeModel(torch.nn.Module):
             }
             self.graphic = PointGraphic2d(canvas_shape, **point_kwargs)
 
-        if len(self.inputs) == 2:
+        if self.inputs.shape[1] == 2:
             line_kwargs = {
                 kwarg: path_kwargs[kwarg]
                 for kwarg in path_kwargs
@@ -59,19 +56,13 @@ class StrokeModel(torch.nn.Module):
             }
             self.graphic = LineGraphic2d(canvas_shape, **line_kwargs)
 
-        if len(self.inputs) >= 3:
+        if self.inputs.shape[1] >= 3:
             self.graphic = CurveGraphic2d(canvas_shape, **path_kwargs)
-
-
-    def parameters(self):
-        """
-        Future: do this properly, something like making the parameters a module?
-        """
-        return self.inputs
 
 
     def forward(self):
         output_canvas = self.graphic(self.inputs)
+        print(output_canvas.shape)
 
         return output_canvas
 
