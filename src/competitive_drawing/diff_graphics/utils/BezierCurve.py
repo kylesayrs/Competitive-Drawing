@@ -65,8 +65,8 @@ class BezierCurve():
         """
         Subdivision algorithm
         """
-        # randomly decide which endpoint to truncate
-        truncate_left = torch.rand(1)[0] > 0.5
+        # TODO: randomly decide which endpoint to truncate
+        truncate_left = False #torch.rand(1)[0] > 0.5
         if truncate_left:
             self.key_points = list(reversed(self.key_points))
 
