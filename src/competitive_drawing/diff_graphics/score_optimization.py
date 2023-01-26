@@ -2,7 +2,8 @@ import cv2
 import torch
 
 from competitive_drawing.diff_graphics.utils.load_score_model import load_score_model
-from competitive_drawing.diff_graphics.search import search_stroke, grid_search_stroke
+from competitive_drawing.diff_graphics.search import search_strokes, grid_search_stroke
+from competitive_drawing.diff_graphics.draw_graphics import draw_keypoints
 
 
 if __name__ == "__main__":
@@ -12,15 +13,13 @@ if __name__ == "__main__":
     base_canvas = torch.tensor(base_canvas / 255)
 
     score_model = load_score_model("assets/camera-coffee cup.pth")
-    #print(score_model.parameters())
-    #exit(0)
 
     optimizer_kwargs = {
         "lr": 0.08
     }
 
     target_index = 0
-    max_length = 15.0
+    max_length = base_canvas.shape[0] / 3
     if mode == "global":
         loss, keypoints = search_stroke(
             base_canvas,
@@ -34,13 +33,12 @@ if __name__ == "__main__":
             max_aa=0.35,
             min_aa=0.9,
             max_steps=500,
-            save_best=True,
             draw_output=True,
             max_length=max_length,
         )
 
     elif mode == "grid":
-        loss, keypoints = grid_search_stroke(
+        score, keypoints = grid_search_stroke(
             base_canvas,
             (3, 3),
             score_model,
@@ -52,7 +50,6 @@ if __name__ == "__main__":
             max_aa=0.35,
             min_aa=0.9,
             max_steps=50,
-            save_best=True,
             draw_output=True,
             max_length=max_length,
         )
@@ -60,5 +57,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown mode {mode}")
 
-    print(f"loss: {loss}")
+    print(f"score: {score}")
     print(f"keypoints: {keypoints}")
+
+    draw_keypoints(base_canvas, keypoints)

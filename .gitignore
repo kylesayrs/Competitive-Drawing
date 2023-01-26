@@ -131,4 +131,9 @@ dmypy.json
 # pycharm
 .idea/
 
+# wandb
+wandb/
+
+research/
+
 !.gitignore

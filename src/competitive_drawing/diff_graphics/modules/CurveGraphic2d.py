@@ -16,17 +16,11 @@ class CurveGraphic2d(torch.nn.Module):
     def __init__(
         self,
         canvas_shape: List[int],
-        width: float = 1.0,
-        anti_aliasing_factor: str = 0.35,
         num_samples: int = 15,
-        sample_method: str = "uniform"
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
-        self.width = width
-        self.anti_aliasing_factor = anti_aliasing_factor
         self.num_samples = num_samples
-        self.sample_method = sample_method
 
         self._device = "cpu"
         self._canvas = torch.zeros(self.canvas_shape)
@@ -36,11 +30,6 @@ class CurveGraphic2d(torch.nn.Module):
 
         if self.num_samples < 3:
             raise ValueError("num_samples must be greater than 3")
-
-        if self.sample_method not in ["uniform", "uniform_t", "stochastic"]:
-            raise ValueError(
-                "sample_method must be 'uniform', 'uniform_t', or 'stochastic'"
-            )
 
 
     def sample_distance_to_path(
@@ -65,7 +54,7 @@ class CurveGraphic2d(torch.nn.Module):
         return torch.min(distances, dim=1).values
 
 
-    def forward(self, inputs: List[torch.tensor]):
+    def forward(self, inputs: List[torch.tensor], widths: List[float], aa_factors: List[float]):
         # prepare canvas and key_points
         canvas = self._canvas.repeat(inputs.shape[0], 1, 1)
         canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
@@ -84,12 +73,9 @@ class CurveGraphic2d(torch.nn.Module):
                     b_curve_precomputations=b_curve_precomputations
                 )
 
-                """
-                if distance < self.width:
-                    print(f"Draw! {distance}")
-                    canvas[:, y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
-                """
-                canvas[:, y, x] = 1 - (distances / self.width + EPSILON) ** self.anti_aliasing_factor
+                for canvas_i in range(len(canvas)):
+                    if distances[canvas_i] < widths[canvas_i]:
+                        canvas[canvas_i, y, x] = 1 - (distances[canvas_i] / widths[canvas_i] + EPSILON) ** aa_factors[canvas_i]
 
         return canvas
 
@@ -98,7 +84,6 @@ class CurveGraphic2d(torch.nn.Module):
         curves = [
             BezierCurve(
                 key_point_set,
-                sample_method=self.sample_method,
                 num_approximations=self.num_samples  # technically could be anything
             )
             for key_point_set in key_points

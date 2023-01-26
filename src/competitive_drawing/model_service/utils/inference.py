@@ -110,15 +110,13 @@ class Inferencer:
             min_width=line_width * 2,
             max_aa=0.35,
             min_aa=0.9,
-            max_steps=20,#100,
-            save_best=True,
+            max_steps=100,
             draw_output=False,
             max_length=max_length,
         )
 
         curve = BezierCurve(
             keypoints,
-            sample_method="uniform",
             num_approximations=20
         )
         stroke_samples = [

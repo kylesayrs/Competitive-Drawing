@@ -60,13 +60,14 @@ def get_label_to_train(data_dir: str, root_folder: str):
         return None
 
 
-if __name__ == "__main__":
-    label_pair = get_label_to_train("images", "static_crop_50x50")
+def main():
+    images_dir_path = os.path.join(os.path.dirname(__file__), "images")
+    label_pair = get_label_to_train(images_dir_path, "static_crop_50x50")
     while label_pair is not None:
         print(f"Training {label_pair}")
         train_model(
             label_pair,
-            "images",
+            images_dir_path,
             image_shape=(50, 50),
             num_epochs=10,
             batch_size=64,
@@ -85,6 +86,10 @@ if __name__ == "__main__":
             wandb_mode="online",
         )
 
-        label_pair = get_label_to_train("images", "static_crop_50x50")
+        label_pair = get_label_to_train(images_dir_path, "static_crop_50x50")
 
     print("Done training all models")
+
+
+if __name__ == "__main__":
+    main()

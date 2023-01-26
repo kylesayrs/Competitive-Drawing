@@ -51,14 +51,12 @@ class StrokeScoreModel(StrokeModel):
     def forward(self):
         graphic = super().forward()
         canvas_with_graphic = self.base_canvas + graphic
-        canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (1, 1, 50, 50))
-        logits, _scores = self.score_model(canvas_with_graphic)
+        canvas_with_graphic = torch.reshape(canvas_with_graphic.to(torch.float32), (-1, 1, *self.base_canvas.shape))
+        logits, scores = self.score_model(canvas_with_graphic)
 
-        scores = torch.nn.Softmax(dim=1)(logits)
+        target_scores = scores[:, self.target_index]
 
-        target_score = scores[0][self.target_index]
-
-        return canvas_with_graphic, target_score
+        return canvas_with_graphic, target_scores
 
 
     def to(self, device):
