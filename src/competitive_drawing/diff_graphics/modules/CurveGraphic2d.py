@@ -57,9 +57,12 @@ class CurveGraphic2d(torch.nn.Module):
             else b_curve_precomputations
         )
 
-        distances = torch.norm(p - sample_points.reshape((-1, 2)), dim=1)
+        distances = torch.cat([
+            torch.norm(p - curve_sample_points, dim=1)
+            for curve_sample_points in sample_points
+        ]).reshape((sample_points.shape[0], -1))
 
-        return torch.min(distances, dim=0).values
+        return torch.min(distances, dim=1).values
 
 
     def forward(self, inputs: List[torch.tensor]):
@@ -72,35 +75,45 @@ class CurveGraphic2d(torch.nn.Module):
         b_curve_precomputations = self.get_bezier_curve_precomputations(key_points)
 
         # torch doesn't implement a map function, so a single thread will do
-        for y in range(0, canvas.shape[0]):
-            for x in range(0, canvas.shape[1]):
+        for y in range(0, canvas.shape[1]):
+            for x in range(0, canvas.shape[2]):
                 p = torch.tensor([y, x], dtype=torch.float32, device=self._device)
 
-                distance = self.sample_distance_to_path(
+                distances = self.sample_distance_to_path(
                     p, key_points,
                     b_curve_precomputations=b_curve_precomputations
                 )
 
+                """
                 if distance < self.width:
                     print(f"Draw! {distance}")
                     canvas[:, y, x] = 1 - (distance / self.width + EPSILON) ** self.anti_aliasing_factor
+                """
+                canvas[:, y, x] = 1 - (distances / self.width + EPSILON) ** self.anti_aliasing_factor
 
         return canvas
 
 
     def get_bezier_curve_precomputations(self, key_points: torch.tensor):
-        bezier_curve = BezierCurve(
-            key_points,
-            sample_method=self.sample_method,
-            num_approximations=self.num_samples  # technically could be anything
-        )
+        curves = [
+            BezierCurve(
+                key_point_set,
+                sample_method=self.sample_method,
+                num_approximations=self.num_samples  # technically could be anything
+            )
+            for key_point_set in key_points
+        ]
 
         sample_ts = get_uniform_ts(self.num_samples)
 
+        # jank af
         sample_points = torch.cat([
-            bezier_curve.sample(sample_t)
-            for sample_t in sample_ts
-        ])
+            torch.cat([
+                curve.sample(sample_t)
+                for sample_t in sample_ts
+            ])
+            for curve in curves
+        ]).reshape((len(curves), -1, 2))
 
         return sample_points
 
