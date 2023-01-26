@@ -107,7 +107,6 @@ def search_strokes(
         loss = criterion(scores, target_score)
         loss.backward()
         optimizer.step()
-        #exit(0)
 
         # update graphic parameters
         model.update_width_and_anti_aliasing(scores, max_width, min_width, max_aa, min_aa)

@@ -20,7 +20,6 @@ def draw_keypoints(base_canvas, keypoints):
     output_canvas = model()
 
     image = draw_output_and_target(base_canvas, output_canvas[0])
-    cv2.imwrite("image.png", image * 255)
     cv2.imshow("output and target", image)
     cv2.waitKey(0)
 
