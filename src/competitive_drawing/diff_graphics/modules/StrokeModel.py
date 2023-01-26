@@ -30,93 +30,76 @@ class StrokeModel(torch.nn.Module):
         canvas_shape: Tuple[float, float],
         initial_inputs: torch.Tensor, # shape = (num_batches, num_key_points, 2)
         max_length: float,
-        **path_kwargs,
+        widths: List[float],
+        aa_factors: List[float],
+        **curve_kwargs,
     ):
         super().__init__()
 
         # note inputs are optimized
         self.inputs = torch.nn.Parameter(initial_inputs, requires_grad=True)
         self.max_length = max_length
+        self.widths = widths
+        self.aa_factors = aa_factors
         self._device = "cpu"
 
-        # path rendering
-        if self.inputs.shape[1] == 1:
-            point_kwargs = {
-                kwarg: path_kwargs[kwarg]
-                for kwarg in path_kwargs
-                if kwarg in ["width", "anti_aliasing_factor"]
-            }
-            self.graphic = PointGraphic2d(canvas_shape, **point_kwargs)
-
-        if self.inputs.shape[1] == 2:
-            line_kwargs = {
-                kwarg: path_kwargs[kwarg]
-                for kwarg in path_kwargs
-                if kwarg in ["width", "anti_aliasing_factor"]
-            }
-            self.graphic = LineGraphic2d(canvas_shape, **line_kwargs)
-
-        if self.inputs.shape[1] >= 3:
-            self.graphic = CurveGraphic2d(canvas_shape, **path_kwargs)
+        self.graphic = CurveGraphic2d(canvas_shape, **curve_kwargs)
 
 
     def forward(self):
-        output_canvas = self.graphic(self.inputs)
-        print(output_canvas.shape)
+        output_canvas = self.graphic(self.inputs, self.widths, self.aa_factors)
 
         return output_canvas
 
 
-    def update_graphic_width(self, new_width: float):
-        self.graphic.width = new_width
-
-
-    def update_graph_anti_aliasing_factor(self, new_factor: float):
-        self.graphic.anti_aliasing_factor = new_factor
+    def update_width_and_anti_aliasing(
+        self,
+        scores: List[float],
+        max_width: float,
+        min_width: float,
+        max_aa: float,
+        min_aa: float,
+    ):
+        with torch.no_grad():
+            self.widths = [
+                (1.0 - score) * max_width + (score * min_width)
+                for score in scores
+            ]
+            self.aa_factors = [
+                (1.0 - score) * max_aa + (score * min_aa)
+                for score in scores
+            ]
 
 
     def constrain_keypoints(self):
         """
         Make sure this is called within the context torch.no_grad()
         """
-
-        # enforce maximum length
-        canvas_shape_tensor = torch.tensor(self.graphic.canvas_shape, device=self._device)
-        key_points = [input * canvas_shape_tensor for input in self.inputs]
-
-        if len(self.inputs) == 1:
-            return  # points have no length
-
-        if len(self.inputs) == 2:
-            line_length = torch.norm(key_points[1] - key_points[0])
-            if line_length > self.max_length:
-                new_endpoint = torch.lerp(
-                    key_points[0],
-                    key_points[1],
-                    self.max_length / line_length
+        with torch.no_grad():
+            # enforce maximum length
+            canvas_shape_tensor = torch.tensor(self.graphic.canvas_shape, device=self._device)
+            key_points = [input * canvas_shape_tensor for input in self.inputs]
+            curves = [
+                BezierCurve(
+                    key_point_set,
+                    num_approximations=self.graphic.num_samples  # technically could be anything
                 )
+                for key_point_set in key_points
+            ]
 
-                self.inputs[1].data = new_endpoint.data
+            for curve_i, curve in enumerate(curves):
+                if curve.arc_length > self.max_length:
+                    curve.truncate(self.max_length / curve.arc_length)
 
-        if len(self.inputs) >= 3:
-            curve = BezierCurve(
-                key_points,
-                sample_method="uniform",
-                num_approximations=self.graphic.num_samples
-            )
-            arc_length = curve.arc_length()
-            if arc_length > self.max_length:
-                curve.truncate(self.max_length / arc_length)
-
-                new_key_points = curve.key_points
-                new_inputs = [key_point / canvas_shape_tensor for key_point in new_key_points]
-                for input, new_input in zip(self.inputs, new_inputs):
-                    input.data = new_input.data
+                    new_key_points = curve.key_points
+                    new_inputs = [key_point / canvas_shape_tensor for key_point in new_key_points]
+                    for input_i, new_input in enumerate(new_inputs):
+                        self.inputs.data[curve_i][input_i] = new_input.data
 
 
-        # clamp endpoints
-        self.inputs[0].clamp_(0.0, 1.0)
-        self.inputs[-1].clamp_(0.0, 1.0)
+            # clamp endpoints
+            self.inputs[:, 0].clamp_(0.0, 1.0)
+            self.inputs[:, -1].clamp_(0.0, 1.0)
 
 
     def to(self, device):

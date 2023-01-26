@@ -10,11 +10,9 @@ class BezierCurve():
     def __init__(
         self,
         key_points: List[torch.tensor],
-        sample_method: str = "uniform",
         num_approximations: int = 20
     ):
         self.key_points = key_points
-        self.sample_method = sample_method
         self.num_approximations = num_approximations
         self._device = key_points[0].data.device
 
@@ -39,7 +37,7 @@ class BezierCurve():
 
     def _get_cumulative_distances_normalized(self):
         return torch.tensor([
-            cumulative_sum / self.arc_length()
+            cumulative_sum / self.arc_length
             for cumulative_sum in self._approx_lengths
         ], device=self._device)
 
@@ -54,48 +52,11 @@ class BezierCurve():
         ])
 
 
-    def _sample_from_approximations(self, t: float):
-        right_index = torch.searchsorted(self._approx_lengths_normalized, t, side="right")
-        left_index = right_index - 1
-
-        # edge cases
-        if right_index <= 0:
-            return self._approx_points[0]
-        if left_index >= self.num_approximations - 1:
-            return self._approx_points[-1]
-
-        # sample by lerping
-        lerp_t = (
-            (t - self._approx_lengths_normalized[left_index]) /
-            (
-                self._approx_lengths_normalized[right_index] -
-                self._approx_lengths_normalized[left_index]
-            )
-        )
-
-        if lerp_t == 0.0:
-            return self._approx_points[left_index]
-        if lerp_t == 1.0:
-            return self._approx_points[right_index]
-
-        return torch.lerp(
-            self._approx_points[left_index],
-            self._approx_points[right_index],
-            lerp_t
-        )
-
-
     def sample(self, t: float):
-        if True:#self.sample_method == "uniform_t":
-            return self._sample_directly(t)
-
-        elif self.sample_method == "uniform":
-            return self._sample_from_approximations(t)
-
-        else:
-            raise ValueError(f"Unknown sampling method {self.sample_method}")
+        return self._sample_directly(t)
 
 
+    @property
     def arc_length(self):
         return float(self._approx_lengths[-1])
 
@@ -158,6 +119,5 @@ class BezierCurve():
 
         self.__init__(
             new_key_points,
-            sample_method=self.sample_method,
             num_approximations=self.num_approximations
         )

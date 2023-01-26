@@ -26,18 +26,12 @@ def grid_search_stroke(
     max_aa: float = 0.35,
     min_aa: float = 0.9,
     max_steps: int = 200,
-    save_best: bool = True,
     draw_output: bool = False,
     **model_kwargs,
 ):
-    best_loss = float("Inf")
-    best_keypoints = None
+    initial_inputs = torch.rand(torch.prod(torch.tensor(grid_shape)), 4, 2)
 
-    # TODO: parallelize
-    initial_inputs = torch.rand((2, 4, 2))
-    print(initial_inputs)
-
-    loss, keypoints = search_stroke(
+    score, keypoints = search_strokes(
         base_canvas,
         initial_inputs,
         score_model,
@@ -49,23 +43,18 @@ def grid_search_stroke(
         max_aa=max_aa,
         min_aa=min_aa,
         max_steps=max_steps,
-        save_best=save_best,
         draw_output=draw_output,
         **model_kwargs,
     )
 
-    if save_best and loss < best_loss:
-        best_loss = loss
-        best_keypoints = keypoints
-
     if DEBUG:
-        print(f"best_loss: {best_loss}")
-        print(f"best_keypoints: {best_keypoints}")
+        print(f"score: {score}")
+        print(f"keypoints: {keypoints}")
 
-    return best_loss, best_keypoints
+    return score, keypoints
 
 
-def search_stroke(
+def search_strokes(
     base_canvas: torch.Tensor,
     initial_inputs: Optional[List[torch.Tensor]],
     score_model: torch.nn.Module,
@@ -77,14 +66,13 @@ def search_stroke(
     max_aa: float = 0.35,
     min_aa: float = 0.9,
     max_steps: int = 200,
-    save_best: bool = True,
     draw_output: bool = False,
     **model_kwargs,
 ):
     initial_inputs = (
         initial_inputs
         if initial_inputs is not None
-        else [torch.rand(2) for _ in range(4)]
+        else torch.rand(1, 4, 2)
     )
 
     model = StrokeScoreModel(
@@ -92,8 +80,8 @@ def search_stroke(
         initial_inputs,
         score_model,
         target_index=target_index,
-        width=max_width,
-        anti_aliasing_factor=max_aa,
+        widths=[max_width for _ in range(initial_inputs.shape[0])],
+        aa_factors=[min_aa for _ in range(initial_inputs.shape[0])],
         **model_kwargs
     )
     model = model.to(DEVICE)
@@ -105,48 +93,42 @@ def search_stroke(
         model.parameters(), **optimizer_kwargs
     )
 
-    best_loss = float("Inf")
-    best_keypoints = list(model.parameters()).copy()
+    best_score = 0.0
+    best_keypoints = list(model.parameters()).copy()[0]
     for step_num in range(max_steps):
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward
-        canvas_with_graphic, score = model()
-        print(canvas_with_graphic.shape)
+        canvas_with_graphic, scores = model()
 
-        # backwards and optimize
-        target_score = torch.tensor(1.0, dtype=torch.float32, device=DEVICE)
-        loss = criterion(score, target_score)
+        # backwards, optimize, and constrain (via hook)
+        target_score = torch.full([scores.shape[0]], 1.0, dtype=torch.float32, device=DEVICE)
+        loss = criterion(scores, target_score)
         loss.backward()
         optimizer.step()
+        #exit(0)
 
-        new_width = loss.item() * max_width + (1.0 - loss.item()) * min_width
-        new_aa_factor = loss.item() * max_aa + (1.0 - loss.item()) * min_aa
-        model.update_graphic_width(new_width)
-        model.update_graph_anti_aliasing_factor(new_aa_factor)
+        # update graphic parameters
+        model.update_width_and_anti_aliasing(scores, max_width, min_width, max_aa, min_aa)
+
+        for score_i, score in enumerate(scores):
+            if score > best_score:
+                best_score = score
+                best_keypoints = list(model.parameters()).copy()[0][score_i]
 
         if DEBUG:
-            print(f"new_width: {new_width}")
-            print(f"new_aa_factor: {new_aa_factor}")
+            print(f"new_widths: {model.widths}")
+            print(f"new_aa_factors: {model.aa_factors}")
             print(f"step_num: {step_num}")
-            print(list(model.parameters()))
+            #print(list(model.parameters())[0])
+            print(f"scores: {scores.tolist()}")
+            print(f"best_score: {best_score}")
             print(f"loss: {loss.item()}")
 
-        if save_best and loss.item() < best_loss:
-            best_loss = loss.item()
-            best_keypoints = list(model.parameters()).copy()
-
         if draw_output:
-            image = draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
+            image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
             cv2.imshow("output and target", image)
             cv2.waitKey(0)
 
-        image = draw_output_and_target(canvas_with_graphic[0][0], canvas_with_graphic[0][0])
-        cv2.imwrite(f"/tmp/images/{step_num}.png", image * 255)
-
-    if save_best:
-        return best_loss, best_keypoints
-
-    else:
-        return loss.item(), list(model.parameters())
+    return best_score, best_keypoints

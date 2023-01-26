@@ -27,6 +27,7 @@ setup(
         "console_scripts": [
             "competitive_drawing.launch_model_service = competitive_drawing.model_service.app:start_app",
             "competitive_drawing.launch_web_app = competitive_drawing.web_app.app:start_app",
+            "competitive_drawing.train_all_models = competitive_drawing.train.train_all_models:main",
         ],
     },
 )
