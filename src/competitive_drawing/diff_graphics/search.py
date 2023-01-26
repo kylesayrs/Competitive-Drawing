@@ -95,21 +95,20 @@ def search_strokes(
 
     best_score = 0.0
     best_keypoints = list(model.parameters()).copy()[0]
+    scores = torch.zeros([initial_inputs.shape[0]], dtype=torch.float32, device=DEVICE)
     for step_num in range(max_steps):
-        # zero the parameter gradients
+        # zero the parameter gradients, set graphics parameters
         optimizer.zero_grad()
+        model.update_width_and_anti_aliasing(scores, max_width, min_width, max_aa, min_aa)
 
         # forward
         canvas_with_graphic, scores = model()
 
         # backwards, optimize, and constrain (via hook)
-        target_score = torch.full([scores.shape[0]], 1.0, dtype=torch.float32, device=DEVICE)
+        target_score = torch.full([initial_inputs.shape[0]], 1.0, dtype=torch.float32, device=DEVICE)
         loss = criterion(scores, target_score)
         loss.backward()
         optimizer.step()
-
-        # update graphic parameters
-        model.update_width_and_anti_aliasing(scores, max_width, min_width, max_aa, min_aa)
 
         for score_i, score in enumerate(scores):
             if score > best_score:
