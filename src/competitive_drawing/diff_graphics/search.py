@@ -2,6 +2,7 @@ from typing import Optional, List, Dict, Any, Tuple
 
 import cv2
 import torch
+import numpy
 
 from competitive_drawing.diff_graphics import StrokeScoreModel
 from .utils.helpers import make_hooked_optimizer, draw_output_and_target
@@ -11,7 +12,7 @@ DEVICE = (
     "cuda" if torch.cuda.is_available() else
     "cpu"
 )
-DEBUG = False
+DEBUG = True
 
 
 def grid_search_stroke(
@@ -29,7 +30,15 @@ def grid_search_stroke(
     draw_output: bool = False,
     **model_kwargs,
 ):
-    initial_inputs = torch.rand(torch.prod(torch.tensor(grid_shape)), 4, 2)
+    initial_inputs = torch.from_numpy(numpy.array([
+        [
+            (numpy.random.random(2) + numpy.array([grid_y, grid_x])) / numpy.array(grid_shape)
+            for _ in range(4)
+        ]
+        for grid_y in range(grid_shape[1])
+        for grid_x in range(grid_shape[0])
+    ], dtype=numpy.float32))
+
 
     score, keypoints = search_strokes(
         base_canvas,
@@ -125,8 +134,7 @@ def search_strokes(
             print(f"loss: {loss.item()}")
 
         if draw_output:
-            #image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
-            image = draw_output_and_target(base_canvas, canvas_with_graphic[0][0])
+            image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
             cv2.imshow("output and target", image)
             cv2.waitKey(0)
 
