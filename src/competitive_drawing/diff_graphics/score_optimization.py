@@ -50,7 +50,7 @@ if __name__ == "__main__":
             max_aa=0.35,
             min_aa=0.9,
             max_steps=50,
-            draw_output=True,#True,
+            draw_output=True,
             max_length=max_length,
         )
 

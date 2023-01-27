@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-import time
 import torch
 import numpy
 
