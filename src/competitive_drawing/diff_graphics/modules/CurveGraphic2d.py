@@ -57,8 +57,7 @@ class CurveGraphic2d(torch.nn.Module):
 
 
     def forward(self, inputs: List[torch.tensor], widths: List[float], aa_factors: List[float]):
-        # prepare canvas and key_points
-        canvas = self._canvas.repeat(inputs.shape[0], 1, 1)
+        # prepare canvas and key_points: TODO simplify this
         canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
         key_points = inputs * canvas_shape_tensor[None, None, :]
 
@@ -76,57 +75,31 @@ class CurveGraphic2d(torch.nn.Module):
         # allocate position array
         positions = torch.from_numpy(numpy.array([[
             [y, x]
-            for x in range(0, canvas.shape[2])
-            for y in range(0, canvas.shape[1])
+            for x in range(self.canvas_shape[1])
+            for y in range(self.canvas_shape[0])
         ]]))
 
+        # prepare tensors
         positions_repeated = positions.repeat(sample_points.shape[0], sample_points.shape[1], 1)
         sample_points_repeated = torch.repeat_interleave(sample_points, positions.shape[1], dim=1)
 
+        # compute distances between each pixel position and sample points
         distances = torch.norm(positions_repeated - sample_points_repeated, dim=2)
         distances = distances.reshape((sample_points.shape[0], sample_points.shape[1], -1))
 
+        # take the minimum distance for each position
         minimum_distances = torch.min(distances, dim=1).values
 
-        canvas_distances = minimum_distances.reshape(canvas.shape)
+        # transform distances into pixel values
+        widths = torch.tensor(widths).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
+        aa_factors = torch.tensor(aa_factors).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
 
-        widths = torch.tensor(widths)
-        aa_factors = torch.tensor(aa_factors)
-
-        #canvas_distances - widths
-        start = time.time()
-        for canvas_i in range(len(canvas)):
-            for y in range(canvas.shape[1]):
-                for x in range(canvas.shape[2]):
-                    if canvas_distances[canvas_i, y, x] < widths[canvas_i]:
-                        canvas[canvas_i, y, x] = 1 - (canvas_distances[canvas_i, y, x] / widths[canvas_i] + EPSILON) ** aa_factors[canvas_i]
-
-        #torch.min(1)
-        print(f"compute canvas values: {time.time() - start}")
-
-        return canvas
-
-
-        """
-        start = time.time()
-        for y in range(0, canvas.shape[1]):
-            for x in range(0, canvas.shape[2]):
-                p = torch.tensor([y, x], dtype=torch.float32, device=self._device)
-
-                start1 = time.time()
-                distances = self.sample_distance_to_path(
-                    p, key_points,
-                    b_curve_precomputations=b_curve_precomputations
-                )
-                print(f"compute distances: {time.time() - start1}")
-
-                start1 = time.time()
-                for canvas_i in range(len(canvas)):
-                    if distances[canvas_i] < widths[canvas_i]:
-                        canvas[canvas_i, y, x] = 1 - (distances[canvas_i] / widths[canvas_i] + EPSILON) ** aa_factors[canvas_i]
-                print(f"place distances: {time.time() - start1}")
-        print(f"place all distances: {time.time() - start}")
-        """
+        _canvas = minimum_distances / widths
+        _canvas = _canvas + EPSILON
+        _canvas = _canvas ** aa_factors
+        _canvas = 1 - _canvas
+        _canvas = torch.clamp(_canvas, 0.0, 1.0)
+        canvas = _canvas.reshape((sample_points.shape[0], *self.canvas_shape))
 
         return canvas
 

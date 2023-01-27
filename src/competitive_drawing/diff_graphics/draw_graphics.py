@@ -29,11 +29,11 @@ if __name__ == "__main__":
     base_canvas = cv2.imread("assets/box.png", cv2.IMREAD_GRAYSCALE)
     base_canvas = torch.tensor(base_canvas / 255)
 
-    initial_inputs = torch.tensor([
-        [0.6140, 0.3890],
-        [0.5048, 0.4737],
-        [0.3519, 0.5020],
-        [0.5758, 0.4939]
-    ])
+    initial_inputs = torch.tensor(
+        [[0.9360, 0.9853],
+        [0.8830, 0.8738],
+        [0.9009, 0.8216],
+        [0.9043, 0.6772]]
+    )
 
     draw_keypoints(base_canvas, initial_inputs)
