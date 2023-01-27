@@ -11,7 +11,7 @@ def get_all_local_labels(data_dir: str):
         if file_name[0] == ".": continue
 
         label_name = file_name.split(".")[0]
-        label_name.replace("-", " ")
+        label_name = label_name.replace("-", " ")
         label_names.append(label_name)
 
     return label_names
