@@ -65,18 +65,14 @@ class BezierCurve():
         """
         Subdivision algorithm
         """
-        
+
         # 50% chance to truncate from the left
         if numpy.random.randint(0, 2) == 0:
             self._approx_ts = list(reversed(self._approx_ts))
             self._approx_lengths_normalized = torch.flip(self._approx_lengths_normalized, dims=[0])
 
-
         with torch.no_grad():
-            print(self._approx_lengths_normalized)
-            print(normed_t)
             right_index = torch_search(self._approx_lengths_normalized, normed_t)
-            print(right_index)
             left_index = right_index - 1
 
             if right_index <= 0:
@@ -100,7 +96,6 @@ class BezierCurve():
                     torch.tensor(self._approx_ts[right_index], device=self._device),
                     lerp_t
                 )
-            print(real_t)
 
             degree_key_points = [self.key_points]  # first degree
             for prev_degree in range(len(self.key_points) - 1):

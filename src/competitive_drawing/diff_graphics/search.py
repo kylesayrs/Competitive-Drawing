@@ -22,18 +22,20 @@ def grid_search_stroke(
     target_index: int,
     optimizer_class: torch.optim.Optimizer,
     optimizer_kwargs: Dict[str, Any],
+    num_keypoints: int = 4,
     max_width: float = 10.0,
     min_width: float = 3.5,
     max_aa: float = 0.35,
     min_aa: float = 0.9,
     max_steps: int = 200,
+    return_best: bool = False,
     draw_output: bool = False,
     **model_kwargs,
 ):
     initial_inputs = torch.from_numpy(numpy.array([
         [
             (numpy.random.random(2) + numpy.array([grid_y, grid_x])) / numpy.array(grid_shape)
-            for _ in range(4)
+            for _ in range(num_keypoints)
         ]
         for grid_y in range(grid_shape[1])
         for grid_x in range(grid_shape[0])
@@ -47,11 +49,13 @@ def grid_search_stroke(
         target_index,
         optimizer_class,
         optimizer_kwargs,
+        num_keypoints=num_keypoints,
         max_width=max_width,
         min_width=min_width,
         max_aa=max_aa,
         min_aa=min_aa,
         max_steps=max_steps,
+        return_best=return_best,
         draw_output=draw_output,
         **model_kwargs,
     )
@@ -70,18 +74,20 @@ def search_strokes(
     target_index: int,
     optimizer_class: torch.optim.Optimizer,
     optimizer_kwargs: Dict[str, Any],
+    num_keypoints: int = 4,
     max_width: float = 10.0,
     min_width: float = 3.5,
     max_aa: float = 0.35,
     min_aa: float = 0.9,
     max_steps: int = 200,
+    return_best: bool = False,
     draw_output: bool = False,
     **model_kwargs,
 ):
     initial_inputs = (
         initial_inputs
         if initial_inputs is not None
-        else torch.rand(1, 4, 2)
+        else torch.rand(1, num_keypoints, 2)
     )
 
     model = StrokeScoreModel(
@@ -102,8 +108,8 @@ def search_strokes(
         model.parameters(), **optimizer_kwargs
     )
 
-    best_score = 0.0
-    best_keypoints = list(model.parameters()).copy()[0]
+    return_score = 0.0
+    return_keypoints = list(model.parameters()).copy()[0]
     scores = torch.zeros([initial_inputs.shape[0]], dtype=torch.float32, device=DEVICE)
     for step_num in range(max_steps):
         # zero the parameter gradients, set graphics parameters
@@ -119,17 +125,19 @@ def search_strokes(
         loss.backward()
         optimizer.step()
 
-        for score_i, score in enumerate(scores):
-            if score > best_score:
-                best_score = score
-                best_keypoints = list(model.parameters()).copy()[0][score_i]
+        best_index = torch.argmax(scores)
+        best_score = scores[best_index]
+        best_keypoints = list(model.parameters()).copy()[0][best_index]
+        if (return_best and best_score > return_score) or not return_best:
+            return_score = best_score
+            return_keypoints = best_keypoints
 
         if DEBUG:
             print(f"new_widths: {model.widths}")
             print(f"new_aa_factors: {model.aa_factors}")
             print(f"step_num: {step_num}")
             #print(list(model.parameters())[0])
-            print(f"scores: {scores.tolist()}")
+            #print(f"scores: {scores.tolist()}")
             print(f"best_score: {best_score}")
             print(f"loss: {loss.item()}")
 
@@ -138,4 +146,4 @@ def search_strokes(
             cv2.imshow("output and target", image)
             cv2.waitKey(0)
 
-    return best_score, best_keypoints
+    return return_score, return_keypoints
