@@ -11,7 +11,7 @@ DEVICE = (
     "cuda" if torch.cuda.is_available() else
     "cpu"
 )
-DEBUG = True
+DEBUG = False
 
 
 def grid_search_stroke(
@@ -125,7 +125,8 @@ def search_strokes(
             print(f"loss: {loss.item()}")
 
         if draw_output:
-            image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
+            #image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
+            image = draw_output_and_target(base_canvas, canvas_with_graphic[0][0])
             cv2.imshow("output and target", image)
             cv2.waitKey(0)
 

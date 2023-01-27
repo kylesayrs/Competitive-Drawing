@@ -1,6 +1,8 @@
 from typing import List, Optional
 
+import time
 import torch
+import numpy
 
 from competitive_drawing.diff_graphics.utils.BezierCurve import BezierCurve
 from competitive_drawing.diff_graphics.utils.helpers import get_uniform_ts
@@ -64,18 +66,67 @@ class CurveGraphic2d(torch.nn.Module):
         b_curve_precomputations = self.get_bezier_curve_precomputations(key_points)
 
         # torch doesn't implement a map function, so a single thread will do
+        # get sample points (already tensor)
+        sample_points = (
+            self.get_bezier_curve_precomputations(key_points)
+            if b_curve_precomputations is None
+            else b_curve_precomputations
+        )
+
+        # allocate position array
+        positions = torch.from_numpy(numpy.array([[
+            [y, x]
+            for x in range(0, canvas.shape[2])
+            for y in range(0, canvas.shape[1])
+        ]]))
+
+        positions_repeated = positions.repeat(sample_points.shape[0], sample_points.shape[1], 1)
+        sample_points_repeated = torch.repeat_interleave(sample_points, positions.shape[1], dim=1)
+
+        distances = torch.norm(positions_repeated - sample_points_repeated, dim=2)
+        distances = distances.reshape((sample_points.shape[0], sample_points.shape[1], -1))
+
+        minimum_distances = torch.min(distances, dim=1).values
+
+        canvas_distances = minimum_distances.reshape(canvas.shape)
+
+        widths = torch.tensor(widths)
+        aa_factors = torch.tensor(aa_factors)
+
+        #canvas_distances - widths
+        start = time.time()
+        for canvas_i in range(len(canvas)):
+            for y in range(canvas.shape[1]):
+                for x in range(canvas.shape[2]):
+                    if canvas_distances[canvas_i, y, x] < widths[canvas_i]:
+                        canvas[canvas_i, y, x] = 1 - (canvas_distances[canvas_i, y, x] / widths[canvas_i] + EPSILON) ** aa_factors[canvas_i]
+
+        #torch.min(1)
+        print(f"compute canvas values: {time.time() - start}")
+
+        return canvas
+
+
+        """
+        start = time.time()
         for y in range(0, canvas.shape[1]):
             for x in range(0, canvas.shape[2]):
                 p = torch.tensor([y, x], dtype=torch.float32, device=self._device)
 
+                start1 = time.time()
                 distances = self.sample_distance_to_path(
                     p, key_points,
                     b_curve_precomputations=b_curve_precomputations
                 )
+                print(f"compute distances: {time.time() - start1}")
 
+                start1 = time.time()
                 for canvas_i in range(len(canvas)):
                     if distances[canvas_i] < widths[canvas_i]:
                         canvas[canvas_i, y, x] = 1 - (distances[canvas_i] / widths[canvas_i] + EPSILON) ** aa_factors[canvas_i]
+                print(f"place distances: {time.time() - start1}")
+        print(f"place all distances: {time.time() - start}")
+        """
 
         return canvas
 
