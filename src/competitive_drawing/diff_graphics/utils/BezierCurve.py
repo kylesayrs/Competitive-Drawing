@@ -3,7 +3,7 @@ from typing import List
 import torch
 import numpy
 
-from .helpers import get_uniform_ts, bernstein_polynomial
+from .helpers import get_uniform_ts, bernstein_polynomial, torch_search
 
 
 class BezierCurve():
@@ -65,13 +65,18 @@ class BezierCurve():
         """
         Subdivision algorithm
         """
-        # TODO: randomly decide which endpoint to truncate
-        truncate_left = False #torch.rand(1)[0] > 0.5
-        if truncate_left:
-            self.key_points = list(reversed(self.key_points))
+        
+        # 50% chance to truncate from the left
+        if numpy.random.randint(0, 2) == 0:
+            self._approx_ts = list(reversed(self._approx_ts))
+            self._approx_lengths_normalized = torch.flip(self._approx_lengths_normalized, dims=[0])
+
 
         with torch.no_grad():
-            right_index = torch.searchsorted(self._approx_lengths_normalized, normed_t, side="right")
+            print(self._approx_lengths_normalized)
+            print(normed_t)
+            right_index = torch_search(self._approx_lengths_normalized, normed_t)
+            print(right_index)
             left_index = right_index - 1
 
             if right_index <= 0:
@@ -80,6 +85,7 @@ class BezierCurve():
             if left_index >= self.num_approximations - 1:
                 real_t = self._approx_ts[-1]
 
+            # interpolate
             else:
                 lerp_t = (
                     (normed_t - self._approx_lengths_normalized[left_index]) /
@@ -90,10 +96,11 @@ class BezierCurve():
                 )
 
                 real_t = torch.lerp(
-                    torch.tensor(self._approx_ts[left_index], device=self.key_points[0].device),
-                    torch.tensor(self._approx_ts[right_index], device=self.key_points[0].device),
+                    torch.tensor(self._approx_ts[left_index], device=self._device),
+                    torch.tensor(self._approx_ts[right_index], device=self._device),
                     lerp_t
                 )
+            print(real_t)
 
             degree_key_points = [self.key_points]  # first degree
             for prev_degree in range(len(self.key_points) - 1):
@@ -113,9 +120,6 @@ class BezierCurve():
                 degree_key_points[degree][0]
                 for degree in range(len(self.key_points))
             ]
-
-        if truncate_left:
-            self.key_points = list(reversed(self.key_points))
 
         self.__init__(
             new_key_points,

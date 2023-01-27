@@ -33,49 +33,19 @@ class CurveGraphic2d(torch.nn.Module):
             raise ValueError("num_samples must be greater than 3")
 
 
-    def sample_distance_to_path(
-        self,
-        p: torch.tensor,
-        key_points: List[torch.tensor],
-        b_curve_precomputations: Optional[List[torch.tensor]] = None,
-    ):
-        """
-        """
-        sample_points = (
-            self.get_bezier_curve_precomputations(key_points)
-            if b_curve_precomputations is None
-            else b_curve_precomputations
-        )
-
-        distances = torch.cat([
-            torch.norm(p - curve_sample_points, dim=1)
-            for curve_sample_points in sample_points
-        ]).reshape((sample_points.shape[0], -1))
-
-        return torch.min(distances, dim=1).values
-
-
     def forward(self, inputs: List[torch.tensor], widths: List[float], aa_factors: List[float]):
         # prepare canvas and key_points: TODO simplify this
         canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
         key_points = inputs * canvas_shape_tensor[None, None, :]
 
-        # precompute some values
-        b_curve_precomputations = self.get_bezier_curve_precomputations(key_points)
-
-        # torch doesn't implement a map function, so a single thread will do
-        # get sample points (already tensor)
-        sample_points = (
-            self.get_bezier_curve_precomputations(key_points)
-            if b_curve_precomputations is None
-            else b_curve_precomputations
-        )
+        # get sample points
+        sample_points = self.get_sample_points(key_points)
 
         # allocate position array
         positions = torch.from_numpy(numpy.array([[
             [y, x]
-            for x in range(self.canvas_shape[1])
             for y in range(self.canvas_shape[0])
+            for x in range(self.canvas_shape[1])
         ]]))
 
         # prepare tensors
@@ -103,7 +73,7 @@ class CurveGraphic2d(torch.nn.Module):
         return canvas
 
 
-    def get_bezier_curve_precomputations(self, key_points: torch.tensor):
+    def get_sample_points(self, key_points: torch.tensor):
         curves = [
             BezierCurve(
                 key_point_set,

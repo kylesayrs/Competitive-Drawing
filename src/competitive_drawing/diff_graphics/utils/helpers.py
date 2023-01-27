@@ -42,3 +42,7 @@ def draw_output_and_target(output_canvas: torch.tensor, target_canvas: torch.ten
     image[:, :, 2] = output * (1.0 - target)
 
     return image
+
+
+def torch_search(array, value):
+    return torch.argmin(torch.abs(array - value))

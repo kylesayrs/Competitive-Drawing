@@ -49,7 +49,7 @@ if __name__ == "__main__":
             min_width=1.5,
             max_aa=0.35,
             min_aa=0.9,
-            max_steps=50,
+            max_steps=200,
             draw_output=True,
             max_length=max_length,
         )

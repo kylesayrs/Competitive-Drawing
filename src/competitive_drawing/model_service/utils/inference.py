@@ -101,7 +101,7 @@ class Inferencer:
 
         loss, keypoints = grid_search_stroke(
             base_canvas,
-            (3, 3),
+            (5, 5),
             self.model,
             target_index,
             torch.optim.Adamax,
@@ -110,7 +110,7 @@ class Inferencer:
             min_width=line_width * 2,
             max_aa=0.35,
             min_aa=0.9,
-            max_steps=100,
+            max_steps=150,
             draw_output=False,
             max_length=max_length,
         )
