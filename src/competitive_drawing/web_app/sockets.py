@@ -112,10 +112,11 @@ def make_socket_messages(socketio, game_config, games_manager):
             return
 
         game_state.next_turn()
-        emit_start_turn(game_state, room_id)
 
         if game_state.can_end_game():
             emit_end_game(game_state, game_config, data["preview"], room_id)
+        else:
+            emit_start_turn(game_state, room_id)
 
 
     @socketio.on("disconnect")

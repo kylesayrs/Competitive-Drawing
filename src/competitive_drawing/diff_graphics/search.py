@@ -12,7 +12,7 @@ DEVICE = (
     "cuda" if torch.cuda.is_available() else
     "cpu"
 )
-DEBUG = True
+DEBUG = False
 
 
 def grid_search_stroke(

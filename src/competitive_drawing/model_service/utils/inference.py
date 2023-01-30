@@ -20,9 +20,12 @@ DEVICE = (
     "cuda" if torch.cuda.is_available() else
     "cpu"
 )
+DEBUG = False
 
 class Inferencer:
     def __init__(self, model_class, state_dict):
+        self._model_class = model_class
+        self._state_dict = state_dict
         self._model = self.load_model(model_class, state_dict)
         self.cam = XGradCAM(
             model=self._model,
@@ -99,10 +102,11 @@ class Inferencer:
     ):
         base_canvas = self.convert_image_to_input(image)[0][0]
 
+        tmp_target_model = self.load_model(self._model_class, self._state_dict)
         loss, keypoints = grid_search_stroke(
             base_canvas,
             (5, 5),
-            self.model,
+            tmp_target_model,
             target_index,
             torch.optim.Adamax,
             { "lr": 0.03 },
@@ -115,17 +119,17 @@ class Inferencer:
             draw_output=False,
             max_length=max_length,
         )
+        del tmp_target_model
 
-        curve = BezierCurve(
-            keypoints,
-            num_approximations=20
-        )
+        curve = BezierCurve(keypoints, num_approximations=20)
         stroke_samples = [
             curve.sample(t).cpu().detach().tolist()
             for t in get_uniform_ts(20)
         ]
 
-        print(f"stroke_samples: {stroke_samples}")
+        if DEBUG:
+            print(f"stroke_samples: {stroke_samples}")
+
         return stroke_samples
 
 

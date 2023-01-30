@@ -40,7 +40,7 @@ class StrokeScoreModel(StrokeModel):
 
         self.base_canvas = base_canvas.to(torch.float32)
         self.score_model = score_model.float()
-        self.score_model.eval()
+        self.score_model.train()
         self.target_index = target_index
 
         # freeze score model
