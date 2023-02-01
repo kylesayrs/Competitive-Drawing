@@ -72,8 +72,8 @@ export class DrawingBoard {
 
 
     getMousePosition(event) {
-        const clientX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
-        const clientY = event instanceof TouchEvent ? event.touches[0].clientY : event.clientY
+        const clientX = (window.TouchEvent && event instanceof TouchEvent) ? event.touches[0].clientX : event.clientX
+        const clientY = (window.TouchEvent && event instanceof TouchEvent) ? event.touches[0].clientY : event.clientY
 
         const canvasBoundingRect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / canvasBoundingRect.width
