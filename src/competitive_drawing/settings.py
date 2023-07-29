@@ -23,8 +23,8 @@ class Settings:
 
     S3_MODELS_BUCKET="competitive-drawing-models-prod"
     S3_MODELS_ROOT_FOLDER="static_crop_50x50"
-    S3_MODEL_URL_DURATION=108000  # 30 minutes in seconds
-    S3_MODEL_DURATION=108000  # 30 minutes in seconds
+    S3_MODEL_URL_DURATION=108000  # 30 minutes
+    S3_MODEL_DURATION=108000  # 30 minutes
 
     PAGE_REFRESH_BUFFER_TIME=2.0  # a client has 2 seconds to reconnect after a disconnect
 
