@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Union
 
 import torch
 import numpy
@@ -18,12 +18,13 @@ class CurveGraphic2d(torch.nn.Module):
         self,
         canvas_shape: List[int],
         num_samples: int = 15,
+        device: Union[torch.device, str] = "cpu"
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
         self.num_samples = num_samples
 
-        self._device = "cpu"
+        self._device = device
         self._canvas = torch.zeros(self.canvas_shape)
         self.max_distance = torch.norm(
             torch.tensor(canvas_shape) - torch.tensor([0.0, 0.0])

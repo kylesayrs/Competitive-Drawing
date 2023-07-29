@@ -5,7 +5,7 @@ from competitive_drawing import Settings
 
 
 class EnvironmentConfig(BaseModel):
-    image_shape: Tuple[int, int] = Field(default=(50, 50))
+    image_size: Tuple[int, int] = Field(default=Settings.get("IMAGE_SIZE", 50))
     max_steps: int = Field(default=10)
 
     num_bezier_key_points: int = Field(default=4)
