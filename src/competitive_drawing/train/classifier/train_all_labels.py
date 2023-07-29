@@ -4,7 +4,7 @@ import random
 import itertools
 
 from competitive_drawing.train.utils import get_all_local_labels
-from competitive_drawing.train.train_model import train_model
+from competitive_drawing.train.classifier import train_model
 
 
 S3_CLIENT = boto3.client("s3")

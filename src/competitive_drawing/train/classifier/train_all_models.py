@@ -4,7 +4,7 @@ import random
 import itertools
 
 from competitive_drawing.train.utils import get_all_local_labels
-from competitive_drawing.train.train_model import train_model
+from competitive_drawing.train.classifier import train_model
 
 
 S3_CLIENT = boto3.client("s3")
@@ -60,7 +60,7 @@ def get_label_to_train(data_dir: str, root_folder: str):
         return None
 
 
-def main():
+if __name__ == "__main__":
     images_dir_path = os.path.join(os.path.dirname(__file__), "images")
     label_pair = get_label_to_train(images_dir_path, "static_crop_50x50")
     while label_pair is not None:
@@ -89,7 +89,3 @@ def main():
         label_pair = get_label_to_train(images_dir_path, "static_crop_50x50")
 
     print("Done training all models")
-
-
-if __name__ == "__main__":
-    main()

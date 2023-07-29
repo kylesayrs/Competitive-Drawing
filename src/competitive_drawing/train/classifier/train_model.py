@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple
 
 import os
 import numpy
@@ -10,7 +10,8 @@ from sklearn.metrics import accuracy_score
 import torch
 from timm.data import Mixup
 
-from competitive_drawing.train.utils import load_data, QuickDrawDataset, Classifier, RandomResizePad, upload_model
+from competitive_drawing.train.classifier import Classifier, upload_model
+from competitive_drawing.train.utils import load_data, QuickDrawDataset, RandomResizePad
 
 DEVICE = (
     "mps" if torch.backends.mps.is_available() else
@@ -208,8 +209,7 @@ def train_model(
 
 if __name__ == "__main__":
     train_model(
-        #["The Eiffel Tower", "The Great Wall of China"],
-        ["couch", "duck"],
+        ["cat", "house"],
         "images",
         image_shape=(50, 50),
         num_epochs=10,
@@ -225,6 +225,6 @@ if __name__ == "__main__":
         patience_threshold=0.95,
         temperature=0.05,
 
-        do_upload=True,
-        wandb_mode="online",
+        do_upload=False,
+        wandb_mode="disabled",
     )

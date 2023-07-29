@@ -1,6 +1,6 @@
 import pickle
 
-from competitive_drawing.train.utils import Classifier
+from competitive_drawing.train.classifier import Classifier
 
 if __name__ == "__main__":
     file_path = "./model.pkl"

@@ -12,7 +12,7 @@ class Settings:
     ALLOWED_ORIGIN="localhost:5001"
 
     SOFTMAX_FACTOR=2.0
-    DISTANCE_PER_TURN=30
+    DISTANCE_PER_TURN=40
     TOTAL_NUM_TURNS=10  # should be an even number for fairness
 
     CANVAS_SIZE=100
