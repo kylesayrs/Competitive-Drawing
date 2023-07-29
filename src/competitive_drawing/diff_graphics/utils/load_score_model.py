@@ -1,6 +1,6 @@
 import torch
 
-from competitive_drawing.train.utils.model import Classifier
+from competitive_drawing.train.classifier import Classifier
 
 
 def load_score_model(checkpoint_path: str):

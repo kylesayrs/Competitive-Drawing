@@ -7,7 +7,7 @@ from PIL import Image
 
 from .s3 import get_object_file_stream
 from competitive_drawing import Settings
-from competitive_drawing.train.utils.model import Classifier
+from competitive_drawing.train.classifier import Classifier
 
 
 def get_model_class():
