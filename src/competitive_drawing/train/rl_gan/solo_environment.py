@@ -29,7 +29,7 @@ class SoloEnvironment():
         self.reset()
 
 
-    def reset(self) -> None:
+    def reset(self, agent_number: int) -> None:
         self.image = torch.zeros(
             (self.config.image_size, self.config.image_size),
             dtype=torch.float32,
@@ -37,6 +37,8 @@ class SoloEnvironment():
         )
 
         self.steps_left = torch.tensor(0, dtype=int, device=self.config.device)
+
+        self.agent_number = agent_number
 
         return self.get_observation()
 

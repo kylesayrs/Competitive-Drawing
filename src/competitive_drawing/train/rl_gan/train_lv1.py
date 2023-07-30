@@ -17,37 +17,21 @@ def train_models(
     agent_two = DDPG(**agent_config.dict())
     critic = Critic(**critic_config.dict())
 
-    environment_one = make_vec_env(
+    environment = make_vec_env(
         SoloEnvironment,
         env_kwargs={
             "environment_config": environment_config,
-            "agent_number": 1,
             "critic": critic
         },
-        n_envs=training_config.n_envs
-    )
-
-    environment_two = make_vec_env(
-        SoloEnvironment,
-        env_kwargs={
-            "environment_config": environment_config,
-            "agent_number": 2,
-            "critic": critic
-        },
-        n_envs=training_config.n_envs
+        n_envs=1
     )
 
     rollout_callback = None
 
     for episode_index in training_config.num_episodes:
-        if episode_index % 2 == 0:
-            agent = agent_one
-            environment = environment_one
-        else:
-            agent = agent_two
-            environment = environment_two
+        agent = agent_one if episode_index % 2 == 0 else agent_two
 
-        environment.reset()
+        environment.reset(agent_number=(episode_index % 2) + 1)
 
         agent.collect_rollouts(
             environment,
@@ -58,7 +42,6 @@ def train_models(
             replay_buffer=agent.replay_buffer,
             log_interval=training_config.log_interval,
         )
-
         critic.collect_final_images(environment)
         
         if episode_index % training_config.episodes_per_cycle == 0:

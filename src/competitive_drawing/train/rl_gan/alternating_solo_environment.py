@@ -11,12 +11,16 @@ class AlternatingSoloEnvironment():
         self,
         environment_config: EnvironmentConfig,
         agent_number: int,
-        critic: Critic
+        critic: Critic,
+        base_image: torch.tensor,
+        steps_left: int,
     ):
         super().__init__()
         self.config = environment_config
         self.agent_number = agent_number
         self.critic = critic
+        self.base_image = base_image
+        self.steps_left = steps_left
 
         self.curve_graphic = CurveGraphic2d(
             (self.config.image_size, self.config.image_size),
@@ -26,17 +30,12 @@ class AlternatingSoloEnvironment():
 
         self.image = None
         self.steps_left = None
-        self.reset()
+        self.reset(base_image, steps_left)
 
 
-    def reset(self) -> None:
-        self.image = torch.zeros(
-            (self.config.image_size, self.config.image_size),
-            dtype=torch.float32,
-            device=self.config.device
-        )
-
-        self.steps_left = torch.tensor(0, dtype=int, device=self.config.device)
+    def reset(self, base_image: torch.tensor, steps_left: int) -> None:
+        self.image = base_image.clone()
+        self.steps_left = torch.tensor(steps_left, dtype=int, device=self.config.device)
 
         return self.get_observation()
 
@@ -78,7 +77,7 @@ class AlternatingSoloEnvironment():
     
 
     def get_reward(self) -> torch.tensor:
-        if environment_config.shaped_reward:
+        if environment_config.shaped_reward or self.is_finished():
             with torch.no_grad():
                 critic_scores = self.critic(self.image)
                 real_score = critic_scores[2 * (self.agent_number - 1)]
@@ -97,7 +96,7 @@ if __name__ == "__main__":
         max_steps=10,
         num_bezier_key_points=4
     )
-    environment_one = SoloEnvironment(environment_config)
+    environment_one = AlternatingSoloEnvironment(environment_config)
     print(environment_one.get_observation())
     environment_one.step(torch.tensor([
         0.3, 0.3,
