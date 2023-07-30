@@ -6,7 +6,7 @@ from competitive_drawing.train.rl_gan import EnvironmentConfig, Critic
 from competitive_drawing.diff_graphics import CurveGraphic2d
 
 
-class SoloEnvironment():
+class AlternatingSoloEnvironment():
     def __init__(
         self,
         environment_config: EnvironmentConfig,
@@ -78,7 +78,7 @@ class SoloEnvironment():
     
 
     def get_reward(self) -> torch.tensor:
-        if environment_config.shaped_reward or self.is_finished():
+        if environment_config.shaped_reward:
             with torch.no_grad():
                 critic_scores = self.critic(self.image)
                 real_score = critic_scores[2 * (self.agent_number - 1)]
