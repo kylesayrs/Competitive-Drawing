@@ -27,6 +27,8 @@ def train_models(
     critic = Critic(**critic_config.dict())
 
     rollout_callback = None
+    agent_one._setup_learn(0)
+    agent_two._setup_learn(0)
 
     alternating_images = None
     one_starts_first = True

@@ -10,12 +10,10 @@ class SoloEnvironment():
     def __init__(
         self,
         environment_config: EnvironmentConfig,
-        agent_number: int,
         critic: Critic
     ):
         super().__init__()
         self.config = environment_config
-        self.agent_number = agent_number
         self.critic = critic
 
         self.curve_graphic = CurveGraphic2d(
@@ -26,7 +24,7 @@ class SoloEnvironment():
 
         self.image = None
         self.steps_left = None
-        self.reset()
+        self.agent_number = None
 
 
     def reset(self, agent_number: int) -> None:
@@ -83,7 +81,7 @@ class SoloEnvironment():
         if environment_config.shaped_reward or self.is_finished():
             with torch.no_grad():
                 critic_scores = self.critic(self.image)
-                real_score = critic_scores[2 * (self.agent_number - 1)]
+                real_score = critic_scores[2 * self.agent_number]
 
         return real_score
 

@@ -1,8 +1,6 @@
 from typing import Tuple
 from pydantic import BaseModel, Field
 
-from stable_baselines3 import TrainFreq
-
 from competitive_drawing import Settings
 
 
@@ -23,10 +21,14 @@ class EnvironmentConfig(BaseModel):
 
 class TrainingConfig(BaseModel):
     num_episodes: int = Field(default=10)
-    train_frequency: TrainFreq = Field(default=TrainFreq(frequency=1, unit="episode"))
+
+    log_interval: int = Field(default=128, description="Episodes per log")
 
 
 class AgentConfig(BaseModel):
+    policy: str = Field(default="")
+    gradient_steps: int = Field(default=128)
+    batch_size: int = Field(default=128)
     pass
 
 

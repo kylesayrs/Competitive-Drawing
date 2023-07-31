@@ -1,4 +1,5 @@
-from stable_baselines3 import DDPG, make_vec_env
+from stable_baselines3 import DDPG
+from stable_baselines3.common.env_util import make_vec_env
 
 from competitive_drawing.train.rl_gan.config import (
     TrainingConfig, AgentConfig, CriticConfig, EnvironmentConfig
@@ -13,8 +14,6 @@ def train_models(
     critic_config: CriticConfig,
     environment_config: EnvironmentConfig,
 ):
-    agent_one = DDPG(**agent_config.dict())
-    agent_two = DDPG(**agent_config.dict())
     critic = Critic(**critic_config.dict())
 
     environment = make_vec_env(
@@ -26,14 +25,29 @@ def train_models(
         n_envs=1
     )
 
+    agents_dict = [
+        {
+            "agent": DDPG(
+                None
+                **agent_config.dict()
+            ),
+            "steps_before_train": 0
+        }
+        for _ in range(2)
+    ]
+
     rollout_callback = None
+    agents_dict[0]["agent"]._setup_learn(0)
+    agents_dict[1]["agent"]._setup_learn(0)
 
+    time_steps_before_train = 0
     for episode_index in training_config.num_episodes:
-        agent = agent_one if episode_index % 2 == 0 else agent_two
+        agent_number = episode_index % 2
+        agent = agents_dict[agent_number]["agent"]
 
-        environment.reset(agent_number=(episode_index % 2) + 1)
+        environment.reset(agent_number=agent_number)
 
-        agent.collect_rollouts(
+        rollout = agent.collect_rollouts(
             environment,
             train_freq=(1, "episode"),  # trick to only rollout one episode
             action_noise=agent.action_noise,
@@ -43,15 +57,17 @@ def train_models(
             log_interval=training_config.log_interval,
         )
         critic.collect_final_images(environment)
+
+        agents_dict[agent_number]["steps_before_train"] += rollout.episode_timesteps
         
         if episode_index % training_config.episodes_per_cycle == 0:
-            agent_one.train(
-                gradient_steps=agent_one.gradient_steps,
-                batch_size=agent_one.batch_size,
+            agents_dict[0]["agent"].train(
+                gradient_steps=agents_dict[0]["steps_before_train"],
+                batch_size=agents_dict[0]["agent"].batch_size,
             )
-            agent_two.train(
-                gradient_steps=agent_two.gradient_steps,
-                batch_size=agent_two.batch_size,
+            agents_dict[1]["agent"].train(
+                gradient_steps=agents_dict[1]["steps_before_train"],
+                batch_size=agents_dict[1]["agent"].batch_size,
             )
             critic.train()
 
