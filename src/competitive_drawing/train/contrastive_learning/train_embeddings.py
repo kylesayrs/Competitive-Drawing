@@ -66,14 +66,14 @@ def train_models(config: TrainingConfig):
 
     # create models and optimizers
     class_encoder = ClassEncoder(config.num_classes, config.latent_size)
-    image_encoder = ImageEncoder(config.latent_size)
+    image_encoder = ImageEncoder(config.latent_size, max_temp=config.max_temp)
 
     class_optimizer = torch.optim.Adam(class_encoder.parameters(), lr=config.class_lr)
     image_optimizer = torch.optim.Adam(image_encoder.parameters(), lr=config.image_lr)
 
     criterion = torch.nn.CrossEntropyLoss()
 
-     # train
+    # train
     print("Begin training")
     metrics = {}
     for epoch_index in range(config.num_epochs):
@@ -97,7 +97,7 @@ def train_models(config: TrainingConfig):
             image_embedding = image_encoder(images)
 
             # calculate loss
-            logits  = (image_embedding @ class_embedding.T)
+            logits  = image_embedding @ class_embedding.T
             loss = criterion(logits, labels)
             accuracy = projection_accuracy(labels, logits)
             
@@ -118,7 +118,7 @@ def train_models(config: TrainingConfig):
                     test_class_embedding = class_encoder(classes)
                     test_image_embedding = image_encoder(test_images)
 
-                    test_logits = (test_image_embedding @ test_class_embedding.T)
+                    test_logits = test_image_embedding @ test_class_embedding.T
                     test_loss = criterion(test_logits, test_labels)
 
                     test_accuracy = projection_accuracy(test_labels, test_logits)
@@ -127,7 +127,8 @@ def train_models(config: TrainingConfig):
                     "train_loss": loss.item(),
                     "train_accuracy": accuracy,
                     "test_loss": test_loss.item(),
-                    "test_accuracy": test_accuracy
+                    "test_accuracy": test_accuracy,
+                    "temperature": image_encoder.temperature.item()
                 }
 
                 print(f"[{epoch_index}, {batch_index + 1:5d}]", end=" ")

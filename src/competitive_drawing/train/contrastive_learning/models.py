@@ -13,9 +13,13 @@ class ClassEncoder(torch.nn.Module):
 
 
 class ImageEncoder(torch.nn.Module):
-    def __init__(self, latent_size: int = 128):
+    def __init__(self, latent_size: int = 128, max_temp: float = 0.0):
         super(ImageEncoder, self).__init__()
         self.latent_size = latent_size
+        self.max_temp = max_temp
+
+        if max_temp < 0.0:
+            raise ValueError("max_temp must be greater than 0.0")
 
         self.conv = torch.nn.Sequential(
             *make_conv_block(1, 32, batch_normalization=False),
@@ -31,12 +35,20 @@ class ImageEncoder(torch.nn.Module):
             #torch.nn.Linear(128, self.latent_size)
         )
 
+        self.temperature = torch.nn.Parameter(torch.min(0.07, self.max_temp))
+
 
     def forward(self, x: torch.tensor):
         x = self.conv(x)
         x = x.view(x.shape[0], -1)
         x = self.fc(x)
-        return torch.nn.functional.normalize(x, p=2)
+    
+        x = torch.nn.functional.normalize(x, p=2)
+    
+        if self.max_temp > 0.0:
+            x = x * torch.exp(torch.min(self.temperature, self.max_temp))
+
+        return x
 
 
 def make_conv_block(in_filters, out_filters, batch_normalization=True):
