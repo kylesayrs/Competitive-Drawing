@@ -16,8 +16,8 @@ from competitive_drawing.train.contrastive_learning.models import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument("checkpoint_path")
-parser.add_argument("--perplexity", type=int, default=2)
-parser.add_argument("--images_per_class", type=int, default=2)
+parser.add_argument("--perplexity", type=int, default=15)
+parser.add_argument("--images_per_class", type=int, default=15)
 
 
 def validate_models(
@@ -64,7 +64,7 @@ def validate_models(
         tsne_model = TSNE(
             n_components=2,
             learning_rate="auto",
-            init="random",
+            init="pca",
             perplexity=args.perplexity
         )
         embeddings = tsne_model.fit_transform(embeddings)

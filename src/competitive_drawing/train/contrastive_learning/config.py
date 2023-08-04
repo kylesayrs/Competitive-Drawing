@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class TrainingConfig(BaseModel):
     num_classes: int = Field(default=2)  #Field(default=345)
-    latent_size: int = Field(default=2)  #Field(default=128)
+    latent_size: int = Field(default=3)  #Field(default=128)
     max_temp: float = Field(default=100.0)
 
     images_dir: str = Field(default="images")
