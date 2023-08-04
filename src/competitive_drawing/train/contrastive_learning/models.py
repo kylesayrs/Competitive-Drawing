@@ -35,7 +35,7 @@ class ImageEncoder(torch.nn.Module):
             #torch.nn.Linear(128, self.latent_size)
         )
 
-        self.temperature = torch.nn.Parameter(torch.min(0.07, self.max_temp))
+        self.temperature = torch.nn.Parameter(torch.tensor(min(0.07, self.max_temp)))
 
 
     def forward(self, x: torch.tensor):
@@ -45,8 +45,8 @@ class ImageEncoder(torch.nn.Module):
     
         x = torch.nn.functional.normalize(x, p=2)
     
-        if self.max_temp > 0.0:
-            x = x * torch.exp(torch.min(self.temperature, self.max_temp))
+        if self.training and self.temperature > 0.0:
+            x = x * torch.exp(torch.clip(self.temperature, None, self.max_temp))
 
         return x
 

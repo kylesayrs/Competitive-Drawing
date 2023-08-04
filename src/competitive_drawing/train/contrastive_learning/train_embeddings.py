@@ -128,7 +128,7 @@ def train_models(config: TrainingConfig):
                     "train_accuracy": accuracy,
                     "test_loss": test_loss.item(),
                     "test_accuracy": test_accuracy,
-                    "temperature": image_encoder.temperature.item()
+                    "temp": image_encoder.temperature.item()
                 }
 
                 print(f"[{epoch_index}, {batch_index + 1:5d}]", end=" ")
