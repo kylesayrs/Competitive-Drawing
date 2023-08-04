@@ -5,9 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
-from competitive_drawing.train.utils import (
-    get_all_local_labels, load_data, QuickDrawDataset, RandomResizePad
-)
+from competitive_drawing.train.utils import load_data, QuickDrawDataset, RandomResizePad
 from competitive_drawing.train.contrastive_learning.models import ClassEncoder, ImageEncoder
 
 
@@ -99,7 +97,7 @@ def train_models(config: TrainingConfig):
             image_embedding = image_encoder(images)
 
             # calculate loss
-            logits  = (image_embedding @ class_embedding.T) * torch.exp(torch.tensor(config.temperature))
+            logits  = (image_embedding @ class_embedding.T)
             loss = criterion(logits, labels)
             accuracy = projection_accuracy(labels, logits)
             
@@ -120,7 +118,7 @@ def train_models(config: TrainingConfig):
                     test_class_embedding = class_encoder(classes)
                     test_image_embedding = image_encoder(test_images)
 
-                    test_logits = (test_image_embedding @ test_class_embedding.T) * torch.exp(torch.tensor(config.temperature))
+                    test_logits = (test_image_embedding @ test_class_embedding.T)
                     test_loss = criterion(test_logits, test_labels)
 
                     test_accuracy = projection_accuracy(test_labels, test_logits)

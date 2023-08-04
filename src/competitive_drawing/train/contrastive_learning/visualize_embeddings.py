@@ -24,6 +24,7 @@ def validate_models(
     config: TrainingConfig,
     args: Dict[str, Any]
 ):
+    # load data and models
     class_encoder_path = os.path.join(args.checkpoint_path, "class_encoder.pth")
     class_encoder = ClassEncoder(config.num_classes, config.latent_size)
     class_encoder.load_state_dict(torch.load(class_encoder_path))
@@ -40,6 +41,7 @@ def validate_models(
     num_classes = len(label_names)
     validation_dataset = QuickDrawDataset(all_images, all_labels, is_test=True)
 
+    # get encodings
     class_encodings = []
     image_encodings = []
 
@@ -56,6 +58,7 @@ def validate_models(
             image_encodings.append(image_encoding)
             image_labels.append(label_names[all_labels[image_index]])
 
+    # use TSNE to reduce dimensionality
     embeddings = numpy.array(class_encodings + image_encodings)
     if config.latent_size > 2:
         tsne_model = TSNE(
@@ -68,6 +71,7 @@ def validate_models(
     class_embeddings = embeddings[:len(class_encodings)]
     image_embeddings = embeddings[len(class_encodings):]
 
+    # visualize
     plt.scatter(*image_embeddings.T, color="blue")
     for point, label in zip(image_embeddings, image_labels):
         plt.annotate(label, point)
