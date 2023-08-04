@@ -13,11 +13,10 @@ from competitive_drawing.train.contrastive_learning.models import ClassEncoder, 
 
 def projection_accuracy(
     class_labels: torch.tensor,
-    image_embeddings: torch.tensor,
-    class_embeddings: torch.tensor,
+    logits: torch.tensor
 ):
     with torch.no_grad():
-        predicted = torch.argmax(image_embeddings @ class_embeddings.T, dim=1)
+        predicted = torch.argmax(logits, dim=1)
         true = torch.argmax(class_labels, dim=1)
         return accuracy_score(true, predicted)
 
@@ -100,8 +99,9 @@ def train_models(config: TrainingConfig):
             image_embedding = image_encoder(images)
 
             # calculate loss
-            logits = (image_embedding @ class_embedding.T) * torch.exp(torch.tensor(config.temperature))
+            logits  = (image_embedding @ class_embedding.T) * torch.exp(torch.tensor(config.temperature))
             loss = criterion(logits, labels)
+            accuracy = projection_accuracy(labels, logits)
             
             # optimize
             loss.backward()
@@ -123,10 +123,11 @@ def train_models(config: TrainingConfig):
                     test_logits = (test_image_embedding @ test_class_embedding.T) * torch.exp(torch.tensor(config.temperature))
                     test_loss = criterion(test_logits, test_labels)
 
-                    test_accuracy = projection_accuracy(test_labels, test_image_embedding, test_class_embedding)
+                    test_accuracy = projection_accuracy(test_labels, test_logits)
 
                 metrics = {
                     "train_loss": loss.item(),
+                    "train_accuracy": accuracy,
                     "test_loss": test_loss.item(),
                     "test_accuracy": test_accuracy
                 }

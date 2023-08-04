@@ -8,7 +8,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
-from competitive_drawing.train.utils import load_data, to_one_hot
+from competitive_drawing.train.utils import load_data, QuickDrawDataset
 from competitive_drawing.train.contrastive_learning.models import (
     ClassEncoder, ImageEncoder
 )
@@ -38,6 +38,7 @@ def validate_models(
         config.images_dir, config.image_shape, one_hot=False
     )
     num_classes = len(label_names)
+    validation_dataset = QuickDrawDataset(all_images, all_labels, is_test=True)
 
     class_encodings = []
     image_encodings = []
@@ -49,9 +50,9 @@ def validate_models(
     for label in range(num_classes):
         image_indexes = [index for index, _label in enumerate(all_labels) if _label == label]
         for image_index in image_indexes[:args.images_per_class]:
-            image = numpy.array(all_images[image_index]).reshape((1, 1, 50, 50))
+            image = validation_dataset[image_index][0].reshape((1, 1, 50, 50))
             with torch.no_grad():
-                image_encoding = image_encoder(torch.tensor(image, dtype=torch.float32))[0].tolist()
+                image_encoding = image_encoder(image)[0].tolist()
             image_encodings.append(image_encoding)
             image_labels.append(label_names[all_labels[image_index]])
 
@@ -67,12 +68,12 @@ def validate_models(
     class_embeddings = embeddings[:len(class_encodings)]
     image_embeddings = embeddings[len(class_encodings):]
 
-    plt.scatter(*class_embeddings.T, color="red")
-    for point, label in zip(class_embeddings, label_names):
-        plt.annotate(label, point)
-
     plt.scatter(*image_embeddings.T, color="blue")
     for point, label in zip(image_embeddings, image_labels):
+        plt.annotate(label, point)
+
+    plt.scatter(*class_embeddings.T, color="red")
+    for point, label in zip(class_embeddings, label_names):
         plt.annotate(label, point)
 
     plt.show()

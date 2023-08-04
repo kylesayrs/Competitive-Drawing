@@ -10,7 +10,7 @@ class TrainingConfig(BaseModel):
     image_shape: Tuple[int, int] = Field(default=(50, 50))
     resize_scale: Tuple[float, float] = Field(default=(0.2, 1.0))
 
-    temperature: float = Field(default=1.0)
+    temperature: float = Field(default=0.0)
 
     num_epochs: int = Field(default=10)
     class_lr: float = Field(default=1e-1)
