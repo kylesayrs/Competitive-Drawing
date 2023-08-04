@@ -47,5 +47,6 @@ def load_data(
     return all_images, all_labels, label_names
 
 def to_one_hot(array, num_classes):
+  array = numpy.array(array)
   one_hot = numpy.squeeze(numpy.eye(num_classes)[array.reshape(-1)])
   return numpy.array(one_hot, dtype=numpy.float32)

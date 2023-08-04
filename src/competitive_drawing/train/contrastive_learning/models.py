@@ -8,7 +8,8 @@ class ClassEncoder(torch.nn.Module):
         self.tokenizer = torch.nn.Linear(num_classes, latent_size)
 
     def forward(self, x: torch.tensor):
-        return self.tokenizer(x)
+        x = self.tokenizer(x)
+        return torch.nn.functional.normalize(x, p=2)
 
 
 class ImageEncoder(torch.nn.Module):
@@ -25,16 +26,17 @@ class ImageEncoder(torch.nn.Module):
         )
 
         self.fc = torch.nn.Sequential(
-            torch.nn.Linear(256, self.latent_size)
+            torch.nn.Linear(256, self.latent_size),
+            #torch.nn.ReLU(),
+            #torch.nn.Linear(128, self.latent_size)
         )
 
 
     def forward(self, x: torch.tensor):
         x = self.conv(x)
         x = x.view(x.shape[0], -1)
-        embedding =self.fc(x)
-
-        return embedding
+        x = self.fc(x)
+        return torch.nn.functional.normalize(x, p=2)
 
 
 def make_conv_block(in_filters, out_filters, batch_normalization=True):
