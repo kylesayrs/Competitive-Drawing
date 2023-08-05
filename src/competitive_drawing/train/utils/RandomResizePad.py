@@ -6,6 +6,9 @@ import torchvision.transforms.functional as F
 
 
 class RandomResizePad(object):
+    """
+    Randomly crop an image then pad it to its original size
+    """
     def __init__(
         self,
         size: Tuple[int, int],

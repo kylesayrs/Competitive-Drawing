@@ -1,25 +1,25 @@
+from typing import Optional
+
 import os
 import wandb
 import torch
+import argparse
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
 from competitive_drawing.train.utils import load_data, QuickDrawDataset, RandomResizePad
-from competitive_drawing.train.contrastive_learning.models import ClassEncoder, ImageEncoder
+from competitive_drawing.train.contrastive_learning.utils import (
+    load_models, get_resume_numbers, projection_accuracy
+)
 
 
-def projection_accuracy(
-    class_labels: torch.tensor,
-    logits: torch.tensor
+parser = argparse.ArgumentParser()
+parser.add_argument("--checkpoint_path", type=str, default=None)
+
+def train_models(
+    config: TrainingConfig,
+    checkpoint_path: Optional[str]
 ):
-    with torch.no_grad():
-        predicted = torch.argmax(logits, dim=1)
-        true = torch.argmax(class_labels, dim=1)
-        return accuracy_score(true, predicted)
-
-
-def train_models(config: TrainingConfig):
     # wandb config
     run = wandb.init(
         project="competitive_drawing_contrastive",
@@ -65,8 +65,7 @@ def train_models(config: TrainingConfig):
                                               shuffle=True, num_workers=0, drop_last=True)
 
     # create models and optimizers
-    class_encoder = ClassEncoder(config.num_classes, config.latent_size)
-    image_encoder = ImageEncoder(config.latent_size, max_temp=config.max_temp)
+    class_encoder, image_encoder = load_models(config, checkpoint_path)
 
     class_optimizer = torch.optim.Adam(class_encoder.parameters(), lr=config.class_lr)
     image_optimizer = torch.optim.Adam(image_encoder.parameters(), lr=config.image_lr)
@@ -75,9 +74,12 @@ def train_models(config: TrainingConfig):
 
     # train
     print("Begin training")
+    resume_epoch, resume_batch = get_resume_numbers(checkpoint_path)
     metrics = {}
     for epoch_index in range(config.num_epochs):
+        epoch_index += resume_epoch
         for batch_index, (images, labels) in enumerate(train_loader):
+            batch_index += resume_batch
             class_encoder.train()
             image_encoder.train()
 
@@ -158,5 +160,7 @@ def train_models(config: TrainingConfig):
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+
     training_config = TrainingConfig()
-    train_models(training_config)
+    train_models(training_config, args.checkpoint_path)

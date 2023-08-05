@@ -13,5 +13,10 @@ class EnvironmentConfig(BaseModel):
     num_bezier_samples: int = Field(default=15)
     bezier_width: float = Field(default=Settings.get("CANVAS_LINE_WIDTH", 1.5))
     bezier_aa_factor: int = Field(default=1.0)
+    bezier_length: float = Field(default=(
+        Settings.get("DISTANCE_PER_TURN") /
+        Settings.get("CANVAS_SIZE") *
+        Settings.get("IMAGE_SIZE")
+    ))
 
     device: str = Field(default="cpu")

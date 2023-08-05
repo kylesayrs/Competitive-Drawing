@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
 from competitive_drawing.train.utils import load_data, QuickDrawDataset
-from competitive_drawing.train.contrastive_learning.models import (
-    ClassEncoder, ImageEncoder
-)
+from competitive_drawing.train.contrastive_learning.utils import load_models
 
 
 parser = argparse.ArgumentParser()
@@ -25,14 +23,8 @@ def validate_models(
     args: Dict[str, Any]
 ):
     # load data and models
-    class_encoder_path = os.path.join(args.checkpoint_path, "class_encoder.pth")
-    class_encoder = ClassEncoder(config.num_classes, config.latent_size)
-    class_encoder.load_state_dict(torch.load(class_encoder_path))
+    class_encoder, image_encoder = load_models(config, args.checkpoint_path)
     class_encoder.eval()
-
-    image_encoder_path = os.path.join(args.checkpoint_path, "image_encoder.pth")
-    image_encoder = ImageEncoder(config.latent_size)
-    image_encoder.load_state_dict(torch.load(image_encoder_path))
     image_encoder.eval()
 
     all_images, all_labels, label_names = load_data(

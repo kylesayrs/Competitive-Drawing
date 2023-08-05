@@ -18,11 +18,13 @@ class CurveGraphic2d(torch.nn.Module):
         self,
         canvas_shape: List[int],
         num_samples: int = 15,
+        max_length: float = 80,
         device: Union[torch.device, str] = "cpu"
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
         self.num_samples = num_samples
+        self.max_length = max_length
 
         self._device = device
         self._canvas = torch.zeros(self.canvas_shape)
@@ -82,6 +84,10 @@ class CurveGraphic2d(torch.nn.Module):
             )
             for key_point_set in key_points
         ]
+
+        for curve in curves:
+            if curve.arc_length > self.max_length:
+                curve.truncate(self.max_length / curve.arc_length)
 
         sample_ts = get_uniform_ts(self.num_samples)
 
