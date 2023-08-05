@@ -2,7 +2,7 @@ from typing import Optional, Dict
 
 import torch
 
-from competitive_drawing.train.rl_gan import EnvironmentConfig
+from competitive_drawing.train.reinforcement_learning import EnvironmentConfig
 from competitive_drawing.diff_graphics import CurveGraphic2d
 
 
@@ -10,26 +10,16 @@ class SoloEnvironment():
     def __init__(
         self,
         environment_config: EnvironmentConfig,
-        base_image: Optional[torch.tensor],
-        steps_left: Optional[torch.tensor],
     ):
-        if base_image is None != steps_left is None:
-            raise ValueError("Provide both base_image and steps_left")
-
         super().__init__()
         self.config = environment_config
-        if base_image is not None:
-            self.base_image = base_image.to(self.config.device)
-        else:
-            self.base_image = torch.zeros(
-                self.config.image_shape,
-                dtype=torch.float32,
-                device=self.config.device
-            )
-        if steps_left is not None:
-            self.steps_left = steps_left.to(self.config.device)
-        else:
-            self.steps_left = torch.tensor(0, dtype=int, device=self.config.device)
+
+        self.base_image = torch.zeros(
+            self.config.image_shape,
+            dtype=torch.float32,
+            device=self.config.device
+        )
+        self.steps_left = torch.tensor(0, dtype=int, device=self.config.device)
 
         self.curve_graphic = CurveGraphic2d(
             self.config.image_shape,
