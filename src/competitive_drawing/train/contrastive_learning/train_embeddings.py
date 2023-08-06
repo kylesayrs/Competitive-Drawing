@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import Dict, Any
 
 import os
 import wandb
 import torch
 import argparse
 from sklearn.model_selection import train_test_split
+from sparseml.pytorch.optim import ScheduledModifierManager
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
 from competitive_drawing.train.utils import load_data, QuickDrawDataset, RandomResizePad
@@ -15,11 +16,10 @@ from competitive_drawing.train.contrastive_learning.utils import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_path", type=str, default=None)
+parser.add_argument("--class_recipe_path", type=str, default=None)
+parser.add_argument("--image_recipe_path", type=str, default=None)
 
-def train_models(
-    config: TrainingConfig,
-    checkpoint_path: Optional[str]
-):
+def train_models(config: TrainingConfig, args: Dict[str, Any]):
     # wandb config
     run = wandb.init(
         project="competitive_drawing_contrastive",
@@ -65,16 +65,24 @@ def train_models(
                                               shuffle=True, num_workers=0, drop_last=True)
 
     # create models and optimizers
-    class_encoder, image_encoder = load_models(config, checkpoint_path)
+    class_encoder, image_encoder = load_models(config, args.checkpoint_path)
 
     class_optimizer = torch.optim.Adam(class_encoder.parameters(), lr=config.class_lr)
     image_optimizer = torch.optim.Adam(image_encoder.parameters(), lr=config.image_lr)
+
+    if args.class_recipe_path is not None:
+        manager = ScheduledModifierManager.from_yaml(args.class_recipe_path)
+        class_optimizer = manager.modify(class_encoder, class_optimizer, len(train_loader))
+    if args.image_recipe_path is not None:
+        manager = ScheduledModifierManager.from_yaml(args.image_recipe_path)
+        image_optimizer = manager.modify(image_encoder, image_optimizer, len(train_loader))
 
     criterion = torch.nn.CrossEntropyLoss()
 
     # train
     print("Begin training")
-    resume_epoch, resume_batch = get_resume_numbers(checkpoint_path)
+
+    resume_epoch, resume_batch = get_resume_numbers(args.checkpoint_path)
     metrics = {}
     for epoch_index in range(config.num_epochs):
         epoch_index += resume_epoch
@@ -163,4 +171,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     training_config = TrainingConfig()
-    train_models(training_config, args.checkpoint_path)
+    train_models(training_config, args)
