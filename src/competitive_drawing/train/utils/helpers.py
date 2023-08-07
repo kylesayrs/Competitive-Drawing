@@ -2,7 +2,9 @@ from typing import Optional, List, Tuple
 
 import os
 import PIL
+import tqdm
 import numpy
+from concurrent.futures import ThreadPoolExecutor
 
 
 def get_all_local_labels(data_dir: str):
@@ -23,28 +25,38 @@ def load_data(
     class_names: Optional[List[str]] = None,
     one_hot: bool = False
 ):
-    all_images = []
-    all_labels = []
-    label_names = []
+    print("loading data...")
     class_names = class_names if class_names is not None else sorted(os.listdir(root_dir))
-    for file_i, file_name in enumerate(class_names):
-        file_name = "{file_name}.npy" if "npy" not in file_name else file_name
-        file_path = os.path.join(root_dir, file_name)
+    class_images = [None for _ in range(len(class_names))]
+    class_labels = [None for _ in range(len(class_names))]
+
+    def load_class(class_index, class_name, progress):
+        class_name = f"{class_name}.npy" if "npy" not in class_name else class_name
+        file_path = os.path.join(root_dir, class_name)
 
         images = numpy.load(file_path)
-        images = images.reshape(-1, *image_shape)
         images = [PIL.Image.fromarray(array) for array in images]
 
-        labels = numpy.array([file_i for _ in range(len(images))])
-        labels = to_one_hot(labels, len(class_names)) if one_hot else labels
+        labels = [to_one_hot(class_index, len(class_names))] * len(images)
 
-        all_images.extend(images)
-        all_labels.extend(labels)
-        label_names.append(os.path.splitext(os.path.basename(file_name))[0])
+        class_images[class_index] = images
+        class_labels[class_index] = labels
+        progress.update(1)
 
-    print(f"loaded {len(all_images)} images, {len(all_labels)} labels, from {label_names}")
+    with ThreadPoolExecutor(max_workers=None) as executor:
+        progress = tqdm.tqdm(total=len(class_names))
+        futures = [
+            executor.submit(load_class, class_index, class_name, progress)
+            for class_index, class_name in enumerate(class_names)
+        ]
+        [future.result() for future in futures]
 
-    return all_images, all_labels, label_names
+    all_images = sum(class_images, [])
+    all_labels = sum(class_labels, [])
+
+    print(f"loaded {len(all_images)} images and {len(all_labels)} labels")
+
+    return all_images, all_labels, class_names
 
 def to_one_hot(array, num_classes):
   array = numpy.array(array)

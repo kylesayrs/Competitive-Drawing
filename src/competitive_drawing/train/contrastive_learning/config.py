@@ -1,10 +1,12 @@
-from typing import Tuple
+from typing import Tuple, List
 from pydantic import BaseModel, Field
+from .classes import class_names as train_class_names
 
 
 class TrainingConfig(BaseModel):
-    num_classes: int = Field(default=2)  #Field(default=345)
-    latent_size: int = Field(default=3)  #Field(default=128)
+    class_names: List[str] = Field(default=train_class_names)
+    num_classes: int = Field(default=len(train_class_names))  #Field(default=345)
+    latent_size: int = Field(default=64)  #Field(default=128)
     max_temp: float = Field(default=100.0)
 
     images_dir: str = Field(default="images")
@@ -21,5 +23,5 @@ class TrainingConfig(BaseModel):
     log_freq: int = Field(default=2, description="Training batches per log")
     save_freq: int = Field(default=200, description="Training batches per save")
 
-    device: str = Field(default="cpu")
+    device: str = Field(default="cuda")
     wandb_mode: str = Field(default="disabled")

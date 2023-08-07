@@ -30,11 +30,11 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
     print(wandb.config)
 
     # load data
-    all_images, all_labels, label_names = load_data(
-        config.images_dir, config.image_shape, one_hot=True
+    all_images, all_labels, class_names = load_data(
+        config.images_dir, config.image_shape, config.class_names, one_hot=True
     )
 
-    num_classes = len(label_names)
+    num_classes = len(class_names)
     if (num_classes != config.num_classes):
         raise ValueError(
             f"Warning: config specified {config.num_classes} classes, but only "
@@ -56,7 +56,7 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
     assert len(x_train) == len(y_train)
     assert len(x_test) == len(y_test)
 
-    classes = torch.eye(len(label_names))
+    classes = torch.eye(len(class_names))
     train_dataset = QuickDrawDataset(x_train, y_train, is_test=False)
     test_dataset = QuickDrawDataset(x_test, y_test, is_test=True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size,
