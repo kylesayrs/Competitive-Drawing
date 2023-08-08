@@ -12,7 +12,7 @@ class TrainingConfig(BaseModel):
     images_dir: str = Field(default="images")
     image_shape: Tuple[int, int] = Field(default=(50, 50))
 
-    num_epochs: int = Field(default=10)
+    num_epochs: int = Field(default=3)
     class_lr: float = Field(default=1e-2)
     image_lr: float = Field(default=1e-4)
     batch_size: int = Field(default=256)
