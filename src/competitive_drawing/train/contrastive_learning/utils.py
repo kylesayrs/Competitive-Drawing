@@ -2,13 +2,14 @@ from typing import Optional, Tuple
 
 import os
 import torch
+import numpy
 from sklearn.metrics import accuracy_score
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
 from competitive_drawing.train.contrastive_learning.models import ClassEncoder, ImageEncoder
 
 
-def load_models(config: TrainingConfig, checkpoint_path: Optional[str]):
+def load_models(config: TrainingConfig, checkpoint_path: Optional[str], device="cpu"):
     class_encoder = ClassEncoder(config.num_classes, config.latent_size)
     image_encoder = ImageEncoder(config.latent_size, max_temp=config.max_temp)
 
@@ -17,6 +18,9 @@ def load_models(config: TrainingConfig, checkpoint_path: Optional[str]):
         image_encoder_path = os.path.join(checkpoint_path, "image_encoder.pth")
         class_encoder.load_state_dict(torch.load(class_encoder_path))
         image_encoder.load_state_dict(torch.load(image_encoder_path))
+
+    class_encoder.to(dtype=torch.float32, device=device)
+    image_encoder.to(dtype=torch.float32, device=device)
 
     return class_encoder, image_encoder
 
@@ -34,7 +38,10 @@ def projection_accuracy(
     class_labels: torch.tensor,
     logits: torch.tensor
 ):
+    logits = logits.detach().cpu().numpy()
+    class_labels = class_labels.detach().cpu().numpy()
+
     with torch.no_grad():
-        predicted = torch.argmax(logits, dim=1)
-        true = torch.argmax(class_labels, dim=1)
+        predicted = numpy.argmax(logits, axis=1)
+        true = numpy.argmax(class_labels, axis=1)
         return accuracy_score(true, predicted)

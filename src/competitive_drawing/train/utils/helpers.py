@@ -27,24 +27,30 @@ def load_data(
 ):
     print("loading data...")
     class_names = class_names if class_names is not None else sorted(os.listdir(root_dir))
-    class_images = [None for _ in range(len(class_names))]
-    class_labels = [None for _ in range(len(class_names))]
+    num_classes = len(class_names)
+    class_images = [None for _ in range(num_classes)]
+    class_labels = [None for _ in range(num_classes)]
 
     def load_class(class_index, class_name, progress):
         class_name = f"{class_name}.npy" if "npy" not in class_name else class_name
         file_path = os.path.join(root_dir, class_name)
 
-        images = numpy.load(file_path)
-        images = [PIL.Image.fromarray(array) for array in images]
+        images_raw = numpy.load(file_path)
+        images = []
+        for raw_image in images_raw:
+            raw_image = raw_image.reshape(*image_shape)
+            image = PIL.Image.fromarray(raw_image)
+            images.append(image)
+            del raw_image
 
-        labels = [to_one_hot(class_index, len(class_names))] * len(images)
+        labels = [to_one_hot(class_index, num_classes)] * len(images)
 
         class_images[class_index] = images
         class_labels[class_index] = labels
         progress.update(1)
 
     with ThreadPoolExecutor(max_workers=None) as executor:
-        progress = tqdm.tqdm(total=len(class_names))
+        progress = tqdm.tqdm(total=num_classes)
         futures = [
             executor.submit(load_class, class_index, class_name, progress)
             for class_index, class_name in enumerate(class_names)
@@ -57,6 +63,7 @@ def load_data(
     print(f"loaded {len(all_images)} images and {len(all_labels)} labels")
 
     return all_images, all_labels, class_names
+
 
 def to_one_hot(array, num_classes):
   array = numpy.array(array)

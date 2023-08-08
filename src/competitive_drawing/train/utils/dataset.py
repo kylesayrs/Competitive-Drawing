@@ -1,6 +1,8 @@
 import torch
 from torchvision import transforms
 
+from competitive_drawing.train.utils.RandomResizePad import RandomResizePad
+
 
 class QuickDrawDataset(torch.utils.data.Dataset):
     def __init__(self, X, y, is_test: bool = False):
@@ -12,6 +14,7 @@ class QuickDrawDataset(torch.utils.data.Dataset):
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomAffine(5, shear=5),
                 transforms.ToTensor(),
+                RandomResizePad(scale=(0.3, 1.0), value=0)
             ])
         else:
             self.transform = transforms.Compose([

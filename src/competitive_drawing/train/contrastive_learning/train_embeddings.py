@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sparseml.pytorch.optim import ScheduledModifierManager
 
 from competitive_drawing.train.contrastive_learning.config import TrainingConfig
-from competitive_drawing.train.utils import load_data, QuickDrawDataset, RandomResizePad
+from competitive_drawing.train.utils import load_data, QuickDrawDataset
 from competitive_drawing.train.contrastive_learning.utils import (
     load_models, get_resume_numbers, projection_accuracy
 )
@@ -41,11 +41,6 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
             f"found {num_classes}"
         )
 
-    # image augmentation
-    random_resize_pad = RandomResizePad(
-        config.image_shape, scale=config.resize_scale, value=0,
-    )
-
     # create datasets
     x_train, x_test, y_train, y_test = train_test_split(
         all_images,
@@ -56,7 +51,7 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
     assert len(x_train) == len(y_train)
     assert len(x_test) == len(y_test)
 
-    classes = torch.eye(len(class_names))
+    classes = torch.eye(len(class_names), dtype=torch.float32, device=config.device)
     train_dataset = QuickDrawDataset(x_train, y_train, is_test=False)
     test_dataset = QuickDrawDataset(x_test, y_test, is_test=True)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config.batch_size,
@@ -65,7 +60,7 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
                                               shuffle=True, num_workers=0, drop_last=True)
 
     # create models and optimizers
-    class_encoder, image_encoder = load_models(config, args.checkpoint_path)
+    class_encoder, image_encoder = load_models(config, args.checkpoint_path, config.device)
 
     class_optimizer = torch.optim.Adam(class_encoder.parameters(), lr=config.class_lr)
     image_optimizer = torch.optim.Adam(image_encoder.parameters(), lr=config.image_lr)
@@ -78,6 +73,7 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
         image_optimizer = manager.modify(image_encoder, image_optimizer, len(train_loader))
 
     criterion = torch.nn.CrossEntropyLoss()
+    criterion.to(config.device)
 
     # train
     print("Begin training")
@@ -91,12 +87,9 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
             class_encoder.train()
             image_encoder.train()
 
-            # augmentations
-            images = random_resize_pad(images)
-
             # to device
-            labels = labels.to(config.device)
-            images = images.to(config.device)
+            labels = labels.to(dtype=torch.float32, device=config.device)
+            images = images.to(dtype=torch.float32, device=config.device)
 
             # zero the parameter gradients
             class_optimizer.zero_grad()
@@ -108,6 +101,7 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
 
             # calculate loss
             logits  = image_embedding @ class_embedding.T
+
             loss = criterion(logits, labels)
             accuracy = projection_accuracy(labels, logits)
             
@@ -122,8 +116,8 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
                 image_encoder.eval()
                 with torch.no_grad():
                     test_images, test_labels = next(iter(test_loader))
-                    test_labels = test_labels.to(config.device)
-                    test_images = test_images.to(config.device)
+                    test_labels = test_labels.to(dtype=torch.float32, device=config.device)
+                    test_images = test_images.to(dtype=torch.float32, device=config.device)
 
                     test_class_embedding = class_encoder(classes)
                     test_image_embedding = image_encoder(test_images)
