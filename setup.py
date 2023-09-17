@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from setuptools import setup, find_packages
 
 _deps = [
@@ -10,12 +12,22 @@ _deps = [
     "Pillow",
     "torch",
     "tqdm",
-    "wandb",
     "boto3",
     "simple-websocket",
-    "sparseml",
-    "cairocffi"
 ]
+
+_dev_deps = [
+    "wandb",
+    "sparseml",
+    "cairocffi",
+]
+    
+
+def _setup_extras() -> Dict[str, List[str]]:
+    return {
+        "dev": _dev_deps
+    }
+
 
 setup(
     name="competitive_drawing",
@@ -25,6 +37,7 @@ setup(
     install_requires=_deps,
     package_dir={"": "src"},
     packages=find_packages("src", include=["competitive_drawing"], exclude=["*.__pycache__.*"]),
+    extras_require=_setup_extras(),
     entry_points={
         "console_scripts": [
             "competitive_drawing.launch_model_service = competitive_drawing.model_service.app:start_app",
