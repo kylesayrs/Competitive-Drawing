@@ -49,13 +49,13 @@ def load_data(
         class_labels[class_index] = labels
         progress.update(1)
 
-    with ThreadPoolExecutor(max_workers=None) as executor:
-        progress = tqdm.tqdm(total=num_classes)
-        futures = [
-            executor.submit(load_class, class_index, class_name, progress)
-            for class_index, class_name in enumerate(class_names)
-        ]
-        [future.result() for future in futures]
+    with tqdm.tqdm(total=num_classes) as progress:
+        with ThreadPoolExecutor(max_workers=None) as executor:
+            futures = [
+                executor.submit(load_class, class_index, class_name, progress)
+                for class_index, class_name in enumerate(class_names)
+            ]
+            [future.result() for future in futures]
 
     all_images = sum(class_images, [])
     all_labels = sum(class_labels, [])
