@@ -5,11 +5,15 @@ import torch
 import numpy
 from sklearn.metrics import accuracy_score
 
-from competitive_drawing.train.contrastive_learning.config import TrainingConfig
+from competitive_drawing.train.contrastive_learning.config import ModelsConfig
 from competitive_drawing.train.contrastive_learning.models import ClassEncoder, ImageEncoder
 
 
-def load_models(config: TrainingConfig, checkpoint_path: Optional[str], device="cpu"):
+def load_models(
+    config: ModelsConfig,
+    checkpoint_path: Optional[str],
+    device: str = "cpu"
+):
     class_encoder = ClassEncoder(config.num_classes, config.latent_size)
     image_encoder = ImageEncoder(config.latent_size, max_temp=config.max_temp)
 

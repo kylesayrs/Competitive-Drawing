@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from .classes import class_names as train_class_names
 
 
-class TrainingConfig(BaseModel):
+class ModelsConfig(BaseModel):
     class_names: List[str] = Field(default=train_class_names)
     num_classes: int = Field(default=len(train_class_names))  #Field(default=345)
     latent_size: int = Field(default=32)  #Field(default=128)

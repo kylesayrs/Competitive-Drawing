@@ -1,2 +1,2 @@
-from .config import TrainingConfig
+from .config import ModelsConfig
 from .models import ClassEncoder, ImageEncoder

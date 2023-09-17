@@ -14,6 +14,9 @@ class ClassEncoder(torch.nn.Module):
 
 
 class ImageEncoder(torch.nn.Module):
+    """
+    50x50 image size
+    """
     def __init__(self, latent_size: int = 128, max_temp: float = 0.0):
         super(ImageEncoder, self).__init__()
         self.latent_size = latent_size

@@ -13,7 +13,8 @@ _deps = [
     "wandb",
     "boto3",
     "simple-websocket",
-    "sparseml"
+    "sparseml",
+    "cairocffi"
 ]
 
 setup(

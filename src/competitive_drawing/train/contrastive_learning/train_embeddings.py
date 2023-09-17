@@ -7,7 +7,7 @@ import argparse
 from sklearn.model_selection import train_test_split
 from sparseml.pytorch.optim import ScheduledModifierManager
 
-from competitive_drawing.train.contrastive_learning.config import TrainingConfig
+from competitive_drawing.train.contrastive_learning.config import ModelsConfig
 from competitive_drawing.train.utils import load_data, QuickDrawDataset
 from competitive_drawing.train.contrastive_learning.utils import (
     load_models, get_resume_numbers, projection_accuracy
@@ -19,7 +19,7 @@ parser.add_argument("--checkpoint_path", type=str, default=None)
 parser.add_argument("--class_recipe_path", type=str, default=None)
 parser.add_argument("--image_recipe_path", type=str, default=None)
 
-def train_models(config: TrainingConfig, args: Dict[str, Any]):
+def train_models(config: ModelsConfig, args: Dict[str, Any]):
     # wandb config
     run = wandb.init(
         project="competitive_drawing_contrastive",
@@ -164,5 +164,5 @@ def train_models(config: TrainingConfig, args: Dict[str, Any]):
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    training_config = TrainingConfig()
-    train_models(training_config, args)
+    models_config = ModelsConfig()
+    train_models(models_config, args)
