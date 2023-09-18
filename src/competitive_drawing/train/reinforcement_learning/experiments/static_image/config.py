@@ -25,8 +25,8 @@ class AgentConfig(BaseModel):
     policy: str = Field(default="MultiInputPolicy")
     policy_kwargs: str = Field(default={})
 
-    learning_rate: float = Field(default=0.0001)
-    n_steps: float = Field(default=2, description="The number of steps to run for each environment per update")
+    learning_rate: float = Field(default=0.5e-6)
+    n_steps: float = Field(default=32, description="The number of steps to run for each environment per update")
     batch_size: int = Field(default=2)
     n_epochs: int = Field(default=128)
 

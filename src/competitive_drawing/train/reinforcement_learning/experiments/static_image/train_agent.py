@@ -65,7 +65,7 @@ def train_agent(
         n_envs=agent_config.n_envs
     )
 
-    model = PPO(
+    model = PPO(  # TODO: Use DDPG
         agent_config.policy,
         environment,
         policy_kwargs=agent_config.policy_kwargs,
