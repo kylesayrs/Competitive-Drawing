@@ -29,6 +29,13 @@ class StrokeEnvironment(Env):
 
         self.class_embeddings = self._get_class_embeddings()
 
+        self.curve_graphic = CurveGraphic2d(
+            self.config.image_shape,
+            self.config.num_bezier_samples,
+            self.config.bezier_length,
+            self.config.device
+        )
+
         self.observation_space = self._make_observation_space()
         self.action_space = self._make_action_space()
 
@@ -81,9 +88,6 @@ class StrokeEnvironment(Env):
 
 
     def step(self, action: torch.tensor) -> None:       
-        print(action)
-        print(self.image.shape)
-        print(self.image)
         cv2.polylines(self.image, action, False, 1.0)
         print(self.image)
         self.steps_left -= 1

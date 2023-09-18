@@ -5,7 +5,7 @@ from competitive_drawing import Settings
 
 
 class EnvironmentConfig(BaseModel):
-    image_shape: Tuple[int, int] = Field(default=(50, 50))
+    target_image_path: str = Field(default="house_8.png")
     total_num_turns: int = Field(default=Settings.get("TOTAL_NUM_TURNS", 10))
 
     num_bezier_key_points: int = Field(default=4)
