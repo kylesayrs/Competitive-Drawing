@@ -6,20 +6,14 @@ from competitive_drawing import Settings
 
 class EnvironmentConfig(BaseModel):
     target_image_path: str = Field(default="house_8.png")
-    total_num_turns: int = Field(default=Settings.get("TOTAL_NUM_TURNS", 10))
+    total_num_turns: int = Field(default=1)
 
     num_bezier_key_points: int = Field(default=4)
     num_bezier_approximations: int = Field(default=10)
     num_bezier_samples: int = Field(default=15)
     bezier_width: float = Field(default=Settings.get("CANVAS_LINE_WIDTH", 1.5))
     bezier_aa_factor: int = Field(default=1.0)
-    bezier_length: float = Field(default=(
-        Settings.get("DISTANCE_PER_TURN") /
-        Settings.get("CANVAS_SIZE") *
-        Settings.get("IMAGE_SIZE")
-    ))
-
-    step_reward_factor: float = Field(default=0)
+    bezier_length: float = Field(default=Settings.get("IMAGE_SIZE"))
 
     device: str = Field(default="cpu")
 

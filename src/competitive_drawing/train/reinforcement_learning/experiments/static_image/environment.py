@@ -14,13 +14,13 @@ class StrokeEnvironment(Env):
         super().__init__()
         self.config = environment_config
 
-        self.target_image = cv2.imread(self.config.target_image_path, cv2.IMREAD_GRAYSCALE)
+        self.target_image = self._get_target_image()
 
         self.curve_graphic = CurveGraphic2d(
             self.target_image.shape,
             self.config.num_bezier_samples,
             self.config.bezier_length,
-            self.config.device
+            self.config.device,
         )
 
         self.observation_space = self._make_observation_space()
@@ -29,6 +29,12 @@ class StrokeEnvironment(Env):
         self.image = None
         self.steps_left = None
         self.reset()
+
+
+    def _get_target_image(self):
+        return torch.tensor(
+            cv2.imread(self.config.target_image_path, cv2.IMREAD_GRAYSCALE) / 255
+        )
 
 
     def _make_observation_space(self):
@@ -58,6 +64,7 @@ class StrokeEnvironment(Env):
         self.image += self.curve_graphic(
             action, [self.config.bezier_width], [self.config.bezier_aa_factor]
         )[0]
+        self.image = torch.clamp(self.image, 0.0, 1.0)
         self.steps_left -= 1
 
         observation = self.get_observation()
@@ -76,11 +83,10 @@ class StrokeEnvironment(Env):
     
 
     def get_reward(self) -> float:
-        print(self.target_image)
-        print(self.image)
         with torch.no_grad():
-            return torch.mse(self.target_image, self.image)
+            loss = torch.nn.functional.mse_loss(self.image, self.target_image)
+            return 1.0 - loss.item()
 
 
     def is_finished(self):
-        return self.steps_left >= self.config.total_num_turns
+        return self.steps_left <= 0

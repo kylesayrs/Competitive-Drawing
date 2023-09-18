@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 import torch
 import numpy
@@ -19,7 +19,8 @@ class CurveGraphic2d(torch.nn.Module):
         canvas_shape: List[int],
         num_samples: int = 15,
         max_length: float = 80,
-        device: Union[torch.device, str] = "cpu"
+        device: Union[torch.device, str] = "cpu",
+        dtype: Union[torch.dtype, str] = torch.float32
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
@@ -27,7 +28,7 @@ class CurveGraphic2d(torch.nn.Module):
         self.max_length = max_length
 
         self._device = device
-        self._canvas = torch.zeros(self.canvas_shape)
+        self._dtype = dtype
         self.max_distance = torch.norm(
             torch.tensor(canvas_shape) - torch.tensor([0.0, 0.0])
         )
@@ -66,12 +67,13 @@ class CurveGraphic2d(torch.nn.Module):
         widths = torch.tensor(widths).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
         aa_factors = torch.tensor(aa_factors).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
 
-        _canvas = minimum_distances / widths
-        _canvas = _canvas + EPSILON
-        _canvas = _canvas ** aa_factors
-        _canvas = 1 - _canvas
-        _canvas = torch.clamp(_canvas, 0.0, 1.0)
-        canvas = _canvas.reshape((sample_points.shape[0], *self.canvas_shape))
+        canvas = torch.zeros(self.canvas_shape, device=self._device, dtype=self._dtype)
+        canvas = minimum_distances / widths
+        canvas = canvas + EPSILON
+        canvas = canvas ** aa_factors
+        canvas = 1 - canvas
+        canvas = torch.clamp(canvas, 0.0, 1.0)
+        canvas = canvas.reshape((sample_points.shape[0], *self.canvas_shape))
 
         return canvas
 
@@ -103,9 +105,13 @@ class CurveGraphic2d(torch.nn.Module):
         return sample_points
 
 
-    def to(self, device):
-        super().to(device)
+    def to(
+        self,
+        device: Optional[Union[torch.device, str]],
+        dtype: Optional[Union[torch.dtype, str]]
+    ):
+        super().to(device, dtype)
         self._device = device
-        self._canvas = self._canvas.to(device)
+        self._dtype = dtype
 
         return self
