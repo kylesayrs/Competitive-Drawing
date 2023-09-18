@@ -2,6 +2,8 @@ from datetime import datetime
 
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.callbacks import EvalCallback
 
 import wandb
 from wandb.integration.sb3 import WandbCallback
@@ -24,12 +26,26 @@ def init_wandb(
     )
 
 
+def makeEvalCallback(agent_config: AgentConfig):
+    return EvalCallback(
+        Monitor(StrokeEnvironment(environment_config)),
+        n_eval_episodes=agent_config.n_eval_episodes,
+        eval_freq=agent_config.eval_freq,
+        render=agent_config.eval_render,
+    )
+
+
 def makeCallbacks(agent_config: AgentConfig):
     callbacks = []
 
     if agent_config.wandb_mode != "disabled":
         callbacks.append(WandbCallback(
             verbose=agent_config.verbose,
+        ))
+
+    if agent_config.n_eval_episodes > 0:
+        callbacks.append(makeEvalCallback(
+            agent_config
         ))
 
     return callbacks

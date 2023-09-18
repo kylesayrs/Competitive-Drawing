@@ -7,6 +7,7 @@ from gym import Env, spaces
 
 from competitive_drawing.train.reinforcement_learning import EnvironmentConfig
 from competitive_drawing.diff_graphics import CurveGraphic2d
+from competitive_drawing.diff_graphics.utils import draw_output_and_target
 
 
 class StrokeEnvironment(Env):
@@ -39,7 +40,7 @@ class StrokeEnvironment(Env):
 
     def _make_observation_space(self):
         return spaces.Dict({
-            "image": spaces.Box(0.0, 1.0, self.target_image.shape),
+            #"image": spaces.Box(0.0, 1.0, self.target_image.shape),
             "steps_left": spaces.Box(0.0, self.config.total_num_turns, (1, )),
         })
 
@@ -61,6 +62,7 @@ class StrokeEnvironment(Env):
 
     def step(self, action: numpy.ndarray) -> None:       
         action = torch.tensor(action)
+        print(action)
         self.image += self.curve_graphic(
             action, [self.config.bezier_width], [self.config.bezier_aa_factor]
         )[0]
@@ -77,7 +79,7 @@ class StrokeEnvironment(Env):
 
     def get_observation(self) -> Dict[str, torch.tensor]:
         return {
-            "image": self.image,
+            #"image": self.image,
             "steps_left": self.steps_left
         }
     
@@ -90,3 +92,9 @@ class StrokeEnvironment(Env):
 
     def is_finished(self):
         return self.steps_left <= 0
+
+
+    def render(self, mode: str = "human"):
+        render_image = draw_output_and_target(self.image, self.target_image)
+        cv2.imshow("render", render_image * 255)
+        cv2.waitKey(0)
