@@ -75,7 +75,7 @@ def train_agent(
             gamma=model_config.gamma,
             gae_lambda=model_config.gae_lambda,
             clip_range=model_config.clip_range,
-            verbose=model_config.verbosity,
+            verbose=model_config.verbose,
             device=model_config.device,
         )
 
@@ -90,6 +90,8 @@ def train_agent(
             batch_size=model_config.batch_size,
             buffer_size=model_config.buffer_size,
             optimize_memory_usage=model_config.optimize_memory_usage,
+            verbose=model_config.verbose,
+            device=model_config.device
         )
 
     else:

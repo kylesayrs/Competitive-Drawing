@@ -40,8 +40,8 @@ class StrokeEnvironment(Env):
 
     def _make_observation_space(self):
         return spaces.Dict({
-            #"image": spaces.Box(0.0, 1.0, self.target_image.shape),
-            "steps_left": spaces.Box(0.0, self.config.total_num_turns, (1, )),
+            "image": spaces.Box(0.0, 1.0, self.target_image.shape),
+            #"steps_left": spaces.Box(0.0, self.config.total_num_turns, (1, )),
         })
 
 
@@ -78,8 +78,8 @@ class StrokeEnvironment(Env):
 
     def get_observation(self) -> Dict[str, torch.tensor]:
         return {
-            #"image": self.image,
-            "steps_left": self.steps_left
+            "image": self.image,
+            #"steps_left": self.steps_left
         }
     
 

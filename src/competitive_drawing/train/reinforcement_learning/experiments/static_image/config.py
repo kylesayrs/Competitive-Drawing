@@ -27,17 +27,16 @@ class ModelConfig(BaseModel):
         "activation_fn": torch.nn.ReLU
     })
 
-    log_interval: int = Field(default=1)
+    log_interval: int = Field(default=20, description="episodes per log")
     n_eval_episodes: int = Field(default=1)
-    eval_freq: int = Field(default=12800)
+    eval_freq: int = Field(default=1_000, description="steps per evaluation")
     eval_render: bool = Field(default=True)
 
-    progress_bar: bool = Field(default=False)
+    progress_bar: bool = Field(default=True)
     verbose: int = Field(default=2)
-    device: str = Field(default="cpu")
     tensorboard_log: str = Field(default="./tensorboard")
-    device: str = Field(default="cpu")
     wandb_mode: str = Field(default="disabled")
+    device: str = Field(default="cpu")
 
     class Config:
         arbitrary_types_allowed = True
@@ -57,17 +56,17 @@ class PPOConfig(ModelConfig):
 
 
 class DDPGConfig(ModelConfig):
-    total_timesteps: float = Field(default=300_000)
+    total_timesteps: float = Field(default=10_000)
 
     learning_starts: int = Field(default=128)
-    learning_rate: float = Field(default=3e-6)
+    learning_rate: float = Field(default=3e-2)
     train_freq: Tuple[int, str] = Field(default=(10, "step"))
-    batch_size: int = Field(default=128)
+    batch_size: int = Field(default=64)
     gamma: float = Field(default=0.9)
 
-    action_noise: Optional[str] = Field(default=None)
+    action_noise: Optional[str] = Field(default="normal")
     action_noise_mu: float = Field(default=0.0)
-    action_noise_sigma: float = Field(default=0.00)
+    action_noise_sigma: float = Field(default=0.1)
 
     buffer_size: int = Field(default=100_000)
     optimize_memory_usage: bool = Field(default=False)
