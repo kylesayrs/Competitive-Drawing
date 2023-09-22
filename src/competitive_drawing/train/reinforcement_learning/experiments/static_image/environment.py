@@ -62,7 +62,6 @@ class StrokeEnvironment(Env):
 
     def step(self, action: numpy.ndarray) -> None:       
         action = torch.tensor(action)
-        print(action)
         self.image += self.curve_graphic(
             action, [self.config.bezier_width], [self.config.bezier_aa_factor]
         )[0]

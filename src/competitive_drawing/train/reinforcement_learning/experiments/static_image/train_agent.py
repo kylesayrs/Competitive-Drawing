@@ -1,90 +1,105 @@
 from datetime import datetime
 
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, DDPG
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import EvalCallback
 
 import wandb
 from wandb.integration.sb3 import WandbCallback
 
-from config import EnvironmentConfig, AgentConfig
+from config import EnvironmentConfig, DDPGConfig, ModelConfig, PPOConfig
 from environment import StrokeEnvironment
 
 def init_wandb(
-    agent_config: AgentConfig,
+    model_config: ModelConfig,
     environment_config: EnvironmentConfig
 ):
     wandb.init(
         project="CD_RL_Static",
-        mode=agent_config.wandb_mode,
+        mode=model_config.wandb_mode,
         sync_tensorboard=False,
         config={
-            "agent_config": agent_config.dict(),
+            "model_config": model_config.dict(),
             "environment_config": environment_config.dict(),
         }
     )
 
 
-def makeEvalCallback(agent_config: AgentConfig):
+def makeEvalCallback(model_config: ModelConfig):
     return EvalCallback(
         Monitor(StrokeEnvironment(environment_config)),
-        n_eval_episodes=agent_config.n_eval_episodes,
-        eval_freq=agent_config.eval_freq,
-        render=agent_config.eval_render,
+        n_eval_episodes=model_config.n_eval_episodes,
+        eval_freq=model_config.eval_freq,
+        render=model_config.eval_render,
     )
 
 
-def makeCallbacks(agent_config: AgentConfig):
+def makeCallbacks(model_config: ModelConfig):
     callbacks = []
 
-    if agent_config.wandb_mode != "disabled":
+    if model_config.wandb_mode != "disabled":
         callbacks.append(WandbCallback(
-            verbose=agent_config.verbose,
+            verbose=model_config.verbose,
         ))
 
-    if agent_config.n_eval_episodes > 0:
-        callbacks.append(makeEvalCallback(
-            agent_config
-        ))
+    if model_config.n_eval_episodes > 0:
+        callbacks.append(makeEvalCallback(model_config))
 
     return callbacks
 
 
 def train_agent(
-    agent_config: AgentConfig,
+    model_config: ModelConfig,
     environment_config: EnvironmentConfig
 ):
-    init_wandb(agent_config, environment_config)
+    init_wandb(model_config, environment_config)
 
     environment = make_vec_env(
         StrokeEnvironment,
         env_kwargs={
             "environment_config": environment_config
         },
-        n_envs=agent_config.n_envs
+        n_envs=model_config.n_envs
     )
 
-    model = PPO(  # TODO: Use DDPG
-        agent_config.policy,
-        environment,
-        policy_kwargs=agent_config.policy_kwargs,
-        learning_rate=agent_config.learning_rate,
-        n_steps=agent_config.n_steps,
-        batch_size=agent_config.batch_size,
-        n_epochs=agent_config.n_epochs,
-        gamma=agent_config.gamma,
-        gae_lambda=agent_config.gae_lambda,
-        clip_range=agent_config.clip_range,
-        verbose=agent_config.verbosity,
-        device=agent_config.device,
-    )
+    if isinstance(model_config, PPOConfig):
+        model = PPO(  # TODO: Use DDPG
+            model_config.policy,
+            environment,
+            policy_kwargs=model_config.policy_kwargs,
+            learning_rate=model_config.learning_rate,
+            n_steps=model_config.n_steps,
+            batch_size=model_config.batch_size,
+            n_epochs=model_config.n_epochs,
+            gamma=model_config.gamma,
+            gae_lambda=model_config.gae_lambda,
+            clip_range=model_config.clip_range,
+            verbose=model_config.verbosity,
+            device=model_config.device,
+        )
+
+    elif isinstance(model_config, DDPGConfig):
+        model = DDPG(
+            model_config.policy,
+            environment,
+            policy_kwargs=model_config.policy_kwargs,
+            learning_starts=model_config.learning_starts,
+            learning_rate=model_config.learning_rate,
+            train_freq=model_config.train_freq,
+            batch_size=model_config.batch_size,
+            buffer_size=model_config.buffer_size,
+            optimize_memory_usage=model_config.optimize_memory_usage,
+        )
+
+    else:
+        raise ValueError(f"Unknown model_config type {type(model_config)}")
 
     model.learn(
-        total_timesteps=agent_config.total_timesteps,
-        log_interval=agent_config.log_interval,
-        callback=makeCallbacks(agent_config),
-        progress_bar=agent_config.progress_bar,
+        total_timesteps=model_config.total_timesteps,
+        log_interval=model_config.log_interval,
+        callback=makeCallbacks(model_config),
+        progress_bar=model_config.progress_bar,
     )
     now_string = str(datetime.now()).replace(" ", "_")
     save_path = f"checkpoints/{now_string}.zip"
@@ -93,7 +108,7 @@ def train_agent(
 
 
 if __name__ == "__main__":
-    agent_config = AgentConfig()
+    model_config = DDPGConfig()
     environment_config = EnvironmentConfig()
 
-    train_agent(agent_config, environment_config)
+    train_agent(model_config, environment_config)
