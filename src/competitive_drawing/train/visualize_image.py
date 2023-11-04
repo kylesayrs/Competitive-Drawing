@@ -28,7 +28,7 @@ def get_class_names(filter_string: Optional[str]):
 
 def get_image_index(index: int, num_images: int):
     if index is None:
-        numpy.random.randint(0, num_images)
+        index = numpy.random.randint(0, num_images)
 
     if index >= num_images:
         raise ValueError(
