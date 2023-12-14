@@ -6,13 +6,13 @@ from PIL import Image, ImageOps
 import torch
 from torchvision.transforms.functional import to_tensor
 from pytorch_grad_cam import XGradCAM
-#GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from competitive_drawing import Settings
-from competitive_drawing.diff_graphics.search import grid_search_stroke
-from competitive_drawing.diff_graphics.utils import BezierCurve, get_uniform_ts
+from competitive_drawing.model_service.opponent.search import grid_search_stroke
+from competitive_drawing.model_service.opponent.models.BezierCurve import BezierCurve
+from competitive_drawing.model_service.opponent.models.helpers import get_uniform_ts
 
 
 DEVICE = (

@@ -3,7 +3,6 @@ from typing import List, Tuple
 import torch
 
 from .StrokeModel import StrokeModel
-from competitive_drawing import Settings
 
 
 class StrokeScoreModel(StrokeModel):

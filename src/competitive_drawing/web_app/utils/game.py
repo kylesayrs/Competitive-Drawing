@@ -229,8 +229,8 @@ class GameManager:
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         requests.post(
             f"{model_service_base}/start_model",
-            headers={ "Content-Type": "application/json" },
-            data=json.dumps({ "label_pair": label_pair }),
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"label_pair": label_pair}),
         )
 
 
@@ -238,6 +238,6 @@ class GameManager:
         model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         requests.post(
             f"{model_service_base}/stop_model",
-            headers={ "Content-Type": "application/json" },
-            data=json.dumps({ "label_pair": label_pair }),
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"label_pair": label_pair}),
         )

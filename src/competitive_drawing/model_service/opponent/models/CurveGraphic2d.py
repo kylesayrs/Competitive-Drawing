@@ -3,8 +3,8 @@ from typing import List, Union, Optional
 import torch
 import numpy
 
-from competitive_drawing.diff_graphics.utils.BezierCurve import BezierCurve
-from competitive_drawing.diff_graphics.utils.helpers import get_uniform_ts
+from .BezierCurve import BezierCurve
+from .helpers import get_uniform_ts
 
 EPSILON = 0.000001  # autograd has a hard time with 0.0^x
 
@@ -107,11 +107,15 @@ class CurveGraphic2d(torch.nn.Module):
 
     def to(
         self,
-        device: Optional[Union[torch.device, str]],
-        dtype: Optional[Union[torch.dtype, str]]
+        device: Optional[Union[torch.device, str]] = None,
+        dtype: Optional[Union[torch.dtype, str]] = None
     ):
         super().to(device, dtype)
-        self._device = device
-        self._dtype = dtype
+
+        if device is not None:
+            self._device = device
+
+        if dtype is not None:
+            self._dtype = dtype
 
         return self

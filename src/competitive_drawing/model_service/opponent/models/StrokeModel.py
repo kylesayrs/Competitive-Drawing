@@ -2,10 +2,8 @@ from typing import List, Tuple
 
 import torch
 
-from competitive_drawing.diff_graphics.utils.BezierCurve import BezierCurve
-from .PointGraphic2d import PointGraphic2d
-from .LineGraphic2d import LineGraphic2d
 from .CurveGraphic2d import CurveGraphic2d
+from .BezierCurve import BezierCurve
 
 EPSILON = 0.001
 

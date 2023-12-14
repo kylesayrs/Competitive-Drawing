@@ -4,8 +4,8 @@ import cv2
 import torch
 import numpy
 
-from competitive_drawing.diff_graphics import StrokeScoreModel
-from .utils.helpers import make_hooked_optimizer, draw_output_and_target
+from .models.StrokeScoreModel import StrokeScoreModel
+from .models.helpers import make_hooked_optimizer, draw_output_and_target
 
 DEVICE = (
     #"mps" if torch.backends.mps.is_available() else

@@ -11,10 +11,6 @@ from competitive_drawing.train.classifier import Classifier
 
 
 def get_model_class():
-    """
-    I can't figure out how to get pickling the original class to work
-    so this is my lazy solution
-    """
     return Classifier
 
 

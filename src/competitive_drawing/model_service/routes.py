@@ -4,11 +4,12 @@ import json
 import requests
 from threading import Thread
 
-from .utils import imageDataUrlToImage
+from .utils import ModelManager, imageDataUrlToImage
+
 from competitive_drawing import Settings
 
 
-def make_routes_blueprint(app, model_manager):
+def make_routes_blueprint(app, model_manager: ModelManager):
     routes = Blueprint("routes", __name__)
 
     @routes.route("/start_model", methods=["POST"])
@@ -76,7 +77,7 @@ def make_routes_blueprint(app, model_manager):
         # TODO: Cheat detection
 
         @copy_current_request_context
-        def _send_stroke(model_manager, room_id, *args):
+        def _send_stroke(model_manager: ModelManager, room_id, *args):
             inferencer = model_manager.get_inferencer(request.json["label_pair"])
             stroke_samples = inferencer.infer_stroke(*args)
 
