@@ -25,7 +25,6 @@ export class GameBase {
         this.drawingBoard = new DrawingBoard(this.distanceIndicator, this.gameConfig)
         this.confidenceBar = new ConfidenceBar(this.gameConfig.softmaxFactor, this.debug)
         this.turnIndicator = new TurnIndicator(this.debug)
-        //this.drawingBoard.afterMouseEnd = this.serverInferImage.bind(this)
         this.drawingBoard.afterMouseMove = this.clientInferImage.bind(this)
         this.distanceIndicator.onButtonClick = this.onEndTurnButtonClick.bind(this)
 
