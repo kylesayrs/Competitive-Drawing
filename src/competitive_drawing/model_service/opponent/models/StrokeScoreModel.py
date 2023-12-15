@@ -4,6 +4,7 @@ import torch
 
 from .CurveGraphic2d import CurveGraphic2d
 from .BezierCurve import BezierCurve
+from .helpers import lerp
 
 
 class StrokeScoreModel(torch.nn.Module):
@@ -72,15 +73,9 @@ class StrokeScoreModel(torch.nn.Module):
         max_aa: float,
         min_aa: float,
     ):
-        with torch.no_grad():
-            self.widths = [
-                (1.0 - score) * max_width + (score * min_width)
-                for score in scores
-            ]
-            self.aa_factors = [
-                (1.0 - score) * max_aa + (score * min_aa)
-                for score in scores
-            ]
+        for stroke_index, score in enumerate(scores):
+            self.widths[stroke_index] = lerp(max_width, min_width, score)
+            self.aa_factors[stroke_index] = lerp(max_aa, min_aa, score)
     
 
     def constrain_keypoints(self):

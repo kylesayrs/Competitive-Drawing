@@ -5,70 +5,37 @@ import torch
 import numpy
 
 from .models.StrokeScoreModel import StrokeScoreModel
-from .helpers import make_hooked_optimizer, draw_output_and_target
+from .helpers import make_hooked_optimizer
 from .SearchParameters import SearchParameters
-
-DEVICE = (
-    #"mps" if torch.backends.mps.is_available() else
-    "cuda" if torch.cuda.is_available() else
-    "cpu"
-)
-DEBUG = False
 
 
 def grid_search_stroke(
     base_canvas: torch.Tensor,
-    grid_shape: Tuple[int, int],
     score_model: torch.nn.Module,
     target_index: int,
     optimizer_class: torch.optim.Optimizer,
     optimizer_kwargs: Dict[str, Any],
     search_parameters: SearchParameters,
     **model_kwargs,
-):
-    initial_inputs = torch.from_numpy(numpy.array([
-        [
-            (numpy.random.random(2) + numpy.array([grid_y, grid_x])) / numpy.array(grid_shape)
-            for _ in range(search_parameters.num_keypoints)
-        ]
-        for grid_y in range(grid_shape[1])
-        for grid_x in range(grid_shape[0])
-    ], dtype=numpy.float32))
+) -> Tuple[float, torch.Tensor]:
+    """
+    Search for an optimal stroke by randomly initializing strokes within a grid
+    pattern. Score is optimized with respect to the `target_index` of the score
+    model
 
-    score, keypoints = search_strokes(
-        base_canvas,
-        initial_inputs,
-        score_model,
-        target_index,
-        optimizer_class,
-        optimizer_kwargs,
-        search_parameters,
-        **model_kwargs,
-    )
+    :param base_canvas: canvas upon which strokes are drawn
+    :param grid_shape: number of rows and columns of grid
+    :param score_model: model whose output is used as an objective function
+    :param target_index: index of `score_model` output to use as objective function
+    :param optimizer_class: class used to optimize stroke
+    :param optimizer_kwargs: arguments used to initialize optimizer
+    :param search_parameters: parameters used to search for curves
+    :return: best score and curve keypoints
+    """
+    # randomly initialize keypoints on grid
+    initial_inputs = _initialize_grid(search_parameters)
 
-    if DEBUG:
-        print(f"score: {score}")
-        print(f"keypoints: {keypoints}")
-
-    return score, keypoints
-
-
-def search_strokes(
-    base_canvas: torch.Tensor,
-    initial_inputs: Optional[List[torch.Tensor]],
-    score_model: torch.nn.Module,
-    target_index: int,
-    optimizer_class: torch.optim.Optimizer,
-    optimizer_kwargs: Dict[str, Any],
-    search_parameters: SearchParameters,
-    **model_kwargs,
-):
-    initial_inputs = (
-        initial_inputs
-        if initial_inputs is not None
-        else torch.rand(1, search_parameters.num_keypoints, 2)
-    )
-
+    # create model with initial keypoints
     model = StrokeScoreModel(
         base_canvas,
         initial_inputs,
@@ -78,8 +45,9 @@ def search_strokes(
         aa_factors=[search_parameters.min_aa for _ in range(initial_inputs.shape[0])],
         **model_kwargs
     )
-    model = model.to(DEVICE)
+    model = model.to(search_parameters.device)
 
+    # create optimizer w.r.t. MSE
     criterion = torch.nn.MSELoss()
     optimizer = make_hooked_optimizer(
         optimizer_class,
@@ -87,10 +55,11 @@ def search_strokes(
         model.parameters(), **optimizer_kwargs
     )
 
+    # optimize
     return_score = 0.0
     return_keypoints = list(model.parameters()).copy()[0]
-    scores = torch.zeros([initial_inputs.shape[0]], dtype=torch.float32, device=DEVICE)
-    for step_num in range(search_parameters.max_steps):
+    scores = torch.zeros([initial_inputs.shape[0]], dtype=torch.float32, device=search_parameters.device)
+    for _step_num in range(search_parameters.max_steps):
         # zero the parameter gradients, set graphics parameters
         optimizer.zero_grad()
         model.update_width_and_anti_aliasing(
@@ -102,10 +71,10 @@ def search_strokes(
         )
 
         # forward
-        canvas_with_graphic, scores = model()
+        _canvas_with_graphic, scores = model()
 
         # backwards, optimize, and constrain (via hook)
-        target_score = torch.full([initial_inputs.shape[0]], 1.0, dtype=torch.float32, device=DEVICE)
+        target_score = torch.full([initial_inputs.shape[0]], 1.0, dtype=torch.float32, device=search_parameters.device)
         loss = criterion(scores, target_score)
         loss.backward()
         optimizer.step()
@@ -120,16 +89,25 @@ def search_strokes(
             return_score = best_score
             return_keypoints = best_keypoints
 
-        if DEBUG:
-            print(f"new_widths: {model.widths}")
-            print(f"new_aa_factors: {model.aa_factors}")
-            print(f"step_num: {step_num}")
-            print(f"best_score: {best_score}")
-            print(f"loss: {loss.item()}")
-
-        if search_parameters.draw_output:
-            image = draw_output_and_target(base_canvas, torch.sum(canvas_with_graphic, dim=0)[0])
-            cv2.imshow("output and target", image)
-            cv2.waitKey(0)
-
     return return_score, return_keypoints
+
+
+
+def _initialize_grid(search_parameters: SearchParameters) -> torch.Tensor:
+    """
+    Initilize keypoints on grid. Each set of keypoints is confined to one block
+    within the grid
+
+    :param search_parameters: parameters which define search
+    :return: keypoints randomly initialized in grid
+    """
+    grid_shape = numpy.array(search_parameters.grid_shape)
+
+    return torch.from_numpy(numpy.array([
+        [
+            (numpy.random.random(2) + numpy.array([grid_y, grid_x])) / grid_shape
+            for _ in range(search_parameters.num_keypoints)
+        ]
+        for grid_y in range(grid_shape[1])
+        for grid_x in range(grid_shape[0])
+    ], dtype=numpy.float32))

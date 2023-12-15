@@ -13,7 +13,6 @@ from competitive_drawing.train.classifier import Classifier
 def get_model_class():
     return Classifier
 
-
     bucket = Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
 
     root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")

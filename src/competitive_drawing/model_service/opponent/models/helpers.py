@@ -58,3 +58,15 @@ def torch_fuzzy_search(array: torch.Tensor, value: float) -> int:
     :return: index of array whose value is closest to value
     """
     return torch.argmin(torch.abs(array - value))
+
+
+def lerp(start: float, end: float, weight: float) -> float:
+    """
+    Linear interpolation
+
+    :param start: start value
+    :param end: end value
+    :param weight: weight between start and end
+    :return: linear interpolation between `start` and `end`
+    """
+    return (1.0 - weight) * start + weight * end

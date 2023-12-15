@@ -19,8 +19,8 @@ from competitive_drawing.model_service.opponent import (
 
 
 DEVICE = (
-    #"mps" if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available() else
+    "mps" if torch.backends.mps.is_available() else
     "cpu"
 )
 DEBUG = False
@@ -31,7 +31,7 @@ class Inferencer:
         self._model_class = model_class
         self._state_dict = state_dict
         self._model = self.load_model(model_class, state_dict)
-        self.cam = XGradCAM(
+        self.grad_cam = XGradCAM(
             model=self._model,
             target_layers=[layer for layer in self._model.conv][0:7], # total 19
             use_cuda=(True if DEVICE == "cuda" else False)
@@ -80,7 +80,7 @@ class Inferencer:
 
         targets = [ClassifierOutputTarget(target_index)]
 
-        grayscale_cam = self.cam(input_tensor=input, targets=targets)
+        grayscale_cam = self.grad_cam(input_tensor=input, targets=targets)
         grayscale_cam = grayscale_cam[0, :]
         image = self.rgba_to_rgb(image)
         image_numpy = numpy.asarray(image)
@@ -104,7 +104,6 @@ class Inferencer:
         tmp_target_model = self.load_model(self._model_class, self._state_dict)
         _loss, keypoints = grid_search_stroke(
             base_canvas,
-            (5, 5),
             tmp_target_model,
             target_index,
             torch.optim.Adamax,

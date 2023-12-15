@@ -1,4 +1,6 @@
 from typing import Optional, Any
+from pydantic import BaseModel, Field
+
 
 class Settings:
     WEB_APP_HOST="localhost"
