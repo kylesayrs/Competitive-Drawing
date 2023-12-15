@@ -75,7 +75,7 @@ class Inferencer:
         return background
 
 
-    def infer_image_with_cam(self, image: Image, target_index: int):
+    def infer_image_with_cam(self, image: Image, target_index: int) -> torch.Tensor:
         input = self.convert_image_to_input(image)
 
         targets = [ClassifierOutputTarget(target_index)]

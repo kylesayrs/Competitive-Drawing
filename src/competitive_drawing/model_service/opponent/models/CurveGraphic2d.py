@@ -11,24 +11,23 @@ EPSILON = 0.000001  # autograd has a hard time with 0.0^x
 
 class CurveGraphic2d(torch.nn.Module):
     """
+    Samples points from bezier curve(s) and draws them on blank canvas(es)
 
+    :param canvas_shape: shape of output canvas
+    :param num_samples: number of samples used to sample bezier curve(s)
+    :param max_length: maximum arc length of bezier curve(s)
     """
-
     def __init__(
         self,
         canvas_shape: List[int],
         num_samples: int = 15,
         max_length: float = 80,
-        device: Union[torch.device, str] = "cpu",
-        dtype: Union[torch.dtype, str] = torch.float32
     ):
         super().__init__()
         self.canvas_shape = canvas_shape
         self.num_samples = num_samples
         self.max_length = max_length
 
-        self._device = device
-        self._dtype = dtype
         self.max_distance = torch.norm(
             torch.tensor(canvas_shape) - torch.tensor([0.0, 0.0])
         )
@@ -37,9 +36,24 @@ class CurveGraphic2d(torch.nn.Module):
             raise ValueError("num_samples must be greater than 3")
 
 
-    def forward(self, inputs: List[torch.tensor], widths: List[float], aa_factors: List[float]):
+    def forward(
+        self,
+        inputs: torch.tensor,
+        widths: List[float],
+        aa_factors: List[float]
+    ) -> torch.Tensor:
+        """
+        Draw normalized keypoints onto canvas
+
+        :param inputs: normalized tensor of keypoints
+        :param widths: list of widths for each keypoint
+        :param aa_factors: list of anti-aliasing factors for each keypoint
+        :return: canvases with drawn curves
+        """
+        assert len(inputs) == len(widths) == len(aa_factors)
+
         # prepare canvas and key_points: TODO simplify this
-        canvas_shape_tensor = torch.tensor(self.canvas_shape, device=self._device)
+        canvas_shape_tensor = torch.tensor(self.canvas_shape, device=inputs.device)
         key_points = inputs * canvas_shape_tensor[None, None, :]
 
         # get sample points
@@ -67,7 +81,7 @@ class CurveGraphic2d(torch.nn.Module):
         widths = torch.tensor(widths).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
         aa_factors = torch.tensor(aa_factors).reshape((-1, 1)).repeat(1, minimum_distances.shape[1])
 
-        canvas = torch.zeros(self.canvas_shape, device=self._device, dtype=self._dtype)
+        canvas = torch.zeros(self.canvas_shape, device=inputs.device, dtype=inputs.dtype)
         canvas = minimum_distances / widths
         canvas = canvas + EPSILON
         canvas = canvas ** aa_factors
@@ -78,12 +92,9 @@ class CurveGraphic2d(torch.nn.Module):
         return canvas
 
 
-    def get_sample_points(self, key_points: torch.tensor):
+    def get_sample_points(self, key_points: torch.tensor) -> torch.Tensor:
         curves = [
-            BezierCurve(
-                key_point_set,
-                num_approximations=self.num_samples  # technically could be anything
-            )
+            BezierCurve(key_point_set, num_approximations=self.num_samples)
             for key_point_set in key_points
         ]
 
@@ -93,7 +104,7 @@ class CurveGraphic2d(torch.nn.Module):
 
         sample_ts = get_uniform_ts(self.num_samples)
 
-        # jank af
+        # TODO: rework
         sample_points = torch.cat([
             torch.cat([
                 curve.sample(sample_t)
@@ -105,17 +116,11 @@ class CurveGraphic2d(torch.nn.Module):
         return sample_points
 
 
-    def to(
-        self,
-        device: Optional[Union[torch.device, str]] = None,
-        dtype: Optional[Union[torch.dtype, str]] = None
-    ):
-        super().to(device, dtype)
+    @property
+    def device(self):
+        return next(self.parameters()).device
+    
 
-        if device is not None:
-            self._device = device
-
-        if dtype is not None:
-            self._dtype = dtype
-
-        return self
+    @property
+    def dtype(self):
+        return next(self.parameters()).dtype

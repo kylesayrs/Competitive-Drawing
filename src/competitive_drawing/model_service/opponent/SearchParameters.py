@@ -2,6 +2,11 @@ from pydantic import BaseModel, Field
 
 
 class SearchParameters(BaseModel):
+    """
+    Data class which specifies parameters for searching strokes 
+
+    :param BaseModel: _description_
+    """
     num_keypoints: int = Field(default=4)
     max_width: float = Field(default=10.0)
     min_width: float = Field(default=3.5)
