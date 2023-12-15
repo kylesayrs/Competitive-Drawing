@@ -28,7 +28,7 @@ def create_app():
     model_manager = ModelManager()
 
     # routes
-    routes_blueprint = make_routes_blueprint(app, model_manager)
+    routes_blueprint = make_routes_blueprint(model_manager)
     app.register_blueprint(routes_blueprint)
 
     return app

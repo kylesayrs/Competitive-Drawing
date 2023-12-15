@@ -3,7 +3,7 @@ from typing import List
 import torch
 import numpy
 
-from .helpers import get_uniform_ts, bernstein_polynomial, torch_search
+from .helpers import get_uniform_ts, bernstein_polynomial, torch_fuzzy_search
 
 
 class BezierCurve():
@@ -12,6 +12,14 @@ class BezierCurve():
         key_points: List[torch.tensor],
         num_approximations: int = 20
     ):
+        """
+        Models a bezier curve parameterized by key points. Sampling points along
+        the curve is differentiable with respect to key points
+
+        :param key_points: List of initial key points which define the curve
+        :param num_approximations: number of approximation points used for
+            arc_length and truncation calculations, defaults to 20
+        """
         self.key_points = key_points
         self.num_approximations = num_approximations
         self._device = key_points[0].data.device
@@ -25,35 +33,20 @@ class BezierCurve():
         self._approx_lengths_normalized = self._get_cumulative_distances_normalized()
 
 
-    def _get_cumulative_distances(self):
-        return torch.cumsum(
-            torch.cat([
-                torch.norm(self._approx_points[i] - self._approx_points[i + 1], keepdim=True)
-                for i in range(len(self._approx_points) - 1)
-            ]),
-            dim=0
-        )
-
-
-    def _get_cumulative_distances_normalized(self):
-        return torch.tensor([
-            cumulative_sum / self.arc_length
-            for cumulative_sum in self._approx_lengths
-        ], device=self._device)
-
-
-    def _sample_directly(self, t: float):
+    def sample(self, t: float):
         """
-        TODO: batch samples to rewrite as a matrix multiplication
+        Rather than normalizing samples for uniform instance w.r.t. `t`, instead
+        sample points along the beizer curve directly.
+
+        Use the Bernstein polynomal form to compute the position along the bezier
+
+        :param t: interpolation factor
+        :return: point at time `t` along the beizer curve
         """
         return sum([
             key_point * bernstein_polynomial(len(self.key_points) - 1, key_point_i, t)
             for key_point_i, key_point in enumerate(self.key_points)
         ])
-
-
-    def sample(self, t: float):
-        return self._sample_directly(t)
 
 
     @property
@@ -72,7 +65,7 @@ class BezierCurve():
             self._approx_lengths_normalized = torch.flip(self._approx_lengths_normalized, dims=[0])
 
         with torch.no_grad():
-            right_index = torch_search(self._approx_lengths_normalized, normed_t)
+            right_index = torch_fuzzy_search(self._approx_lengths_normalized, normed_t)
             left_index = right_index - 1
 
             if right_index <= 0:
@@ -120,3 +113,31 @@ class BezierCurve():
             new_key_points,
             num_approximations=self.num_approximations
         )
+
+
+    def _get_cumulative_distances(self):
+        return torch.cumsum(
+            torch.cat([
+                torch.norm(self._approx_points[i] - self._approx_points[i + 1], keepdim=True)
+                for i in range(len(self._approx_points) - 1)
+            ]),
+            dim=0
+        )
+
+
+    def _get_cumulative_distances_normalized(self):
+        return torch.tensor([
+            cumulative_sum / self.arc_length
+            for cumulative_sum in self._approx_lengths
+        ], device=self._device)
+
+
+    def _sample_directly(self, t: float) -> torch.Tensor:
+        """
+        Uses Bernstein polynomal form to compute the position along the bezier
+        curve at time `t`.
+        """
+        return sum([
+            key_point * bernstein_polynomial(len(self.key_points) - 1, key_point_i, t)
+            for key_point_i, key_point in enumerate(self.key_points)
+        ])

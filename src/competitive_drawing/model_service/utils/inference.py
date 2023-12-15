@@ -10,9 +10,12 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from competitive_drawing import Settings
-from competitive_drawing.model_service.opponent.search import grid_search_stroke
-from competitive_drawing.model_service.opponent.models.BezierCurve import BezierCurve
-from competitive_drawing.model_service.opponent.models.helpers import get_uniform_ts
+from competitive_drawing.model_service.opponent import (
+    grid_search_stroke,
+    SearchParameters,
+    BezierCurve,
+    get_uniform_ts
+)
 
 
 DEVICE = (
@@ -21,6 +24,7 @@ DEVICE = (
     "cpu"
 )
 DEBUG = False
+
 
 class Inferencer:
     def __init__(self, model_class, state_dict):
@@ -44,15 +48,10 @@ class Inferencer:
         return model
 
 
-    def convert_image_to_input(self, image: Image):
+    def convert_image_to_input(self, image: Image) -> torch.Tensor:
         image = image.convert("RGB")
         image = ImageOps.invert(image)
         red_channel = image.split()[0]
-
-        """
-        import cv2
-        cv2.imwrite("/Users/poketopa/Desktop/image.png", numpy.array(red_channel))
-        """
 
         input = to_tensor(red_channel)
         input = torch.reshape(input, (1, 1, self.image_size, self.image_size))
@@ -103,20 +102,17 @@ class Inferencer:
         base_canvas = self.convert_image_to_input(image)[0][0]
 
         tmp_target_model = self.load_model(self._model_class, self._state_dict)
-        loss, keypoints = grid_search_stroke(
+        _loss, keypoints = grid_search_stroke(
             base_canvas,
             (5, 5),
             tmp_target_model,
             target_index,
             torch.optim.Adamax,
             { "lr": 0.03 },
-            max_width=line_width * 4,
-            min_width=line_width,
-            max_aa=0.35,
-            min_aa=0.9,
-            max_steps=125,
-            return_best=False,
-            draw_output=False,
+            SearchParameters(
+                max_width=line_width * 4,
+                min_width=line_width
+            ),
             max_length=max_length,
         )
         del tmp_target_model

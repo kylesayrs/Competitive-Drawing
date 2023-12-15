@@ -9,7 +9,7 @@ from .utils import ModelManager, imageDataUrlToImage
 from competitive_drawing import Settings
 
 
-def make_routes_blueprint(app, model_manager: ModelManager):
+def make_routes_blueprint(model_manager: ModelManager):
     routes = Blueprint("routes", __name__)
 
     @routes.route("/start_model", methods=["POST"])
@@ -112,6 +112,5 @@ def make_routes_blueprint(app, model_manager: ModelManager):
             print(exception)
             print(model_manager.inferencers.keys())
             return str(exception), 409
-
 
     return routes
