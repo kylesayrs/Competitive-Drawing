@@ -8,6 +8,8 @@ from .utils import ModelManager, imageDataUrlToImage
 
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
+
 
 def make_routes_blueprint(model_manager: ModelManager):
     routes = Blueprint("routes", __name__)
@@ -81,10 +83,8 @@ def make_routes_blueprint(model_manager: ModelManager):
             inferencer = model_manager.get_inferencer(request.json["label_pair"])
             stroke_samples = inferencer.infer_stroke(*args)
 
-            host = Settings.get("WEB_APP_HOST")
-            port = Settings.get("WEB_APP_PORT")
             requests.post(
-                f"http://{host}:{port}/ai_stroke",
+                f"http://{SETTINGS.web_app_host}:{SETTINGS.web_app_port}/ai_stroke",
                 headers={"Content-type": "application/json"},
                 data=json.dumps({
                     "strokeSamples": stroke_samples,

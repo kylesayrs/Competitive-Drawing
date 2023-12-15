@@ -7,8 +7,8 @@ S3_CLIENT = boto3.client("s3")
 
 
 def get_uploaded_label_pairs():
-    bucket = Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
-    root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
+    bucket = Settings().s3_models_bucket
+    root_folder = Settings().s3_models_root_folder
 
     bucket_objects = S3_CLIENT.list_objects(Bucket=bucket)
     if not "Contents" in bucket_objects:
@@ -28,11 +28,9 @@ def get_uploaded_label_pairs():
 
 
 def get_s3_dir(label_pair: Tuple[str, str]):
-    root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
-
     label_pair_str = "-".join(sorted(list(label_pair)))
 
-    return "/".join([root_folder, label_pair_str])
+    return "/".join([Settings().s3_models_root_folder, label_pair_str])
 
 
 def get_onnx_url(label_pair: Tuple[str, str]):
@@ -42,10 +40,10 @@ def get_onnx_url(label_pair: Tuple[str, str]):
     response = S3_CLIENT.generate_presigned_url(
         "get_object",
         Params={
-            "Bucket": Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod"),
+            "Bucket": Settings().s3_models_bucket,
             "Key": key,
         },
-        ExpiresIn=Settings.get("S3_MODEL_DURATION", 108000)  # 30 minutes
+        ExpiresIn=Settings().s3_model_duration
     )
 
     return response

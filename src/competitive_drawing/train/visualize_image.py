@@ -13,10 +13,11 @@ parser.add_argument("out_path")
 parser.add_argument("--filter", type=str, default=None)
 parser.add_argument("--index", type=int, default=None)
 
+SETTINGS = Settings()
+
 
 def get_image_shape():
-    image_size = Settings.get("IMAGE_SIZE", 50)
-    return (image_size, image_size)
+    return (SETTINGS.image_size, SETTINGS.image_size)
 
 
 def get_class_names(filter_string: Optional[str]):

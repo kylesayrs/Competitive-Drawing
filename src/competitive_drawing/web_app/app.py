@@ -12,33 +12,31 @@ from .sockets import make_socket_messages
 from .utils.game import GameManager
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
+
 
 def create_app():
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config["SECRET_KEY"] = Settings.get("WEB_APP_SECRET_KEY", "secret!")
+    app.config["SECRET_KEY"] = SETTINGS.web_app_secret_key
     socketio = SocketIO(app)
 
     # set up config to pass to javascript
     game_config = {
-        "softmaxFactor": float(Settings.get("SOFTMAX_FACTOR", 5)),
-        "canvasSize": int(Settings.get("CANVAS_SIZE", 100)),
-        "canvasLineWidth": float(Settings.get("CANVAS_LINE_WIDTH", 1.5)),
-        "imageSize": int(Settings.get("IMAGE_SIZE", 50)),
-        "imagePadding": int(Settings.get("IMAGE_PADDING", 0)),
-        "distancePerTurn": float(Settings.get("DISTANCE_PER_TURN", 80)),
-        "staticCrop": bool(Settings.get("STATIC_CROP", 1)),
+        "softmaxFactor": SETTINGS.softmax_factor,
+        "canvasSize": SETTINGS.canvas_size,
+        "canvasLineWidth": SETTINGS.canvas_line_width,
+        "imageSize": SETTINGS.image_size,
+        "imagePadding": SETTINGS.image_padding,
+        "distancePerTurn": SETTINGS.distance_per_turn,
+        "staticCrop": SETTINGS.static_crop
     }
-    print(game_config)
 
     # set up games manager
     games_manager = GameManager()
 
     # create instance folder
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-    except OSError:
-        raise ValueError("Could not create instance folder")
+    os.makedirs(app.instance_path, exist_ok=True)
 
     # routes
     routes_blueprint = make_routes_blueprint(app, game_config, games_manager)
@@ -54,8 +52,8 @@ def start_app():
     app, socketio = create_app()
     socketio.run(
         app,
-        host=Settings.get("WEB_APP_HOST", "localhost"),
-        port=Settings.get("WEB_APP_PORT", 5001),
+        host=SETTINGS.web_app_host,
+        port=SETTINGS.web_app_port,
         debug=True
     )
 

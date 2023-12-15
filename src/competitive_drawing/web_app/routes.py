@@ -7,6 +7,8 @@ import requests
 from .utils.game import GameType
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
+
 
 def make_routes_blueprint(app, game_config, games_manager):
     routes = Blueprint("routes", __name__)
@@ -57,9 +59,8 @@ def make_routes_blueprint(app, game_config, games_manager):
 
     @routes.route("/infer", methods=["POST"])
     def infer():
-        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         service_response = requests.post(
-            f"{model_service_base}/infer",
+            f"{SETTINGS.model_service_base}/infer",
             headers={"Content-Type": "application/json"},
             data=request.get_data(),
         )
@@ -74,9 +75,8 @@ def make_routes_blueprint(app, game_config, games_manager):
 
     @routes.route("/infer_stroke", methods=["POST"])
     def infer_stroke():
-        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         service_response = requests.post(
-            f"{model_service_base}/infer_stroke",
+            f"{SETTINGS.model_service_base}/infer_stroke",
             headers={"Content-Type": "application/json"},
             data=request.get_data(),
         )

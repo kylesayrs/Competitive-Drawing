@@ -13,14 +13,6 @@ from competitive_drawing.train.classifier import Classifier
 def get_model_class():
     return Classifier
 
-    bucket = Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
-
-    root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
-    key = f"{root_folder}/model.pkl"
-
-    pickled_file_stream = get_object_file_stream(bucket, key)
-    return pickle.loads(torch.load(pickled_file_stream))
-
 
 def imageDataUrlToImage(image_data_url):
     image_data_str = re.sub("^data:image/.+;base64,", "", image_data_url)

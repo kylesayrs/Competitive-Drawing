@@ -17,13 +17,7 @@ from competitive_drawing.model_service.opponent import (
     get_uniform_ts
 )
 
-
-DEVICE = (
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
-DEBUG = False
+SETTINGS = Settings()
 
 
 class Inferencer:
@@ -34,16 +28,15 @@ class Inferencer:
         self.grad_cam = XGradCAM(
             model=self._model,
             target_layers=[layer for layer in self._model.conv][0:7], # total 19
-            use_cuda=(True if DEVICE == "cuda" else False)
+            use_cuda=(SETTINGS.device == "cuda")
         )
-        self.image_size = int(Settings.get("IMAGE_SIZE", 50))
+        self.image_size = SETTINGS.image_size
 
 
     def load_model(self, model_class, state_dict):
         model = model_class()
         model.load_state_dict(state_dict)
         model = model.eval()
-        model = model.to(DEVICE)
 
         return model
 
@@ -55,7 +48,7 @@ class Inferencer:
 
         input = to_tensor(red_channel)
         input = torch.reshape(input, (1, 1, self.image_size, self.image_size))
-        input = input.to(DEVICE)
+        input = input.to(SETTINGS.device)
 
         return input
 
@@ -121,9 +114,6 @@ class Inferencer:
             curve.sample(t).cpu().detach().tolist()
             for t in get_uniform_ts(20)
         ]
-
-        if DEBUG:
-            print(f"stroke_samples: {stroke_samples}")
 
         return stroke_samples
 

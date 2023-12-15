@@ -6,11 +6,8 @@ from .s3 import get_object_file_stream
 from .inference import Inferencer
 from competitive_drawing import Settings
 
-DEVICE = (
-    "cuda" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
+SETTINGS = Settings()
+
 
 class ModelManager():
     def __init__(self):
@@ -23,14 +20,12 @@ class ModelManager():
         if label_pair_str in self.inferencers:
             raise Exception("Model is already started")
 
-        bucket = Settings.get("S3_MODELS_BUCKET", "competitive-drawing-models-prod")
-        root_folder = Settings.get("S3_MODELS_ROOT_FOLDER", "static_crop_50x50")
-        key = f"{root_folder}/{label_pair_str}/model.pth"
-        state_dict_stream = get_object_file_stream(bucket, key)
+        key = f"{SETTINGS.s3_models_root_folder}/{label_pair_str}/model.pth"
+        state_dict_stream = get_object_file_stream(SETTINGS.s3_models_bucket, key)
 
         self.inferencers[label_pair_str] = Inferencer(
             self.model_class,
-            torch.load(state_dict_stream, map_location=torch.device("cpu")),
+            torch.load(state_dict_stream, map_location=SETTINGS.device),
         )
 
 

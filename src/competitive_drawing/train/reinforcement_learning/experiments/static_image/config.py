@@ -5,6 +5,8 @@ import torch
 
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
+
 
 class EnvironmentConfig(BaseModel):
     target_images_dir: str = Field(default="houses")
@@ -13,9 +15,9 @@ class EnvironmentConfig(BaseModel):
     num_bezier_key_points: int = Field(default=3)
     num_bezier_approximations: int = Field(default=10)
     num_bezier_samples: int = Field(default=25)
-    bezier_width: float = Field(default=Settings.get("CANVAS_LINE_WIDTH", 1.5))
+    bezier_width: float = Field(default=SETTINGS.canvas_line_width)
     bezier_aa_factor: int = Field(default=5.0)
-    bezier_length: float = Field(default=Settings.get("IMAGE_SIZE"))
+    bezier_length: float = Field(default=SETTINGS.image_size)
 
     device: str = Field(default="cpu")
 

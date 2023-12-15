@@ -3,20 +3,22 @@ from pydantic import BaseModel, Field
 
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
+
 
 class EnvironmentConfig(BaseModel):
     image_shape: Tuple[int, int] = Field(default=(50, 50))
-    total_num_turns: int = Field(default=Settings.get("TOTAL_NUM_TURNS", 10))
+    total_num_turns: int = Field(default=SETTINGS.total_num_turns)
 
     num_bezier_key_points: int = Field(default=4)
     num_bezier_approximations: int = Field(default=10)
     num_bezier_samples: int = Field(default=15)
-    bezier_width: float = Field(default=Settings.get("CANVAS_LINE_WIDTH", 1.5))
+    bezier_width: float = Field(default=SETTINGS.canvas_line_width)
     bezier_aa_factor: int = Field(default=1.0)
     bezier_length: float = Field(default=(
-        Settings.get("DISTANCE_PER_TURN") /
-        Settings.get("CANVAS_SIZE") *
-        Settings.get("IMAGE_SIZE")
+        SETTINGS.distance_per_turn /
+        SETTINGS.canvas_size *
+        SETTINGS.image_size
     ))
 
     step_reward_factor: float = Field(default=0)

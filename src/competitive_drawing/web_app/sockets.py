@@ -129,7 +129,7 @@ def make_socket_messages(socketio, game_config, games_manager):
 
         # check if player reconnects in time
         found_player.sid = None
-        time.sleep(Settings.get("PAGE_REFRESH_BUFFER_TIME"))
+        time.sleep(Settings().client_disconnect_grace_period)
         if found_player.sid is not None:
             return
 
@@ -181,10 +181,8 @@ def emit_start_game(game_state, room_id):
 
 
 def emit_end_game(game_state, game_config, image_data, room_id):
-    model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
-
     response = requests.post(
-        f"{model_service_base}/infer",
+        f"{Settings().model_service_base}/infer",
         headers={ "Content-Type": "application/json" },
         data=json.dumps({
             "gameConfig": game_config,

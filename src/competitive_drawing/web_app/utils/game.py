@@ -55,12 +55,12 @@ class Game:
         label_pair: Optional[Tuple[str, str]] = None,
     ):
         self.game_type = game_type
-        self.canvasSize = int(Settings.get("CANVAS_SIZE", 100))
+        self.canvasSize = Settings().canvas_size
         self.canvasImage = Image.new("RGB", (self.canvasSize, self.canvasSize), (255, 255, 255))
         self.players = []
         self._player_turn_index = 0
         self.started = False
-        self.total_num_turns = int(Settings.get("TOTAL_NUM_TURNS"))
+        self.total_num_turns = Settings().total_num_turns
         self.turns_left = self.total_num_turns
 
         if label_pair is None:
@@ -226,18 +226,16 @@ class GameManager:
 
 
     def start_model_service(self, label_pair, room_id):
-        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         requests.post(
-            f"{model_service_base}/start_model",
+            f"{Settings().model_service_base}/start_model",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"label_pair": label_pair}),
         )
 
 
     def stop_model_service(self, label_pair):
-        model_service_base = Settings.get("MODEL_SERVICE_BASE", "http://localhost:5002")
         requests.post(
-            f"{model_service_base}/stop_model",
+            f"{Settings().model_service_base}/stop_model",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"label_pair": label_pair}),
         )

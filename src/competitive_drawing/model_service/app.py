@@ -11,18 +11,20 @@ from .routes import make_routes_blueprint
 from .utils import ModelManager
 from competitive_drawing import Settings
 
+SETTINGS = Settings()
 
-def create_app():
+
+def create_app() -> Flask:
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    CORS(app, resources={ r"/*": {"origins": "*"} }) #Settings.get("ALLOWED_ORIGIN", "localhost:5001")
-    app.config["SECRET_KEY"] = Settings.get("MODEL_SERVICE_SECRET_KEY", "secret!")
+    app.config["SECRET_KEY"] = SETTINGS.model_service_secret_key
+
+    # allow web app origin requests
+    web_app_origin = f"{SETTINGS.web_app_host}:{SETTINGS.web_app_port}"
+    CORS(app, resources={ r"/*": {"origins": web_app_origin} })
 
     # create instance folder
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-    except OSError:
-        raise ValueError("Could not create instance folder")
+    os.makedirs(app.instance_path, exist_ok=True)
 
     # model manager
     model_manager = ModelManager()
@@ -37,8 +39,8 @@ def create_app():
 def start_app():
     app = create_app()
     app.run(
-        host=Settings.get("MODEL_SERVICE_HOST", "localhost"),
-        port=Settings.get("MODEL_SERVICE_PORT", 5002),
+        host=SETTINGS.model_service_host,
+        port=SETTINGS.model_service_port,
         debug=True
     )
 
