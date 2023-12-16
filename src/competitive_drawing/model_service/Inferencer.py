@@ -1,10 +1,10 @@
 from typing import Tuple
 
 import numpy
-from PIL import Image, ImageOps
+import asyncio
+from PIL import Image
 
 import torch
-from torchvision.transforms.functional import to_tensor
 from pytorch_grad_cam import XGradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
@@ -16,66 +16,57 @@ from competitive_drawing.model_service.opponent import (
     BezierCurve,
     get_uniform_ts
 )
-
-SETTINGS = Settings()
+from competitive_drawing.model_service.utils.helpers import pil_to_input
+from .utils.helpers import pil_rgba_to_rgb
 
 
 class Inferencer:
-    def __init__(self, model_class, state_dict):
-        self._model_class = model_class
-        self._state_dict = state_dict
-        self._model = self.load_model(model_class, state_dict)
-        self.grad_cam = XGradCAM(
-            model=self._model,
+    """
+    Wraps the classifier model to handle classifier inference and opponent stroke
+    inference. Uses a mutex to 
+
+    Models are deployed in TensorRT rather than alternatives such as ORT because
+    model gradients are necessary in order to optimize strokes for the AI opponent 
+
+    :param classifier_model: instance of classifier model
+    """
+    def __init__(self, classifier_model: torch.nn.Module):
+        self._model = classifier_model
+        self._grad_cam = XGradCAM(
+            model=classifier_model,
             target_layers=[layer for layer in self._model.conv][0:7], # total 19
-            use_cuda=(SETTINGS.device == "cuda")
+            use_cuda=(Settings().device == "cuda")
         )
-        self.image_size = SETTINGS.image_size
+
+        self.mutex = asyncio.Lock()
+
+    """
+    def async_inference(method):
+        def wrapper(self):
+            async_inference
+            
+
+        return wrapper
+    """
 
 
-    def load_model(self, model_class, state_dict):
-        model = model_class()
-        model.load_state_dict(state_dict)
-        model = model.eval()
-
-        return model
-
-
-    def convert_image_to_input(self, image: Image) -> torch.Tensor:
-        image = image.convert("RGB")
-        image = ImageOps.invert(image)
-        red_channel = image.split()[0]
-
-        input = to_tensor(red_channel)
-        input = torch.reshape(input, (1, 1, self.image_size, self.image_size))
-        input = input.to(SETTINGS.device)
-
-        return input
-
-
+    #@async_inference
     def infer_image(self, image: Image):
-        input = self.convert_image_to_input(image)
+        input = pil_to_input(image)
         with torch.no_grad():
-            logits, confidences = self._model(input)
+            logits, _confidences = self._model(input)
 
         return logits[0].tolist()
 
 
-    def rgba_to_rgb(self, image: Image):
-        background = Image.new("RGB", image.size, (255, 255, 255))
-        background.paste(image, mask=image.split()[3])
-
-        return background
-
-
     def infer_image_with_cam(self, image: Image, target_index: int) -> torch.Tensor:
-        input = self.convert_image_to_input(image)
+        input = pil_to_input(image)
 
         targets = [ClassifierOutputTarget(target_index)]
-
-        grayscale_cam = self.grad_cam(input_tensor=input, targets=targets)
+        grayscale_cam = self._grad_cam(input_tensor=input, targets=targets)
         grayscale_cam = grayscale_cam[0, :]
-        image = self.rgba_to_rgb(image)
+
+        image = pil_rgba_to_rgb(image)
         image_numpy = numpy.asarray(image)
         image_numpy = image_numpy / 255
         grad_cam_image = show_cam_on_image(image_numpy, grayscale_cam, use_rgb=True, image_weight=0.8)
@@ -85,6 +76,7 @@ class Inferencer:
         return logits[0].tolist(), grad_cam_image.tolist()
 
 
+    #@self.aquire_lock
     def infer_stroke(
         self,
         image: Image,
@@ -92,12 +84,11 @@ class Inferencer:
         line_width: float,
         max_length: float,
     ):
-        base_canvas = self.convert_image_to_input(image)[0][0]
+        base_canvas = pil_to_input(image)[0][0]
 
-        tmp_target_model = self.load_model(self._model_class, self._state_dict)
         _loss, keypoints = grid_search_stroke(
             base_canvas,
-            tmp_target_model,
+            self._model,
             target_index,
             torch.optim.Adamax,
             { "lr": 0.03 },
@@ -107,7 +98,6 @@ class Inferencer:
             ),
             max_length=max_length,
         )
-        del tmp_target_model
 
         curve = BezierCurve(keypoints, num_approximations=20)
         stroke_samples = [

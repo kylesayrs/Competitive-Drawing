@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 # implementations
 from .routes import make_routes_blueprint
-from .utils import ModelManager
+from .manager import ModelManager
 from competitive_drawing import Settings
 
 SETTINGS = Settings()
@@ -21,7 +21,8 @@ def create_app() -> Flask:
 
     # allow web app origin requests
     web_app_origin = f"{SETTINGS.web_app_host}:{SETTINGS.web_app_port}"
-    CORS(app, resources={ r"/*": {"origins": web_app_origin} })
+    print(web_app_origin)
+    CORS(app, resources={ r"/*": {"origins": "*"} })
 
     # create instance folder
     os.makedirs(app.instance_path, exist_ok=True)

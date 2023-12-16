@@ -4,7 +4,8 @@ import json
 import requests
 from threading import Thread
 
-from .utils import ModelManager, imageDataUrlToImage
+from .manager import ModelManager
+from .utils import imageDataUrlToImage
 
 from competitive_drawing import Settings
 
