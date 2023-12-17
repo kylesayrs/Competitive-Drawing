@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Dict, Tuple, Union
 
 import uuid
 import json
@@ -6,12 +6,13 @@ import random
 import requests
 
 from competitive_drawing import Settings
-from ..game import GameType, Game
+from ..game import GameType, Game, Player
 
 
 class GameManager:
     rooms: Dict[GameType, Dict[str, Game]]
     label_pair_rooms: Dict[Tuple[str, str], List[str]]
+
 
     def __init__(self):
         self.rooms = {
@@ -44,7 +45,7 @@ class GameManager:
         self.rooms[game_type][new_room_id] = new_game
 
         if new_game.label_pair not in self.label_pair_rooms.keys():
-            self.start_model_service(new_game.label_pair, new_room_id)
+            self.start_model_service(new_game.label_pair)
 
         if new_game.label_pair not in self.label_pair_rooms:
             self.label_pair_rooms[new_game.label_pair] = []
@@ -54,11 +55,11 @@ class GameManager:
         return new_room_id
 
 
-    def get_game(self, game_type: GameType, room_id: str):
+    def get_game(self, game_type: GameType, room_id: str) -> Game:
         return self.rooms[game_type][room_id]
 
 
-    def has_label_pair(self, label_pair):
+    def has_label_pair(self, label_pair: Tuple[str, str]) -> bool:
         for game_type_rooms in self.rooms.values():
             for room_id, game in game_type_rooms.items():
                 if game.label_pair == label_pair:
@@ -67,7 +68,10 @@ class GameManager:
         return False
 
 
-    def get_player_location_by_sid(self, sid):
+    def get_player_location_by_sid(
+        self,
+        sid: str
+    ) -> Union[Tuple[Player, Game, str], Tuple[None, None, None]]:
         found_player = None
         for game_type_rooms in self.rooms.values():
             for room_id, game in game_type_rooms.items():
@@ -82,13 +86,13 @@ class GameManager:
             return None, None, None
 
 
-    def remove_room(self, room_id):
+    def remove_room(self, room_id: str):
         for game_type_rooms in self.rooms.values():
             if room_id in game_type_rooms:
                 del game_type_rooms[room_id]
 
 
-    def start_model_service(self, label_pair, room_id):
+    def start_model_service(self, label_pair: Tuple[str, str]):
         requests.post(
             f"{Settings().model_service_base}/start_model",
             headers={"Content-Type": "application/json"},
