@@ -7,16 +7,22 @@ from PIL import Image
 
 from competitive_drawing import Settings
 from ..game import GameType, Player
-from ..utils.s3 import get_uploaded_label_pairs, get_onnx_url
+from ..utils import get_available_label_pairs, get_onnx_url, label_pair_to_str
+
+SETTINGS = Settings()
 
 
 class Game:
+    # game environment
     game_type: GameType
-    canvas: List[List[List[int]]]
+    label_pair: Tuple[str, str]
+    room_id: str
+
+    # game state
+    canvas_image: Image
     players: List[Player]
     started: bool
     _player_turn_index: int
-    label_pair: Tuple[str, str]
     total_num_turns: int
     turns_left: int
 
@@ -24,22 +30,20 @@ class Game:
         self,
         game_type: GameType,
         label_pair: Optional[Tuple[str, str]] = None,
+        room_id: Optional[str] = None
     ):
+        # game environment
         self.game_type = game_type
-        self.canvasSize = Settings().canvas_size
-        self.canvasImage = Image.new("RGB", (self.canvasSize, self.canvasSize), (255, 255, 255))
+        self.label_pair = label_pair if label_pair is not None else _assign_label_pair()
+        self.room_id = room_id if room_id is not None else uuid.uuid4().hex
+
+        # game state
+        self.canvas_image = _new_canvas_image()
         self.players = []
         self._player_turn_index = 0
         self.started = False
-        self.total_num_turns = Settings().total_num_turns
+        self.total_num_turns = SETTINGS.total_num_turns
         self.turns_left = self.total_num_turns
-
-        if label_pair is None:
-            label_pairs = get_uploaded_label_pairs()
-            random.shuffle(label_pairs)
-            self.label_pair = tuple(label_pairs[0])
-        else:
-            self.label_pair = tuple(label_pair)
 
 
     @property
@@ -62,7 +66,12 @@ class Game:
         return get_onnx_url(self.label_pair)
     
 
-    def add_player(self, sid):
+    @property
+    def label_pair_str(self):
+        return label_pair_to_str(self.label_pair)
+    
+
+    def add_player(self, sid: Union[str, None]):
         target_index = len(self.players)
         new_player = Player(
             id=uuid.uuid4().hex,
@@ -74,13 +83,14 @@ class Game:
         return new_player
 
 
-    def next_turn(self):
+    def next_turn(self, canvas_image: numpy.ndarray):
+        self.canvas_image = canvas_image
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
         self.turns_left -= 1
 
 
-    def canvasImageToSerial(self):
-        return numpy.array(self.canvasImage).tolist()
+    def canvas_image_to_serial(self) -> List[List[int]]:
+        return numpy.array(self.canvas_image).tolist()
 
 
     def has_player(self, player_id: Union[str, None]):
@@ -92,7 +102,7 @@ class Game:
         self.started = True
 
 
-    def remove_player(self, sid):
+    def remove_players_by_sid(self, sid: str):
         self.players = [
             player
             for player in self.players
@@ -103,15 +113,31 @@ class Game:
         return self.turns_left <= 0# or self.players <= 1
 
 
-    def assign_player_sid(self, player_id, new_sid):
-        # For single player games, the ai shares the same sid
-        for player_index, player in enumerate(self.players):
-            if player.id == player_id or self.game_type == GameType.SINGLE_PLAYER:
-                player.sid = new_sid
+    def reassign_player_sid(self, player_id: str, new_sid: str):
+        found_players = [player for player in self.players if player.id == player_id]
+        if len(found_players) != 1:
+            # TODO
+            raise ValueError()
+        
+        found_player = found_players[0]
 
-    def get_player_by_sid(self, player_sid):
-        for player_index, player in enumerate(self.players):
-            if player.sid == player_sid:
-                return player
+        found_player.sid = new_sid
 
-        return None
+    def get_other_player(self, player: Player) -> Player:
+        found_players = [player for player in self.players if player.id != player_id]
+        if len(found_players) != 1:
+            # TODO
+            raise ValueError()
+    
+        return found_players[1]
+
+
+def _new_canvas_image() -> Image:
+    canvas_shape = (SETTINGS.canvas_size, SETTINGS.canvas_size)
+    return Image.new("RGB", canvas_shape, (255, 255, 255))
+
+
+def _assign_label_pair() -> Tuple[str, str]:
+    available_label_pairs = get_available_label_pairs()
+    random.shuffle(available_label_pairs)
+    return available_label_pairs[0]

@@ -4,7 +4,7 @@ import torch
 
 from competitive_drawing import Settings
 from .Inferencer import Inferencer
-from .utils.s3 import load_model
+from .utils import load_model, label_pair_to_str
 
 SETTINGS = Settings()
 
@@ -21,17 +21,16 @@ class ModelManager():
 
 
     def start_model(self, label_pair: Tuple[str]):
-        label_pair_str = self._label_pair_to_str(label_pair)
+        label_pair_str = label_pair_to_str(label_pair)
+
         if label_pair_str in self.inferencers:
             raise Exception("Model is already started")
 
-        classifier_model = load_model(label_pair_str)
-
-        self.inferencers[label_pair_str] = Inferencer(classifier_model)
+        self.inferencers[label_pair_str] = Inferencer(load_model(label_pair_str))
 
 
     def get_inferencer(self, label_pair: Tuple[str, str]):
-        label_pair_str = self._label_pair_to_str(label_pair)
+        label_pair_str = label_pair_to_str(label_pair)
 
         if label_pair_str not in self.inferencers:
             raise ValueError(
@@ -43,11 +42,5 @@ class ModelManager():
 
 
     def stop_model(self, label_pair: Tuple[str, str]):
-        label_pair_str = self._label_pair_to_str(label_pair)
+        label_pair_str = label_pair_to_str(label_pair)
         del self.inferencers[label_pair_str]
-
-
-    def _label_pair_to_str(self, label_pair: Tuple[str, str]):
-        label_pair = label_pair.copy()
-        label_pair.sort()
-        return "-".join(label_pair)

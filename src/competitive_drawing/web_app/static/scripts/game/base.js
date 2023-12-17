@@ -34,9 +34,8 @@ export class GameBase {
 
         // Join room
         this.socket.emit("join_room", {
-            "room_id": this.roomId,
-            "game_type": this.gameType,
-            "cachedPlayerId": this.playerId,
+            "roomId": this.roomId,
+            "playerId": this.playerId,
         })
     }
 

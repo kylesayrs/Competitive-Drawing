@@ -102,7 +102,6 @@ export class SinglePlayerGame extends GameBase {
         await this.drawingBoard.updatePreview()
         const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
         this.socket.emit("end_turn", {
-            "game_type": this.gameType,
             "roomId": this.roomId,
             "playerId": this.aiId,
             "canvas": canvasDataUrl,

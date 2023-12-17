@@ -21,17 +21,6 @@ def create_app():
     app.config["SECRET_KEY"] = SETTINGS.web_app_secret_key
     socketio = SocketIO(app)
 
-    # set up config to pass to javascript
-    game_config = {
-        "softmaxFactor": SETTINGS.softmax_factor,
-        "canvasSize": SETTINGS.canvas_size,
-        "canvasLineWidth": SETTINGS.canvas_line_width,
-        "imageSize": SETTINGS.image_size,
-        "imagePadding": SETTINGS.image_padding,
-        "distancePerTurn": SETTINGS.distance_per_turn,
-        "staticCrop": SETTINGS.static_crop
-    }
-
     # set up games manager
     games_manager = GameManager()
 
@@ -39,11 +28,11 @@ def create_app():
     os.makedirs(app.instance_path, exist_ok=True)
 
     # routes
-    routes_blueprint = make_routes_blueprint(app, game_config, games_manager)
+    routes_blueprint = make_routes_blueprint(games_manager)
     app.register_blueprint(routes_blueprint)
 
     # socketio
-    make_socket_messages(socketio, game_config, games_manager)
+    make_socket_messages(socketio, games_manager)
 
     return app, socketio
 

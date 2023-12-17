@@ -1,17 +1,23 @@
+from typing import Dict, Any
+
+import requests
 from flask import Blueprint, render_template, redirect, request, Response
 from flask_socketio import emit
 
-import os
-import requests
-
-from .game import GameType
 from competitive_drawing import Settings
+from .game import GameType, GameManager
+from .utils import get_game_config
 
 SETTINGS = Settings()
 
 
-def make_routes_blueprint(app, game_config, games_manager):
+def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
     routes = Blueprint("routes", __name__)
+    game_config = get_game_config()
+
+
+    """ General """
+
 
     @routes.route("/", methods=["GET"])
     def home():
@@ -28,33 +34,37 @@ def make_routes_blueprint(app, game_config, games_manager):
     @routes.route("/free_draw", methods=["GET"])
     def free_draw():
         return render_template("free_draw.html", game_config=game_config)
+    
+
+    """ Games """
+
 
     @routes.route("/local", methods=["GET"])
     def local_game():
-        room_id = request.args.get("room_id")
-        if room_id is None:
+        if request.args.get("room_id") is None:
             room_id = games_manager.assign_game_room(GameType.LOCAL)
             return redirect(f"local?room_id={room_id}")
-        else:
-            return render_template("local.html", game_config=game_config)
+
+        return render_template("local.html", game_config=game_config)
 
     @routes.route("/online", methods=["GET"])
     def online():
-        room_id = request.args.get("room_id")
-        if room_id is None:
+        if request.args.get("room_id") is None:
             room_id = games_manager.assign_game_room(GameType.ONLINE)
             return redirect(f"online?room_id={room_id}")
-        else:
-            return render_template("online.html", game_config=game_config)
+        
+        return render_template("online.html", game_config=game_config)
 
     @routes.route("/single_player", methods=["GET"])
     def single_player():
-        room_id = request.args.get("room_id")
-        if room_id is None:
+        if request.args.get("room_id") is None:
             room_id = games_manager.assign_game_room(GameType.SINGLE_PLAYER)
             return redirect(f"single_player?room_id={room_id}")
-        else:
-            return render_template("single_player.html", game_config=game_config)
+
+        return render_template("single_player.html", game_config=game_config)
+
+
+    """ Inference """
 
 
     @routes.route("/infer", methods=["POST"])

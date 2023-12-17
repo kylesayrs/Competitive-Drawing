@@ -6,7 +6,7 @@ from competitive_drawing import Settings
 S3_CLIENT = boto3.client("s3")
 
 
-def get_uploaded_label_pairs():
+def get_available_label_pairs():
     bucket = Settings().s3_models_bucket
     root_folder = Settings().s3_models_root_folder
 
@@ -14,17 +14,17 @@ def get_uploaded_label_pairs():
     if not "Contents" in bucket_objects:
         return []
 
-    uploaded_label_pairs = []
+    available_label_pairs = []
     for object in bucket_objects["Contents"]:
         path_components = object["Key"].split("/")
         if path_components[0] == root_folder and path_components[-1] == "model.onnx":
             label_one, label_two = path_components[-2].split("-")
             if label_one < label_two:
-                uploaded_label_pairs.append([label_one, label_two])
+                available_label_pairs.append([label_one, label_two])
             else:
                 print(f"WARNING: Invalid uploaded model {label_one}-{label_two}")
 
-    return uploaded_label_pairs
+    return available_label_pairs
 
 
 def get_s3_dir(label_pair: Tuple[str, str]):

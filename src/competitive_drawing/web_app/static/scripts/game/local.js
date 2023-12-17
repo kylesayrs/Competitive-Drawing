@@ -40,8 +40,7 @@ export class SinglePlayerGame extends GameBase {
 
         // Join local room
         this.socket.emit("join_room", {
-            "room_id": this.roomId,
-            "game_type": this.gameType,
+            "roomId": this.roomId
         })
 
     }

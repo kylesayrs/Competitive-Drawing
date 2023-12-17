@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import re
 import torch
 import base64
@@ -52,3 +54,9 @@ def pil_to_input(image: Image) -> torch.Tensor:
     input = torch.unsqueeze(input, 0)  # singleton batch: (1, 1, image_size, image_size)
 
     return input
+
+
+def label_pair_to_str(label_pair: Tuple[str, str]) -> str:
+    label_pair = label_pair.copy()
+    label_pair.sort()
+    return "-".join(label_pair)
