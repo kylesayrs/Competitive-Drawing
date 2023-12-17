@@ -6,7 +6,7 @@ import numpy
 from PIL import Image
 
 from competitive_drawing import Settings
-from . import GameType, Player
+from ..game import GameType, Player
 from ..utils.s3 import get_uploaded_label_pairs, get_onnx_url
 
 

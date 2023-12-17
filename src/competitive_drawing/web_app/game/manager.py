@@ -6,7 +6,7 @@ import random
 import requests
 
 from competitive_drawing import Settings
-from .game import GameType, Game
+from ..game import GameType, Game
 
 
 class GameManager:
