@@ -4,7 +4,7 @@ from flask_socketio import emit
 import os
 import requests
 
-from .utils.game import GameType
+from .game import GameType
 from competitive_drawing import Settings
 
 SETTINGS = Settings()

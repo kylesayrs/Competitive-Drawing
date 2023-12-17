@@ -50,6 +50,5 @@ def pil_to_input(image: Image) -> torch.Tensor:
     input = to_tensor(first_channel)
     input = input.to(dtype=torch.float, device=SETTINGS.device)
     input = torch.unsqueeze(input, 0)  # singleton batch: (1, 1, image_size, image_size)
-    print(input.shape)
 
     return input

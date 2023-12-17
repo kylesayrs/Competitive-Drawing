@@ -9,7 +9,7 @@ from flask_socketio import SocketIO
 # implementations
 from .routes import make_routes_blueprint
 from .sockets import make_socket_messages
-from .utils.game import GameManager
+from .game import GameManager
 from competitive_drawing import Settings
 
 SETTINGS = Settings()

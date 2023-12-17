@@ -16,10 +16,7 @@ def load_model(label_pair_str: str) -> torch.nn.Module:
 
     # instantiate model
     model = get_classifier_model()
-    print("SDF")
-    print(state_dict)
     model.load_state_dict(state_dict)
-    print("GFDS")
     model = model.eval()
 
     return model

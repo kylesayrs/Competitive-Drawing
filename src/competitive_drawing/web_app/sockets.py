@@ -7,10 +7,9 @@ import json
 import base64
 from io import BytesIO
 from PIL import Image
-import boto3
 import requests
 
-from competitive_drawing.web_app.utils.game import GameType
+from competitive_drawing.web_app.game import GameType
 from competitive_drawing import Settings
 
 
@@ -163,10 +162,8 @@ def emit_start_turn(game_state, room_id):
 
 
 def emit_start_game(game_state, room_id):
-    onnx_url = game_state.get_onnx_url()
-
     emit("start_game", {
-        "onnxUrl": onnx_url,
+        "onnxUrl": game_state.onnx_url,
         "canvas": game_state.canvasImageToSerial(),
         "targets": {
             player.id: player.target
