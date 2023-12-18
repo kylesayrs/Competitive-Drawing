@@ -2,7 +2,6 @@ from typing import List, Tuple, Union, Optional
 
 from PIL import Image
 import json
-import numpy
 import random
 import requests
 from collections import defaultdict
@@ -14,6 +13,10 @@ from ..utils import data_url_to_image, get_game_config
 
 
 class GameManager:
+    """
+    Handles the creation and deletion of games as well as the assignment
+    of players to games
+    """
     games: List[Game]
 
     # game indices
@@ -56,56 +59,19 @@ class GameManager:
             return available_game_room_ids[0]
 
         # otherwise create a new game and room
-        new_game = self.new_game(game_type, *game_args, **game_kwargs)
+        new_game = self._new_game(game_type, *game_args, **game_kwargs)
         return new_game.room_id
 
-
-    def new_game(self, game_type: GameType, *game_args, **game_kwargs) -> Game:
-        """
-        Create a new game
-
-        :param game_type: type of game being created
-        :param game_args: arguments used to initialize new game
-        :param game_kwargs: keyword arguments used to initialize new game
-        :return: instance of new game
-        """
-        # initialize new game
-        new_game = Game(game_type, *game_args, **game_kwargs)
-
-        # update indexes
-        self.games.append(new_game)
-        self.game_by_room_id[new_game.room_id] = new_game
-        self.games_by_gametype[new_game.game_type] += [new_game]
-        self.games_by_label_pair_str[new_game.label_pair_str] += [new_game]
-
-        # communicate games information to model service
-        #TODO: replace with self.update_model_service()
-        self.start_model_service(new_game.label_pair)
-
-        return new_game
     
-
-    def del_game(self, game: Game):
-        """
-        Delete a game instance after the game is finished
-
-        :param game: game to be deleted
-        """
-        # update indexes
-        self.games.remove(game)
-        del self.game_by_room_id[game.room_id]
-        self.games_by_gametype[game.game_type].remove(game)
-        self.games_by_label_pair_str[game.label_pair_str].remove(game)
-
-        for player in game.players:
-            if player.sid is not None:
-                del self.player_game_by_sid[player.sid]
-
-        del game  # redundancy
-
-    
-
     def join_game(self, room_id: str, player_sid: str, player_id_cache: Union[str, None]):
+        """
+        Called when a player joins a game. Assigns player to game and starts game
+        if applicable
+
+        :param room_id: room id being joined
+        :param player_sid: socket session id
+        :param player_id_cache: player id stored in client storage
+        """
         game = self.game_by_room_id[room_id]
 
         if game is None:
@@ -206,7 +172,7 @@ class GameManager:
         game.next_turn(canvas_image)
 
         if game.can_end_game():
-            self.end_game(game, canvas_preview_data_url)
+            self._end_game(game, canvas_preview_data_url)
         else:
             emit_start_turn(game, room_id)
 
@@ -240,10 +206,54 @@ class GameManager:
             emit_end_game(winner.target, game.room_id)
 
         # delete game
-        self.del_game(game)
+        self._del_game(game)
+
+
+    def _new_game(self, game_type: GameType, *game_args, **game_kwargs) -> Game:
+        """
+        Create a new game
+
+        :param game_type: type of game being created
+        :param game_args: arguments used to initialize new game
+        :param game_kwargs: keyword arguments used to initialize new game
+        :return: instance of new game
+        """
+        # initialize new game
+        new_game = Game(game_type, *game_args, **game_kwargs)
+
+        # update indexes
+        self.games.append(new_game)
+        self.game_by_room_id[new_game.room_id] = new_game
+        self.games_by_gametype[new_game.game_type] += [new_game]
+        self.games_by_label_pair_str[new_game.label_pair_str] += [new_game]
+
+        # communicate games information to model service
+        #TODO: replace with self.update_model_service()
+        self._start_model_service(new_game.label_pair)
+
+        return new_game
     
 
-    def set_canvas_image(self, room_id: str, canvas_image: Image):
+    def _del_game(self, game: Game):
+        """
+        Delete a game instance after the game is finished
+
+        :param game: game to be deleted
+        """
+        # update indexes
+        self.games.remove(game)
+        del self.game_by_room_id[game.room_id]
+        self.games_by_gametype[game.game_type].remove(game)
+        self.games_by_label_pair_str[game.label_pair_str].remove(game)
+
+        for player in game.players:
+            if player.sid is not None:
+                del self.player_game_by_sid[player.sid]
+
+        del game  # redundancy
+    
+
+    def _set_canvas_image(self, room_id: str, canvas_image: Image):
         game = self.game_by_room_id[room_id]
         game.canvasImage = canvas_image
         if game is None:
@@ -251,7 +261,7 @@ class GameManager:
             return
 
 
-    def start_model_service(self, label_pair: Tuple[str, str]):
+    def _start_model_service(self, label_pair: Tuple[str, str]):
         requests.post(
             f"{Settings().model_service_base}/start_model",
             headers={"Content-Type": "application/json"},
@@ -259,7 +269,7 @@ class GameManager:
         )
 
 
-    def stop_model_service(self, label_pair: Tuple[str, str]):
+    def _stop_model_service(self, label_pair: Tuple[str, str]):
         requests.post(
             f"{Settings().model_service_base}/stop_model",
             headers={"Content-Type": "application/json"},
