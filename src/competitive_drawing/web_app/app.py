@@ -8,7 +8,7 @@ from flask_socketio import SocketIO
 
 # implementations
 from .routes import make_routes_blueprint
-from .sockets import make_socket_messages
+from .sockets import make_socket_callbacks
 from .game import GameManager
 from competitive_drawing import Settings
 
@@ -32,7 +32,7 @@ def create_app():
     app.register_blueprint(routes_blueprint)
 
     # socketio
-    make_socket_messages(socketio, games_manager)
+    make_socket_callbacks(socketio, games_manager)
 
     return app, socketio
 

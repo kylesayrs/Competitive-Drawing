@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ..game import GameManager
 
 
-def make_socket_messages(socketio, game_manager: "GameManager"):
+def make_socket_callbacks(socketio, game_manager: "GameManager"):
     @socketio.on("join_room")
     def on_join_room(data: Dict[str, Any]):
         room_id = data["roomId"]
