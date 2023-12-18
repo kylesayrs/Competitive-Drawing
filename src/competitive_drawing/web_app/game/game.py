@@ -124,7 +124,7 @@ class Game:
         found_player.sid = new_sid
 
     def get_other_player(self, player: Player) -> Player:
-        found_players = [player for player in self.players if player.id != player_id]
+        found_players = [p for p in self.players if p.id != player.id]
         if len(found_players) != 1:
             # TODO
             raise ValueError()

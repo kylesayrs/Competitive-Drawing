@@ -114,7 +114,7 @@ class GameManager:
                 self.player_game_by_sid[player_sid] = (player_one, game)
 
             elif game.game_type == GameType.ONLINE:
-                if game.can_add_player():
+                if game.can_add_player:
                     new_player = game.add_player(player_sid)
                     emit_assign_player(new_player.id)
 

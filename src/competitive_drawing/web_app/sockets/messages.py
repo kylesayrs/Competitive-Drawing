@@ -31,6 +31,7 @@ def make_socket_messages(socketio, game_manager: "GameManager"):
         canvas_data_url = data["canvas"]
         canvas_preview_data_url = data["preview"]
 
+        # may end game if criteria are met
         game_manager.end_turn(room_id, player_id, canvas_data_url, canvas_preview_data_url)
 
 
