@@ -120,8 +120,8 @@ class Game:
             raise ValueError()
         
         found_player = found_players[0]
-
         found_player.sid = new_sid
+
 
     def get_other_player(self, player: Player) -> Player:
         found_players = [p for p in self.players if p.id != player.id]
