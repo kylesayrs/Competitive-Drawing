@@ -61,6 +61,14 @@ class GameManager:
 
 
     def new_game(self, game_type: GameType, *game_args, **game_kwargs) -> Game:
+        """
+        Create a new game
+
+        :param game_type: type of game being created
+        :param game_args: arguments used to initialize new game
+        :param game_kwargs: keyword arguments used to initialize new game
+        :return: instance of new game
+        """
         # initialize new game
         new_game = Game(game_type, *game_args, **game_kwargs)
 
@@ -78,6 +86,11 @@ class GameManager:
     
 
     def del_game(self, game: Game):
+        """
+        Delete a game instance after the game is finished
+
+        :param game: game to be deleted
+        """
         # update indexes
         self.games.remove(game)
         del self.game_by_room_id[game.room_id]
