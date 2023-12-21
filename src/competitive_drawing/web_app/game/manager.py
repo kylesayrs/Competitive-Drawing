@@ -9,7 +9,7 @@ from collections import defaultdict
 from competitive_drawing import Settings
 from ..game import GameType, Game, Player, create_game
 from ..sockets import emit_end_game
-from ..model_service import server_infer
+from ..model_service import server_infer, server_update
 from ..utils import data_url_to_image
 
 
@@ -210,19 +210,20 @@ class GameManager:
             if player.sid is not None:
                 del self.player_game_by_sid[player.sid]
 
+        # communicate games information to model service
+        self._update_model_service()
+
         del game  # redundancy
         
 
     def _update_model_service(self):
-        num_games_by_label_pair_str = [
-            len(self.games_by_label_pair_str[label_pair_str])
+        """
+        Communicate information about the number of active games and label pairs
+        so model service can make scaling decisions
+        """
+        num_games_by_label_pair_str = {
+            label_pair_str: len(self.games_by_label_pair_str[label_pair_str])
             for label_pair_str in self.games_by_label_pair_str
-        ]
+        }
 
-        requests.post(
-            f"{Settings().model_service_base}/start_model",
-            headers={"Content-Type": "application/json"},
-            data=json.dumps({
-                "label_pair_games": num_games_by_label_pair_str
-            }),
-        )
+        server_update(num_games_by_label_pair_str)

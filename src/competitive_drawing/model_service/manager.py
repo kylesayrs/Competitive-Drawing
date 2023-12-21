@@ -1,5 +1,6 @@
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple
 
+import copy
 import torch
 
 from competitive_drawing import Settings
@@ -17,16 +18,22 @@ class ModelManager():
 
     """
     def __init__(self):
-        self.inferencers: Dict[str, torch.module.nn] = {}
+        self.inferencers: Dict[str, torch.module.nn] = {}  # maps label pairs to inferencers
 
 
-    def start_model(self, label_pair: Tuple[str]):
-        label_pair_str = label_pair_to_str(label_pair)
+    def scale(self, label_pair_games: Dict[str, int]):
+        print(label_pair_games)
+        # scale up
+        for label_pair_str, num_games in label_pair_games.items():
+            if num_games > 0 and label_pair_str not in self.inferencers:
+                self.inferencers[label_pair_str] = Inferencer(load_model(label_pair_str))
 
-        if label_pair_str in self.inferencers:
-            raise Exception("Model is already started")
-
-        self.inferencers[label_pair_str] = Inferencer(load_model(label_pair_str))
+        # scale down
+        inferencer_items = list(self.inferencers.items())  # cache to avoid iterable resizing
+        for label_pair_str, inferencer in inferencer_items:
+            if label_pair_str not in label_pair_games or label_pair_games[label_pair_str] <= 0:
+                del self.inferencers[label_pair_str]
+                del inferencer # redundancy
 
 
     def get_inferencer(self, label_pair: Tuple[str, str]):
@@ -39,8 +46,4 @@ class ModelManager():
             )
 
         return self.inferencers[label_pair_str]
-
-
-    def stop_model(self, label_pair: Tuple[str, str]):
-        label_pair_str = label_pair_to_str(label_pair)
-        del self.inferencers[label_pair_str]
+    

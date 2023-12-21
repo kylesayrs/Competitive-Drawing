@@ -15,17 +15,15 @@ SETTINGS = Settings()
 def make_routes_blueprint(model_manager: ModelManager):
     routes = Blueprint("routes", __name__)
 
-    @routes.route("/start_model", methods=["POST"])
-    def start_model():
-        try:
-            model_manager.start_model(request.json["label_pair"])
-            print(model_manager.inferencers.keys())
-            return "", 200
+    @routes.route("/update", methods=["POST"])
+    def update():
+        label_pair_games = request.json["label_pair_games"]  # maps label pairs to number of games
 
-        except Exception as exception:
-            print(exception)
-            print(model_manager.inferencers.keys())
-            return str(exception), 409
+        model_manager.scale(label_pair_games)
+        print(label_pair_games)
+        print(model_manager.inferencers.keys())
+
+        return "", 200
 
 
     @routes.route("/infer", methods=["POST"])
@@ -63,6 +61,10 @@ def make_routes_blueprint(model_manager: ModelManager):
 
     @routes.route("/infer_stroke", methods=["POST"])
     def infer_stroke():
+        """
+        Asyncronously begin thread to infer AI stroke. Stroke information is sent
+        by a subsequent http request to the web app
+        """
         image = imageDataUrlToImage(request.json["imageDataUrl"])
         target_index = request.json["targetIndex"]
         line_width = (
@@ -99,19 +101,7 @@ def make_routes_blueprint(model_manager: ModelManager):
         )
         thread.start()
 
-        return "", 200
-
-
-    @routes.route("/stop_model", methods=["POST"])
-    def stop_model():
-        try:
-            model_manager.stop_model(request.json["label_pair"])
-            print(model_manager.inferencers.keys())
-            return "", 200
-
-        except Exception as exception:
-            print(exception)
-            print(model_manager.inferencers.keys())
-            return str(exception), 409
+        return "", 201
+    
 
     return routes

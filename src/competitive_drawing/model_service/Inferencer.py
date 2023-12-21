@@ -22,11 +22,12 @@ from .utils.helpers import pil_rgba_to_rgb
 
 class Inferencer:
     """
-    Wraps the classifier model to handle classifier inference and opponent stroke
-    inference. Uses a mutex to 
+    Wraps classifier model to handle classifier inference and opponent stroke
+    inference. Uses a mutex to handle access to model resource
 
     Models are deployed in TensorRT rather than alternatives such as ORT because
-    model gradients are necessary in order to optimize strokes for the AI opponent 
+    model gradients are necessary in order to optimize strokes for the AI opponent
+    as well as for the gram cam.
 
     :param classifier_model: instance of classifier model
     """
