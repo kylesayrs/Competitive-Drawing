@@ -6,15 +6,13 @@ from flask_socketio import emit
 
 from competitive_drawing import Settings
 from .game import GameType, GameManager
-from .utils import get_game_config
+from .utils import GAME_CONFIG
 
 SETTINGS = Settings()
 
 
 def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
     routes = Blueprint("routes", __name__)
-    game_config = get_game_config()
-
 
     """ General """
 
@@ -33,7 +31,7 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
 
     @routes.route("/free_draw", methods=["GET"])
     def free_draw():
-        return render_template("free_draw.html", game_config=game_config)
+        return render_template("free_draw.html", game_config=GAME_CONFIG)
     
 
     """ Games """
@@ -45,7 +43,7 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
             room_id = games_manager.assign_game_room(GameType.LOCAL)
             return redirect(f"local?room_id={room_id}")
 
-        return render_template("local.html", game_config=game_config)
+        return render_template("local.html", game_config=GAME_CONFIG)
 
     @routes.route("/online", methods=["GET"])
     def online():
@@ -53,7 +51,7 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
             room_id = games_manager.assign_game_room(GameType.ONLINE)
             return redirect(f"online?room_id={room_id}")
         
-        return render_template("online.html", game_config=game_config)
+        return render_template("online.html", game_config=GAME_CONFIG)
 
     @routes.route("/single_player", methods=["GET"])
     def single_player():
@@ -61,7 +59,7 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
             room_id = games_manager.assign_game_room(GameType.SINGLE_PLAYER)
             return redirect(f"single_player?room_id={room_id}")
 
-        return render_template("single_player.html", game_config=game_config)
+        return render_template("single_player.html", game_config=GAME_CONFIG)
 
 
     """ Inference """

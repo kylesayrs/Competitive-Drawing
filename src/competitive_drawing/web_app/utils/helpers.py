@@ -24,16 +24,12 @@ def data_url_to_image(data_url):
     return Image.open(image_data_io)
 
 
-def get_game_config():
-    """
-    Used to pass settings to javascript
-    """
-    return {
-        "softmaxFactor": SETTINGS.softmax_factor,
-        "canvasSize": SETTINGS.canvas_size,
-        "canvasLineWidth": SETTINGS.canvas_line_width,
-        "imageSize": SETTINGS.image_size,
-        "imagePadding": SETTINGS.image_padding,
-        "distancePerTurn": SETTINGS.distance_per_turn,
-        "staticCrop": SETTINGS.static_crop
-    }
+GAME_CONFIG = {
+    "softmaxFactor": SETTINGS.softmax_factor,
+    "canvasSize": SETTINGS.canvas_size,
+    "canvasLineWidth": SETTINGS.canvas_line_width,
+    "imageSize": SETTINGS.image_size,
+    "imagePadding": SETTINGS.image_padding,
+    "distancePerTurn": SETTINGS.distance_per_turn,
+    "staticCrop": SETTINGS.static_crop
+}

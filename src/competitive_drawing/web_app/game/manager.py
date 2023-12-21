@@ -9,7 +9,8 @@ from collections import defaultdict
 from competitive_drawing import Settings
 from ..game import GameType, Game, Player, create_game
 from ..sockets import emit_end_game
-from ..utils import data_url_to_image, get_game_config
+from ..model_service import server_infer
+from ..utils import data_url_to_image
 
 
 class GameManager:
@@ -134,7 +135,7 @@ class GameManager:
         if player_id_cache != game.turn.id:
             print(f"WARNING: Received wrong player id for end turn ({player_id_cache} != {game.turn.id})")
             return
-
+        
         # save image
         # TODO: image for future data mining
         canvas_image = data_url_to_image(canvas_data_url)
@@ -150,21 +151,14 @@ class GameManager:
         canvas_preview_data_url: Optional[str] = None,
         force_loser: Optional[Player] = None
     ):
+        # TODO: move to game function
         assert canvas_preview_data_url is not None or force_loser is not None
         if canvas_preview_data_url:
             # do another inference for redundancy
-            response = requests.post(
-                f"{Settings().model_service_base}/infer",
-                headers={ "Content-Type": "application/json" },
-                data=json.dumps({
-                    "gameConfig": get_game_config(),
-                    "label_pair": game.label_pair,
-                    "imageDataUrl": canvas_preview_data_url
-                })
-            )
+            model_outputs = server_infer(game.label_pair, canvas_preview_data_url)
 
             # emit winner
-            winner_index = int(response.json()["modelOutputs"][1] > response.json()["modelOutputs"][0])
+            winner_index = int(model_outputs[1] > model_outputs[0])
             winner_target = game.label_pair[winner_index]
             emit_end_game(winner_target, game.room_id)
 
@@ -191,12 +185,11 @@ class GameManager:
         # update indexes
         self.games.append(new_game)
         self.game_by_room_id[new_game.room_id] = new_game
-        self.games_by_gametype[new_game.game_type] += [new_game]
-        self.games_by_label_pair_str[new_game.label_pair_str] += [new_game]
+        self.games_by_gametype[new_game.game_type].append(new_game)
+        self.games_by_label_pair_str[new_game.label_pair_str].append(new_game)
 
         # communicate games information to model service
-        #TODO: replace with self.update_model_service()
-        self._start_model_service(new_game.label_pair)
+        self._update_model_service()
 
         return new_game
     
@@ -218,27 +211,18 @@ class GameManager:
                 del self.player_game_by_sid[player.sid]
 
         del game  # redundancy
-    
+        
 
-    def _set_canvas_image(self, room_id: str, canvas_image: Image):
-        game = self.game_by_room_id[room_id]
-        game.canvasImage = canvas_image
-        if game is None:
-            print(f"WARNING: Could not find game associated with room id {room_id}")
-            return
+    def _update_model_service(self):
+        num_games_by_label_pair_str = [
+            len(self.games_by_label_pair_str[label_pair_str])
+            for label_pair_str in self.games_by_label_pair_str
+        ]
 
-
-    def _start_model_service(self, label_pair: Tuple[str, str]):
         requests.post(
             f"{Settings().model_service_base}/start_model",
             headers={"Content-Type": "application/json"},
-            data=json.dumps({"label_pair": label_pair}),
-        )
-
-
-    def _stop_model_service(self, label_pair: Tuple[str, str]):
-        requests.post(
-            f"{Settings().model_service_base}/stop_model",
-            headers={"Content-Type": "application/json"},
-            data=json.dumps({"label_pair": label_pair}),
+            data=json.dumps({
+                "label_pair_games": num_games_by_label_pair_str
+            }),
         )
