@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from competitive_drawing import Settings
 from ..game import GameType, Game, Player, create_game
-from ..sockets import emit_assign_player, emit_start_game, emit_start_turn, emit_end_game
+from ..sockets import emit_end_game
 from ..utils import data_url_to_image, get_game_config
 
 

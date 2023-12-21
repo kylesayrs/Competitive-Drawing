@@ -43,7 +43,7 @@ def make_socket_callbacks(socketio, game_manager: "GameManager"):
         if player is None:
             print(f"WARNING: Could not find player with sid {request.sid}")
             return
-
+        
         # check if player reconnects in time
         # Note: there's a race condition if the client reconnects faster than it
         # takes the code to get to here. In this case, the client will be met with
@@ -52,6 +52,6 @@ def make_socket_callbacks(socketio, game_manager: "GameManager"):
         time.sleep(Settings().client_disconnect_grace_period)
         if player.sid is not None:
             return
-
+        
         # end game
         game_manager.end_game(game, force_loser=player)
