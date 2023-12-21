@@ -79,7 +79,8 @@ def make_routes_blueprint(model_manager: ModelManager):
         )
         room_id = request.json["roomId"]
 
-        # TODO: Cheat detection
+        # TODO: Detect if images are too dissilimar. If so, the client may have
+        # manipulated the image
 
         @copy_current_request_context
         def _send_stroke(model_manager: ModelManager, room_id, *args):
