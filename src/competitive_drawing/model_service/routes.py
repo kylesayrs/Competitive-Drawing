@@ -15,8 +15,8 @@ SETTINGS = Settings()
 def make_routes_blueprint(model_manager: ModelManager):
     routes = Blueprint("routes", __name__)
 
-    @routes.route("/update", methods=["POST"])
-    def update():
+    @routes.route("/games", methods=["POST"])
+    def games():
         label_pair_games = request.json["label_pair_games"]  # maps label pairs to number of games
 
         model_manager.scale(label_pair_games)

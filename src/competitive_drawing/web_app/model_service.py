@@ -37,7 +37,7 @@ def server_infer(label_pair: Tuple[str, str], canvas_preview_data_url: str) -> L
 
 def server_update(num_games_by_label_pair_str: Dict[str, int]):
     response = requests.post(
-        f"{SETTINGS.model_service_base}/update",
+        f"{SETTINGS.model_service_base}/games",
         headers=HEADERS,
         data=json.dumps({
             "label_pair_games": num_games_by_label_pair_str
