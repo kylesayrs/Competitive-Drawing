@@ -102,8 +102,8 @@ export class GameBase {
         // update turn indicator
         this.turnIndicator.update(data["turnsLeft"], data["target"])
 
-        // update confidences and preview image
-        this.clientInferImage()
+        // do not update client inference as to not break the illusion
+        // that the game starts at 50/50
     }
 
 

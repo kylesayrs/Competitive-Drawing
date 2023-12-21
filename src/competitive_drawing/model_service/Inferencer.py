@@ -1,7 +1,5 @@
-from typing import Tuple
-
 import numpy
-import asyncio
+import threading
 from PIL import Image
 
 import torch
@@ -20,10 +18,20 @@ from competitive_drawing.model_service.utils.helpers import pil_to_input
 from .utils.helpers import pil_rgba_to_rgb
 
 
+def async_inference(method):
+    def wrapper(self, *args, **kwargs):
+        with self.semaphore:
+            ret = method(self, *args, **kwargs)
+
+        return ret
+        
+    return wrapper
+
+
 class Inferencer:
     """
     Wraps classifier model to handle classifier inference and opponent stroke
-    inference. Uses a mutex to handle access to model resource
+    inference. Uses a semaphore to handle access to model resource
 
     Models are deployed in TensorRT rather than alternatives such as ORT because
     model gradients are necessary in order to optimize strokes for the AI opponent
@@ -39,19 +47,10 @@ class Inferencer:
             use_cuda=(Settings().device == "cuda")
         )
 
-        self.mutex = asyncio.Lock()
-
-    """
-    def async_inference(method):
-        def wrapper(self):
-            async_inference
-            
-
-        return wrapper
-    """
+        self.semaphore = threading.Semaphore(1)
 
 
-    #@async_inference
+    @async_inference
     def infer_image(self, image: Image):
         input = pil_to_input(image)
         with torch.no_grad():
@@ -60,6 +59,7 @@ class Inferencer:
         return logits[0].tolist()
 
 
+    @async_inference
     def infer_image_with_cam(self, image: Image, target_index: int) -> torch.Tensor:
         input = pil_to_input(image)
 
@@ -73,11 +73,12 @@ class Inferencer:
         grad_cam_image = show_cam_on_image(image_numpy, grayscale_cam, use_rgb=True, image_weight=0.8)
 
         with torch.no_grad():
-            logits, confidences = self._model(input)
+            logits, _confidences = self._model(input)
+
         return logits[0].tolist(), grad_cam_image.tolist()
 
 
-    #@self.aquire_lock
+    @async_inference
     def infer_stroke(
         self,
         image: Image,

@@ -22,7 +22,15 @@ class ModelManager():
 
 
     def scale(self, label_pair_games: Dict[str, int]):
-        print(label_pair_games)
+        """
+        Determines how to scale inferences with regards to the number of active
+        games for each label pair. The current policy is to have exactly one
+        inferencer for each active label pair, no matter how many games. Future
+        policies may scale linearly with the number of games or mutex delay time.
+
+        :param label_pair_games: Dictionary mapping label pair strings to number
+            of active games
+        """
         # scale up
         for label_pair_str, num_games in label_pair_games.items():
             if num_games > 0 and label_pair_str not in self.inferencers:
