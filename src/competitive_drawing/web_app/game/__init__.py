@@ -8,4 +8,3 @@ from .online import OnlineGame
 from .single_player import SinglePlayerGame
 
 from .factory import create_game
-from .manager import GameManager

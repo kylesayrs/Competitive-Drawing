@@ -5,7 +5,8 @@ from flask import Blueprint, render_template, redirect, request, Response
 from flask_socketio import emit
 
 from competitive_drawing import Settings
-from .game import GameType, GameManager
+from .game import GameType
+from .GameManager import GameManager
 from .utils import GAME_CONFIG
 
 SETTINGS = Settings()

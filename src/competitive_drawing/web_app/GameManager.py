@@ -7,10 +7,10 @@ import requests
 from collections import defaultdict
 
 from competitive_drawing import Settings
-from ..game import GameType, Game, Player, create_game
-from ..sockets import emit_end_game
-from ..model_service import server_infer, server_update
-from ..utils import data_url_to_image
+from .game import GameType, Game, Player, create_game
+from .sockets import emit_end_game
+from .model_service import server_infer, server_update
+from .utils import data_url_to_image
 
 
 class GameManager:
