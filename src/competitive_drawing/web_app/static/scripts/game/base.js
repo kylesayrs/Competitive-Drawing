@@ -145,6 +145,7 @@ export class GameBase {
     }
 
     async onEndTurnButtonClick(_event) {
+        // TODO: lock end turn button until finished
         this.serverInferImage()
 
         const canvasDataUrl = this.drawingBoard.getCanvasImageDataUrl()
