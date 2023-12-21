@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple, Union
+from abc import ABC, abstractclassmethod
 
 import uuid
 import random
@@ -8,11 +9,12 @@ from PIL import Image
 from competitive_drawing import Settings
 from ..game import GameType, Player
 from ..utils import get_available_label_pairs, get_onnx_url, label_pair_to_str
+from ..sockets import emit_start_game, emit_start_turn, emit_assign_player
 
 SETTINGS = Settings()
 
 
-class Game:
+class Game(ABC):
     # game environment
     game_type: GameType
     label_pair: Tuple[str, str]
@@ -28,12 +30,10 @@ class Game:
 
     def __init__(
         self,
-        game_type: GameType,
         label_pair: Optional[Tuple[str, str]] = None,
         room_id: Optional[str] = None
     ):
         # game environment
-        self.game_type = game_type
         self.label_pair = label_pair if label_pair is not None else _assign_label_pair()
         self.room_id = room_id if room_id is not None else uuid.uuid4().hex
 
@@ -47,31 +47,31 @@ class Game:
 
 
     @property
-    def can_add_player(self):
-        return len(self.players) < 2
-
-
-    @property
-    def can_start_game(self):
-        return self.game_type == GameType.FREE_PLAY or len(self.players) >= 2
-
-
-    @property
-    def turn(self):
+    def turn(self) -> Player:
         return self.players[self._player_turn_index]
     
 
     @property
-    def onnx_url(self):
+    def onnx_url(self) -> str:
         return get_onnx_url(self.label_pair)
     
 
     @property
-    def label_pair_str(self):
+    def label_pair_str(self) -> str:
         return label_pair_to_str(self.label_pair)
     
 
-    def add_player(self, sid: Union[str, None]):
+    @property
+    def can_start_game(self) -> bool:
+        return self.game_type == GameType.FREE_PLAY or len(self.players) >= 2
+    
+
+    @property
+    def can_end_game(self) -> bool:
+        return self.turns_left <= 0
+    
+
+    def add_player(self, sid: Union[str, None]) -> Player:
         target_index = len(self.players)
         new_player = Player(
             id=uuid.uuid4().hex,
@@ -80,6 +80,7 @@ class Game:
             target_index=target_index,
         )
         self.players.append(new_player)
+
         return new_player
 
 
@@ -88,18 +89,24 @@ class Game:
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
         self.turns_left -= 1
 
+        if not self.can_end_game:
+            emit_start_turn(self, self.room_id)
+
 
     def canvas_image_to_serial(self) -> List[List[int]]:
         return numpy.array(self.canvas_image).tolist()
 
 
-    def has_player(self, player_id: Union[str, None]):
+    def has_player(self, player_id: Union[str, None]) -> bool:
         player_ids = [player.id for player in self.players]
         return player_id is not None and player_id in player_ids
 
 
     def start_game(self):
         self.started = True
+
+        emit_start_game(self, self.room_id)
+        emit_start_turn(self, self.room_id)
 
 
     def remove_players_by_sid(self, sid: str):
@@ -109,27 +116,32 @@ class Game:
             if player.sid != sid
         ]
 
-    def can_end_game(self):
-        return self.turns_left <= 0# or self.players <= 1
-
 
     def reassign_player_sid(self, player_id: str, new_sid: str):
         found_players = [player for player in self.players if player.id == player_id]
         if len(found_players) != 1:
-            # TODO
-            raise ValueError()
+            raise ValueError()  # TODO
         
         found_player = found_players[0]
         found_player.sid = new_sid
 
+        emit_start_game(self, self.room_id)
+        emit_assign_player(found_player.id, new_sid)
+        emit_start_turn(self, self.room_id)
+
 
     def get_other_player(self, player: Player) -> Player:
+        """
+        Used for determining winner when player leaves
+
+        :param player: player not being searched
+        :return: other player in game
+        """
         found_players = [p for p in self.players if p.id != player.id]
         if len(found_players) != 1:
-            # TODO
-            raise ValueError()
+            raise ValueError()  # TODO
     
-        return found_players[1]
+        return found_players[0]
 
 
 def _new_canvas_image() -> Image:

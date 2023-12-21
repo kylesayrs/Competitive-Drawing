@@ -103,7 +103,7 @@ export class GameBase {
         this.turnIndicator.update(data["turnsLeft"], data["target"])
 
         // update confidences and preview image
-        //this.clientInferImage()
+        this.clientInferImage()
     }
 
 

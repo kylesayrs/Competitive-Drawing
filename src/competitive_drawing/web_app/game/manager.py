@@ -7,7 +7,7 @@ import requests
 from collections import defaultdict
 
 from competitive_drawing import Settings
-from ..game import GameType, Game, Player
+from ..game import GameType, Game, Player, create_game
 from ..sockets import emit_assign_player, emit_start_game, emit_start_turn, emit_end_game
 from ..utils import data_url_to_image, get_game_config
 
@@ -50,7 +50,7 @@ class GameManager:
         available_game_room_ids = [
             game.room_id
             for game in self.games_by_gametype[game_type]
-            if not game.started and game.can_add_player
+            if not game.started
         ]
 
         # if there are rooms needing players, add to room
@@ -79,41 +79,13 @@ class GameManager:
             return
         
         if not game.started:
-            # add player(s) to game
-            if game.game_type == GameType.FREE_PLAY:
-                print("WARNING: free play is not implemented yet")
-                return
-
-            elif game.game_type == GameType.LOCAL:
-                player_one = game.add_player(player_sid)
-                player_two = game.add_player(None)
-                emit_assign_player(player_one.id)
-                emit_assign_player(player_two.id)
-
-                self.player_game_by_sid[player_sid] = (player_one, game)
-
-            elif game.game_type == GameType.ONLINE:
-                if game.can_add_player:
-                    new_player = game.add_player(player_sid)
-                    emit_assign_player(new_player.id)
-
-                    self.player_game_by_sid[player_sid] = (new_player, game)
-
-            elif game.game_type == GameType.SINGLE_PLAYER:
-                player_one = game.add_player(player_sid)
-                player_two = game.add_player(None)  # AI opponent
-
-                self.player_game_by_sid[player_sid] = (player_one, game)
-
-            else:
-                print(f"WARNING: Unknown game type {game.game_type}")
-                return
+            # add player
+            new_player = game.add_player(player_sid)
+            self.player_game_by_sid[player_sid] = (new_player, game)
 
             # start game
             if game.can_start_game:
                 game.start_game()
-                emit_start_game(game, room_id)
-                emit_start_turn(game, room_id)
 
         else:
             if player_id_cache is None:
@@ -132,9 +104,6 @@ class GameManager:
 
             # assume a disconnect: game is resumed
             game.reassign_player_sid(player_id_cache, player_sid)
-            emit_start_game(game, room_id)
-            emit_assign_player(player_id_cache)
-            emit_start_turn(game, room_id)
 
 
     def end_turn(
@@ -171,10 +140,8 @@ class GameManager:
         canvas_image = data_url_to_image(canvas_data_url)
         game.next_turn(canvas_image)
 
-        if game.can_end_game():
-            self._end_game(game, canvas_preview_data_url)
-        else:
-            emit_start_turn(game, room_id)
+        if game.can_end_game:
+            self.end_game(game, canvas_preview_data_url)
 
 
     def end_game(
@@ -219,7 +186,7 @@ class GameManager:
         :return: instance of new game
         """
         # initialize new game
-        new_game = Game(game_type, *game_args, **game_kwargs)
+        new_game = create_game(game_type, *game_args, **game_kwargs)
 
         # update indexes
         self.games.append(new_game)

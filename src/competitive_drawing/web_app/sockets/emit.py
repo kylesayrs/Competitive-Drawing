@@ -1,12 +1,15 @@
-from ..game import Game
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..game import Game
+
 from flask_socketio import emit
 
 
-def emit_assign_player(player_id: str):
-    emit("assign_player", {"playerId": player_id})
+def emit_assign_player(player_id: str, sid: str):
+    emit("assign_player", {"playerId": player_id}, to=sid)
 
 
-def emit_start_turn(game: Game, room_id: str):
+def emit_start_turn(game: "Game", room_id: str):
     emit("start_turn", {
         "canvas": game.canvas_image_to_serial(),
         "turn": game.turn.id,
@@ -15,7 +18,7 @@ def emit_start_turn(game: Game, room_id: str):
     }, to=room_id)
 
 
-def emit_start_game(game: Game, room_id: str):
+def emit_start_game(game: "Game", room_id: str):
     emit("start_game", {
         "onnxUrl": game.onnx_url,
         "canvas": game.canvas_image_to_serial(),
