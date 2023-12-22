@@ -80,10 +80,5 @@ export class OnlineGame extends GameBase {
             this.distanceIndicator.emptyDistance()
             this.turnIndicator.hideEndTurnButton()
         }
-
-        // update confidences and preview image
-        // TODO: only do this after the first turn as to not break the illusion
-        // that the game starts at 50/50
-        this.clientInferImage()
     }
 }
