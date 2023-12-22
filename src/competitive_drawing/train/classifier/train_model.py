@@ -134,7 +134,7 @@ def train_model(
     epoch_test_accs = []
     test_accuracy = 0.0
     metrics = {}
-    for epoch in range(wandb.config["num_epochs"]):  # loop over the dataset multiple times
+    for epoch in range(wandb.config["num_epochs"]):
 
         running_loss = 0.0
         for i, (images, raw_labels) in enumerate(train_loader):

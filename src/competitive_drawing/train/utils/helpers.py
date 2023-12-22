@@ -7,7 +7,7 @@ import numpy
 from concurrent.futures import ThreadPoolExecutor
 
 
-def get_all_local_labels(data_dir: str):
+def get_all_local_labels(data_dir: str) -> List[str]:
     label_names = []
     for file_name in os.listdir(data_dir):
         if file_name[0] == ".": continue
@@ -66,6 +66,6 @@ def load_data(
 
 
 def to_one_hot(array, num_classes):
-  array = numpy.array(array)
-  one_hot = numpy.squeeze(numpy.eye(num_classes)[array.reshape(-1)])
-  return numpy.array(one_hot, dtype=numpy.float32)
+    array = numpy.array(array)
+    one_hot = numpy.squeeze(numpy.eye(num_classes)[array.reshape(-1)])
+    return numpy.array(one_hot, dtype=numpy.float32)
