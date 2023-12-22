@@ -1,5 +1,6 @@
 from typing import Tuple, Dict
 
+import json
 import requests
 
 from competitive_drawing import Settings
@@ -20,11 +21,11 @@ def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tu
     response = requests.post(
         f"{SETTINGS.model_service_base}/infer",
         headers=HEADERS,
-        data={
+        data=json.dumps({
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
             "imageDataUrl": preview_image_data_url
-        }
+        })
     )
 
     if (not response.ok):
@@ -72,13 +73,13 @@ def server_infer_ai(
     response = requests.post(
         f"{SETTINGS.model_service_base}/infer_stroke",
         headers=HEADERS,
-        data={
+        data=json.dumps({
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
             "targetIndex": ai_target_index,
             "imageDataUrl": preview_image_data_url,
             "roomId": room_id,
-        },
+        }),
     )
 
     if (not response.ok):
@@ -89,9 +90,9 @@ def server_update(num_games_by_label_pair_str: Dict[str, int]):
     response = requests.post(
         f"{SETTINGS.model_service_base}/games",
         headers=HEADERS,
-        data={
+        data=json.dumps({
             "label_pair_games": num_games_by_label_pair_str
-        },
+        }),
     )
 
     if (not response.ok):

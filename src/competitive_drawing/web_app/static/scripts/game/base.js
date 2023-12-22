@@ -71,6 +71,7 @@ export class GameBase {
         // initialize inferencer
         this.inferencer = new Inferencer(this.gameConfig, data["targets"])
         await this.inferencer.loadModel(data["onnxUrl"])
+        console.log("loaded model")
 
         // initialize canvas and confidence bar
         const canvasImageData = imageToImageData(

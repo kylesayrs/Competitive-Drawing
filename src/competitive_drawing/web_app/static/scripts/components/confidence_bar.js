@@ -19,6 +19,7 @@ export class ConfidenceBar {
         // initialize mock labels
         this.leftConfidenceLabel.innerHTML = ""
         this.rightConfidenceLabel.innerHTML = ""
+        this._targetLabels = ["", ""]
 
         this.leftConfidence.style.width = "50%";
     }
@@ -62,7 +63,6 @@ export class ConfidenceBar {
 
         // draw data
         const firstIndex = filteredLabels.indexOf(this._targetLabels[0])
-        const secondIndex = filteredLabels.indexOf(this._targetLabels[1])
         this.leftConfidence.style.width = modelConfidences[firstIndex] * 100 + "%";
     }
 }
