@@ -78,7 +78,7 @@ def make_routes_blueprint(model_manager: ModelManager):
             stroke_samples = inferencer.infer_stroke(*args)
 
             requests.post(
-                f"http://{SETTINGS.web_app_host}:{SETTINGS.web_app_port}/ai_stroke",
+                f"{SETTINGS.web_service_base}/ai_stroke",
                 headers={"Content-type": "application/json"},
                 data=json.dumps({
                     "strokeSamples": stroke_samples,

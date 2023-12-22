@@ -11,11 +11,13 @@ class Settings(BaseModel):
     web_app_host: str = Field(default="localhost")
     web_app_port: int = Field(default=5001)
     web_app_secret_key: str = Field(default="somesecrets")
+    model_service_base: str = Field(default="http://localhost:5002")
 
     # model service
     model_service_host: str = Field(default="localhost")
     model_service_port: int = Field(default=5002)
     model_service_secret_key: str = Field(default="somesecrets")
+    web_service_base: str = Field(default="localhost:5001")
     device: str = Field(default="cpu")
 
     # game settings

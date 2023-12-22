@@ -19,7 +19,7 @@ def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tu
     :return: model outputs
     """
     response = requests.post(
-        f"http://{SETTINGS.model_service_host}:{SETTINGS.model_service_port}/infer",
+        f"{SETTINGS.model_service_base}/infer",
         headers=HEADERS,
         data=json.dumps({
             "gameConfig": GAME_CONFIG,
@@ -49,7 +49,7 @@ def server_infer_ai(
     room_id: str
 ):
     response = requests.post(
-        f"http://{SETTINGS.model_service_host}:{SETTINGS.model_service_port}/infer_stroke",
+        f"{SETTINGS.model_service_base}/infer_stroke",
         headers=HEADERS,
         data=json.dumps({
             "gameConfig": GAME_CONFIG,
@@ -66,7 +66,7 @@ def server_infer_ai(
 
 def server_update(num_games_by_label_pair_str: Dict[str, int]):
     response = requests.post(
-        f"http://{SETTINGS.model_service_host}:{SETTINGS.model_service_port}/games",
+        f"{SETTINGS.model_service_base}/games",
         headers=HEADERS,
         data=json.dumps({
             "label_pair_games": num_games_by_label_pair_str
