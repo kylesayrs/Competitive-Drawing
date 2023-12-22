@@ -37,7 +37,7 @@ def make_socket_callbacks(socketio, game_manager: "GameManager"):
 
     @socketio.on("disconnect")
     def disconnect():
-        print(f"Disconnection: {request.sid}")
+        print(f"Lost connection to: {request.sid}...")
 
         player, game = game_manager.player_game_by_sid[request.sid]
         if player is None:
@@ -51,7 +51,11 @@ def make_socket_callbacks(socketio, game_manager: "GameManager"):
         player.sid = None
         time.sleep(Settings().client_disconnect_grace_period)
         if player.sid is not None:
+            print(f"Reconnected: {request.sid}")
             return
         
+        print(f"Disconnected: {request.sid}")
+        
         # end game
-        game_manager.end_game(game, force_loser=player)
+        if game is not None:
+            game_manager.end_game(game, force_loser=player)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from ..game import Game
 
@@ -9,7 +9,7 @@ def emit_assign_player(player_id: str, sid: str):
     emit("assign_player", {"playerId": player_id}, to=sid)
 
 
-def emit_start_turn(game: "Game", room_id: str):
+def emit_start_turn(game: "Game"):
     emit("start_turn", {
         "canvas": game.canvas_image_to_serial(),
         "turn": game.turn.id,
@@ -19,7 +19,9 @@ def emit_start_turn(game: "Game", room_id: str):
     }, to=game.room_id)
 
 
-def emit_start_game(game: "Game", room_id: str):
+def emit_start_game(game: "Game", sid: Optional[str] = None):
+    print("emit_start_game")
+    destination = sid if sid is not None else game.room_id
     emit("start_game", {
         "onnxUrl": game.onnx_url,
         "canvas": game.canvas_image_to_serial(),
@@ -32,10 +34,11 @@ def emit_start_game(game: "Game", room_id: str):
             for player in game.players
         },
         "totalNumTurns": game.total_num_turns,
-    }, to=game.room_id)
+    }, to=destination)
 
 
-def emit_end_game(winner_target: str, room_id: str):
+def emit_end_game(game: "Game", winner_target: str):
     emit("end_game", {
-        "winnerTarget": winner_target
-    }, to=room_id)
+        "winnerTarget": winner_target,
+        "modelOutputs": game.model_outputs
+    }, to=game.room_id)

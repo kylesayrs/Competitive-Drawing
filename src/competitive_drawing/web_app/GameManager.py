@@ -1,15 +1,10 @@
 from typing import List, Tuple, Union, Optional
 
-from PIL import Image
-import json
 import random
-import requests
 from collections import defaultdict
 
-from competitive_drawing import Settings
 from .game import GameType, Game, Player, create_game
-from .sockets import emit_end_game
-from .model_service import server_infer, server_update
+from .model_service import server_update
 
 
 class GameManager:
@@ -73,7 +68,6 @@ class GameManager:
         :param player_id_cache: player id stored in client storage
         """
         game = self.game_by_room_id[room_id]
-
         if game is None:
             print(f"WARNING: Could not find game associated with room id {room_id}")
             return

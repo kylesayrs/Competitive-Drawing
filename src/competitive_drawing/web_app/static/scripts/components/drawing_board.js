@@ -40,7 +40,7 @@ export class DrawingBoard {
         this.canvasContext.miterLimit = 1;
         this.canvasContext.lineWidth = this.canvasLineWidth;
 
-        this.enabled = true
+        this.enabled = false
         this.mouseHolding = false
         this.lastMouseX = 0
         this.lastMouseY = 0

@@ -16,6 +16,10 @@ export class ConfidenceBar {
         this.leftConfidenceLabel = document.querySelector("#left-confidence-label");
         this.rightConfidenceLabel = document.querySelector("#right-confidence-label");
 
+        // initialize mock labels
+        this.leftConfidenceLabel.innerHTML = ""
+        this.rightConfidenceLabel.innerHTML = ""
+
         this.leftConfidence.style.width = "50%";
     }
 
@@ -26,8 +30,8 @@ export class ConfidenceBar {
     set targetLabels(targetLabels) {
         this._targetLabels = targetLabels
 
-        this.leftConfidenceLabel.innerHTML = this._targetLabels[0] || "Left label"
-        this.rightConfidenceLabel.innerHTML = this._targetLabels[1] || "Right label"
+        this.leftConfidenceLabel.innerHTML = this._targetLabels[0]
+        this.rightConfidenceLabel.innerHTML = this._targetLabels[1]
     }
 
     update(modelOutputs) {

@@ -95,7 +95,7 @@ class Game(ABC):
         self.model_outputs = server_infer(self.label_pair, preview_data_url)
 
         if not self.can_end_game:
-            emit_start_turn(self, self.room_id)        
+            emit_start_turn(self)        
 
 
     def canvas_image_to_serial(self) -> List[List[int]]:
@@ -110,8 +110,8 @@ class Game(ABC):
     def start_game(self):
         self.started = True
 
-        emit_start_game(self, self.room_id)
-        emit_start_turn(self, self.room_id)
+        emit_start_game(self)
+        emit_start_turn(self)
 
 
     def remove_players_by_sid(self, sid: str):
@@ -130,15 +130,15 @@ class Game(ABC):
         found_player = found_players[0]
         found_player.sid = new_sid
 
-        emit_start_game(self, self.room_id)
+        emit_start_game(self, new_sid)
         emit_assign_player(found_player.id, new_sid)
-        emit_start_turn(self, self.room_id)
+        emit_start_turn(self)
     
 
     def end_game(self, preview_data_url: str, force_loser: Player):
         if force_loser is not None:
             winner = self._get_other_player(force_loser)
-            emit_end_game(winner.target, self.room_id)
+            emit_end_game(self, winner.target)
             
         else:
             # do another inference for redundancy
@@ -147,7 +147,7 @@ class Game(ABC):
             # emit winner
             winner_index = numpy.argmax(self.model_outputs)
             winner_target = self.label_pair[winner_index]
-            emit_end_game(winner_target, self.room_id)
+            emit_end_game(self, winner_target)
 
 
     def _get_other_player(self, player: Player) -> Player:

@@ -37,6 +37,9 @@ export class GameBase {
             "roomId": this.roomId,
             "playerId": this.playerId,
         })
+
+        // Disable canvas until start_turn message is received
+        this.drawingBoard.enabled = false
     }
 
 
@@ -65,7 +68,7 @@ export class GameBase {
             console.log(data)
         }
 
-        // Initialize inferencer
+        // initialize inferencer
         this.inferencer = new Inferencer(this.gameConfig, data["targets"])
         await this.inferencer.loadModel(data["onnxUrl"])
 
@@ -80,6 +83,9 @@ export class GameBase {
 
         // initialize preview and preview (not confidence bar)
         await this.drawingBoard.updatePreview()
+
+        // enable canvas
+        this.drawingBoard.enabled = true
     }
 
 
@@ -101,8 +107,8 @@ export class GameBase {
         // update turn indicator
         this.turnIndicator.update(data["turnsLeft"], data["target"])
 
-        // do not update client inference as to not break the illusion
-        // that the game starts at 50/50
+        // update confidence bar based on server inference
+        this.confidenceBar.update(data["modelOutputs"])
     }
 
 
@@ -147,5 +153,8 @@ export class GameBase {
         this.turnIndicator.showWinner(data["winnerTarget"])
         this.drawingBoard.enabled = false
         this.distanceIndicator.emptyDistance()
+
+        // update confidence bar based on server inference
+        this.confidenceBar.update(data["modelOutputs"])
     }
 }

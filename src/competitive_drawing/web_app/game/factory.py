@@ -15,5 +15,4 @@ def create_game(game_type: GameType, *game_args, **game_kwargs):
         case GameType.SINGLE_PLAYER:
             return SinglePlayerGame(*game_args, **game_kwargs)
 
-        case _:
-            raise ValueError(f"Unimplemented game type {game_type.value}")
+    raise ValueError(f"Unimplemented game type {game_type.value}")
