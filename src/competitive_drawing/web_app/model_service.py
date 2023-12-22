@@ -48,28 +48,6 @@ def server_infer_ai(
     ai_target_index: int,
     room_id: str
 ):
-    """
-    const response = await fetch(
-            "/infer_stroke",
-            {
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": JSON.stringify({
-                    "gameConfig": this.gameConfig,
-                    "label_pair": this.label_pair,
-                    "targetIndex": targetIndex,
-                    "imageDataUrl": imageDataUrl,
-                    "roomId": roomId,
-                })
-            }
-        )
-        if (!response.ok) {
-            console.log("Invalid server stroke inference response")
-        }
-    """
-
     response = requests.post(
         f"{SETTINGS.model_service_base}/infer_stroke",
         headers=HEADERS,
