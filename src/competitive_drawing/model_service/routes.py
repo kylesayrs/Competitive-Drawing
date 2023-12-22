@@ -38,16 +38,6 @@ def make_routes_blueprint(model_manager: ModelManager):
 
         # TODO: Cheat detection
 
-        if "targetIndex" in request.json:
-            target_index = request.json["targetIndex"]
-            model_outputs, grad_cam_image = inferencer.infer_image_with_cam(image, target_index)
-
-            response_data = {
-                "modelOutputs": model_outputs,
-                "gradCamImage": grad_cam_image,
-                "isCheater": False,
-            }
-
         else:
             model_outputs = inferencer.infer_image(image)
 
