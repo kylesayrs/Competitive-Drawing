@@ -5,12 +5,11 @@ export class OnlineGame extends GameBase {
     constructor(gameConfig, debug=false) {
         super(2, gameConfig, debug)
 
-        // Player specific variables
+        // player-specific variables
         this.playerTargetIndex = null
         this.myTurn = false
 
-        // Initialize components
-        this.drawingBoard.enabled = false
+        // initialize components
         this.distanceIndicator.emptyDistance()
 
         Toastify({

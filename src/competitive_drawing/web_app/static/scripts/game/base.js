@@ -12,7 +12,7 @@ export class GameBase {
         this.gameConfig = gameConfig
         this.debug = debug
 
-        // Sockets
+        // sockets
         this.socket = io()
         this.roomId = getRoomIdFromUrl()
         this.socket.on("assign_player", this.onAssignPlayer.bind(this))
@@ -20,7 +20,7 @@ export class GameBase {
         this.socket.on("start_turn", this.onStartTurn.bind(this))
         this.socket.on("end_game", this.onEndGame.bind(this))
 
-        // Components
+        // components
         this.distanceIndicator = new DistanceIndicator(this.gameConfig.distancePerTurn)
         this.drawingBoard = new DrawingBoard(this.distanceIndicator, this.gameConfig)
         this.confidenceBar = new ConfidenceBar(this.gameConfig.softmaxFactor, this.debug)
@@ -28,17 +28,17 @@ export class GameBase {
         this.drawingBoard.afterMouseMove = this.clientInferImage.bind(this)
         this.distanceIndicator.onButtonClick = this.onEndTurnButtonClick.bind(this)
 
-        // Inference
+        // inference
         this.inferenceMutex = false  // true for locked, false for unlocked
         this.inferencer = null
 
-        // Join room
+        // join room
         this.socket.emit("join_room", {
             "roomId": this.roomId,
             "playerId": this.playerId,
         })
 
-        // Disable canvas until start_turn message is received
+        // disable canvas until start game message is received
         this.drawingBoard.enabled = false
     }
 
@@ -69,9 +69,8 @@ export class GameBase {
         }
 
         // initialize inferencer
-        this.inferencer = new Inferencer(this.gameConfig, data["targets"])
-        await this.inferencer.loadModel(data["onnxUrl"])
-        console.log("loaded model")
+        this.inferencer = new Inferencer(this.gameConfig, data["targets"], data["onnxUrl"])
+        await this.inferencer.initialize()
 
         // initialize canvas and confidence bar
         const canvasImageData = imageToImageData(
@@ -96,6 +95,9 @@ export class GameBase {
             console.log(data)
         }
 
+        // wait for model to load
+        await this.inferencer.initialize()
+
         // update canvas and preview
         const canvasImageData = imageToImageData(
             data["canvas"],
@@ -114,10 +116,8 @@ export class GameBase {
 
 
     async clientInferImage() {
-        if (!this.inferencer) {
-            console.log("ERROR: Inferencer not initialized yet!")
-            return
-        }
+        // wait for model to load
+        await this.inferencer.initialize()
 
         if (!this.inferenceMutex) {
             this.inferenceMutex = true

@@ -15,22 +15,21 @@ function imageDataToModelInputData(imageData) {
 }
 
 export class Inferencer {
-    constructor(gameConfig, targets) {
+    constructor(gameConfig, targets, onnxUrl) {
         this.gameConfig = gameConfig
         this.label_pair = Object.values(targets).sort()
+        this.onnxUrl = onnxUrl
+
+        this.inferenceSession = null
     }
 
+    
+    async initialize() {
+        if (!this.inferenceSession) {
+            this.inferenceSession = ort.InferenceSession.create(this.onnxUrl);
+        }
 
-    async loadModel(modelUrl, imageSize=50) {
-        this.imageSize = imageSize
-
-        return new Promise((resolve) => {
-            this.inferenceSession = ort.InferenceSession.create(modelUrl);
-            this.inferenceSession.then(() => {
-                console.log("Loaded ort")
-                resolve()
-            })
-        })
+        return this.inferenceSession
     }
 
 
@@ -41,7 +40,7 @@ export class Inferencer {
         // create input
         const modelInput = new ort.Tensor(
             modelInputData,
-            [1, 1, this.imageSize, this.imageSize]
+            [1, 1, this.gameConfig.imageSize, this.gameConfig.imageSize]
         );
 
         // perform inference
