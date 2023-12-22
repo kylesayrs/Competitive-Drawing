@@ -21,8 +21,7 @@ def create_app() -> Flask:
 
     # allow web app origin requests
     web_app_origin = f"{SETTINGS.web_app_host}:{SETTINGS.web_app_port}"
-    print(web_app_origin)
-    CORS(app, resources={ r"/*": {"origins": "*"} })
+    CORS(app, resources={ r"/*": {"origins": web_app_origin} })
 
     # create instance folder
     os.makedirs(app.instance_path, exist_ok=True)

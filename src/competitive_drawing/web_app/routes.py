@@ -63,4 +63,16 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
         return render_template("single_player.html", game_config=GAME_CONFIG)
 
 
+    """ Receive AI stroke """
+
+
+    @routes.route("/ai_stroke", methods=["POST"])
+    def ai_stroke():
+        # TODO: assert it's coming from model service
+        emit("ai_stroke", {
+            "strokeSamples": request.json["strokeSamples"]
+        }, namespace="/", to=request.json["roomId"])
+        return "", 200
+
+
     return routes
