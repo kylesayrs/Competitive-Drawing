@@ -77,11 +77,20 @@ export class SinglePlayerGame extends GameBase {
             this.drawingBoard.enabled = false
             this.distanceIndicator.resetDistance()
             this.turnIndicator.hideEndTurnButton()
-
+            
             if (!this.aiInferenceMutex) {
                 this.aiInferenceMutex = true
-                this.serverInferAIStroke()
             }
+
+            Toastify({
+                text: "AI is computing (~60 seconds)...",
+                duration: 10000,
+                className: "info",
+                gravity: "toastify-top",
+                style: {
+                    background: "linear-gradient(to right, #00b09b, #96c93d)",
+                }
+            }).showToast();
 
         } else {
             console.log("WARNING: Unknown turn " + data["turn"])
@@ -106,32 +115,8 @@ export class SinglePlayerGame extends GameBase {
             "playerId": this.aiId,
             "canvas": canvasDataUrl,
             "preview": imageDataUrl,
-            //replay data
         })
-        console.log("ended ai turn")
         this.aiInferenceMutex = false
-    }
-
-
-    async serverInferAIStroke() {
-        if (!this.inferencer) {
-            console.log("ERROR: Inferencer not initialized yet!")
-            return
-        }
-
-        await this.drawingBoard.updatePreview()
-        const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
-        this.inferencer.serverInferStroke(imageDataUrl, this.aiTargetIndex, this.roomId)
-
-        Toastify({
-            text: "AI is computing (~60 seconds)...",
-            duration: 10000,
-            className: "info",
-            gravity: "toastify-top",
-            style: {
-                background: "linear-gradient(to right, #00b09b, #96c93d)",
-            }
-        }).showToast();
     }
 
 

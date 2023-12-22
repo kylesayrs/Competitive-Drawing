@@ -63,48 +63,4 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
         return render_template("single_player.html", game_config=GAME_CONFIG)
 
 
-    """ Inference """
-
-
-    @routes.route("/infer", methods=["POST"])
-    def infer():
-        service_response = requests.post(
-            f"{SETTINGS.model_service_base}/infer",
-            headers={"Content-Type": "application/json"},
-            data=request.get_data(),
-        )
-
-        excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
-        service_headers = [
-            (k,v) for k,v in service_response.raw.headers.items()
-            if k.lower() not in excluded_headers
-        ]
-
-        return Response(service_response.content, service_response.status_code, service_headers)
-
-    @routes.route("/infer_stroke", methods=["POST"])
-    def infer_stroke():
-        service_response = requests.post(
-            f"{SETTINGS.model_service_base}/infer_stroke",
-            headers={"Content-Type": "application/json"},
-            data=request.get_data(),
-        )
-
-        excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
-        service_headers = [
-            (k,v) for k,v in service_response.raw.headers.items()
-            if k.lower() not in excluded_headers
-        ]
-
-        return Response(service_response.content, service_response.status_code, service_headers)
-
-    @routes.route("/ai_stroke", methods=["POST"])
-    def ai_stroke():
-        # TODO: assert it's coming from model service
-        emit("ai_stroke", {
-            "strokeSamples": request.json["strokeSamples"]
-        }, namespace="/", to=request.json["roomId"])
-        return "", 200
-
-
     return routes

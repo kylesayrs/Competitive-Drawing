@@ -4,6 +4,7 @@ from competitive_drawing.web_app.game import GameType
 
 from ..game import Game, Player
 from ..sockets import emit_assign_player
+from ..model_service import server_infer_ai
 
 
 class SinglePlayerGame(Game):
@@ -24,3 +25,15 @@ class SinglePlayerGame(Game):
         emit_assign_player(player_one.id, sid)
 
         return player_one
+    
+
+    def next_turn(self, canvas_data_url: str, preview_data_url: str):
+        super().next_turn(canvas_data_url, preview_data_url)
+
+        if self._player_turn_index == 1: # now AI player's turn
+            server_infer_ai(
+                self.label_pair,
+                preview_data_url,
+                1,
+                self.room_id
+            )

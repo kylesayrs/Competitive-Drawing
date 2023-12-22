@@ -1,6 +1,5 @@
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict
 
-import json
 import requests
 
 from competitive_drawing import Settings
@@ -21,11 +20,11 @@ def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tu
     response = requests.post(
         f"{SETTINGS.model_service_base}/infer",
         headers=HEADERS,
-        data=json.dumps({
+        data={
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
             "imageDataUrl": preview_image_data_url
-        })
+        }
     )
 
     if (not response.ok):
@@ -42,13 +41,57 @@ def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tu
     return tuple(model_outputs)
 
 
+def server_infer_ai(
+    label_pair: Tuple[str, str],
+    preview_image_data_url: str,
+    ai_target_index: int,
+    room_id: str
+):
+    """
+    const response = await fetch(
+            "/infer_stroke",
+            {
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify({
+                    "gameConfig": this.gameConfig,
+                    "label_pair": this.label_pair,
+                    "targetIndex": targetIndex,
+                    "imageDataUrl": imageDataUrl,
+                    "roomId": roomId,
+                })
+            }
+        )
+        if (!response.ok) {
+            console.log("Invalid server stroke inference response")
+        }
+    """
+
+    response = requests.post(
+        f"{SETTINGS.model_service_base}/infer_stroke",
+        headers=HEADERS,
+        data={
+            "gameConfig": GAME_CONFIG,
+            "label_pair": label_pair,
+            "targetIndex": ai_target_index,
+            "imageDataUrl": preview_image_data_url,
+            "roomId": room_id,
+        },
+    )
+
+    if (not response.ok):
+        raise ValueError(f"Invalid response {response}")
+
+
 def server_update(num_games_by_label_pair_str: Dict[str, int]):
     response = requests.post(
         f"{SETTINGS.model_service_base}/games",
         headers=HEADERS,
-        data=json.dumps({
+        data={
             "label_pair_games": num_games_by_label_pair_str
-        }),
+        },
     )
 
     if (not response.ok):

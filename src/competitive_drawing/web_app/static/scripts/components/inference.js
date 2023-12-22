@@ -50,27 +50,4 @@ export class Inferencer {
 
         return modelOutputs
     }
-
-
-    async serverInferStroke(imageDataUrl, targetIndex, roomId) {
-        const response = await fetch(
-            "/infer_stroke",
-            {
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": JSON.stringify({
-                    "gameConfig": this.gameConfig,
-                    "label_pair": this.label_pair,
-                    "targetIndex": targetIndex,
-                    "imageDataUrl": imageDataUrl,
-                    "roomId": roomId,
-                })
-            }
-        )
-        if (!response.ok) {
-            console.log("Invalid server stroke inference response")
-        }
-    }
 }
