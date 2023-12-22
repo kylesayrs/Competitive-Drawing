@@ -14,7 +14,7 @@ from competitive_drawing.model_service.utils.helpers import pil_to_input
 
 def async_inference(method):
     def wrapper(self, *args, **kwargs):
-        with self.semaphore:
+        with self.mutex:
             ret = method(self, *args, **kwargs)
 
         return ret
@@ -25,7 +25,7 @@ def async_inference(method):
 class Inferencer:
     """
     Wraps classifier model to handle classifier inference and opponent stroke
-    inference. Uses a semaphore to handle access to model resource
+    inference. Uses a mutex to handle access to model resource
 
     Models are deployed in TensorRT rather than alternatives such as ORT because
     model gradients are necessary in order to optimize strokes for the AI opponent
@@ -34,7 +34,7 @@ class Inferencer:
     """
     def __init__(self, classifier_model: torch.nn.Module):
         self._model = classifier_model
-        self.semaphore = threading.Semaphore(1)
+        self.mutex = threading.Semaphore(1)
 
 
     @async_inference
