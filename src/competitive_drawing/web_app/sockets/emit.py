@@ -20,7 +20,6 @@ def emit_start_turn(game: "Game"):
 
 
 def emit_start_game(game: "Game", sid: Optional[str] = None):
-    print("emit_start_game")
     destination = sid if sid is not None else game.room_id
     emit("start_game", {
         "onnxUrl": game.onnx_url,
