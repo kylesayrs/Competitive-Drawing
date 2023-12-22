@@ -64,8 +64,8 @@ export class SinglePlayerGame extends GameBase {
     }
 
 
-    onStartTurn(data) {
-        super.onStartTurn(data)
+    async onStartTurn(data) {
+        await super.onStartTurn(data)
 
         if (data["turn"] == this.humanId) {
             console.log("user turn")

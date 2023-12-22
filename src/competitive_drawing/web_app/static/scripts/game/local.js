@@ -11,8 +11,8 @@ export class LocalGame extends GameBase {
     }
 
 
-    onStartTurn(data) {
-        super.onStartTurn(data)
+    async onStartTurn(data) {
+        await super.onStartTurn(data)
 
         this.playerId = data["turn"]
     }

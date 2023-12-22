@@ -56,7 +56,7 @@ export class OnlineGame extends GameBase {
 
 
     async onStartTurn(data) {
-        super.onStartTurn(data)
+        await super.onStartTurn(data)
 
         if (data["turn"] == this.playerId) {
             this.myTurn = true
