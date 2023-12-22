@@ -52,55 +52,6 @@ export class Inferencer {
     }
 
 
-    async serverInferImage(imageDataUrl, targetIndex) {
-        const response = await fetch(
-            "/infer",
-            {
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": JSON.stringify({
-                    "gameConfig": this.gameConfig,
-                    "label_pair": this.label_pair,
-                    "imageDataUrl": imageDataUrl,
-                })
-            }
-        )
-        if (!response.ok) {
-            console.log("Invalid server inference response")
-        }
-
-        const responseJson = await response.json()
-        return responseJson["modelOutputs"]
-    }
-
-
-    async serverInferImageWithGrad(imageDataUrl, targetIndex) {
-        const response = await fetch(
-            "/infer",
-            {
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": JSON.stringify({
-                    "imageDataUrl": imageDataUrl,
-                    "targetIndex": targetIndex,
-                })
-            }
-        )
-        if (!response.ok) {
-            console.log("Invalid server inference response")
-        }
-
-        const responseJson = await response.json()
-        const modelOutputs = responseJson["modelOutputs"]
-        const gradCamImage = responseJson["gradCamImage"]
-        return { modelOutputs, gradCamImage }
-    }
-
-
     async serverInferStroke(imageDataUrl, targetIndex, roomId) {
         const response = await fetch(
             "/infer_stroke",

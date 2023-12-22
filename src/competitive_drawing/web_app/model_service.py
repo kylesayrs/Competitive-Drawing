@@ -10,14 +10,21 @@ SETTINGS = Settings()
 HEADERS = {"Content-Type": "application/json"}
 
 
-def server_infer(label_pair: Tuple[str, str], image_data_url: str) -> List[float]:
+def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tuple[float, float]:
+    """
+    Requence inference from a model service server
+
+    :param label_pair: labels which define the model/game
+    :param preview_image_data_url: data url of preview image
+    :return: model outputs
+    """
     response = requests.post(
         f"{SETTINGS.model_service_base}/infer",
         headers=HEADERS,
         data=json.dumps({
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
-            "imageDataUrl": image_data_url
+            "imageDataUrl": preview_image_data_url
         })
     )
 
@@ -32,7 +39,7 @@ def server_infer(label_pair: Tuple[str, str], image_data_url: str) -> List[float
     if (model_outputs is None or len(model_outputs) != 2):
         raise ValueError(f"Invalid response body {response.content()}")
 
-    return model_outputs
+    return tuple(model_outputs)
 
 
 def server_update(num_games_by_label_pair_str: Dict[str, int]):

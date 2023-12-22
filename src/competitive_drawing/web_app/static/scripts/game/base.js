@@ -80,7 +80,6 @@ export class GameBase {
 
         // initialize preview and preview (not confidence bar)
         await this.drawingBoard.updatePreview()
-        //this.serverInferImage()
     }
 
 
@@ -107,25 +106,6 @@ export class GameBase {
     }
 
 
-    async serverInferImage() {
-        if (!this.inferencer) {
-            console.log("ERROR: Inferencer not initialized yet!")
-            return
-        }
-
-        if (!this.inferenceMutex) {
-            this.inferenceMutex = true
-
-            await this.drawingBoard.updatePreview()
-            const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
-            const modelOutputs = await this.inferencer.serverInferImage(imageDataUrl, this.playerTargetIndex)
-            this.confidenceBar.update(modelOutputs)
-
-            this.inferenceMutex = false
-        }
-    }
-
-
     async clientInferImage() {
         if (!this.inferencer) {
             console.log("ERROR: Inferencer not initialized yet!")
@@ -145,9 +125,6 @@ export class GameBase {
     }
 
     async onEndTurnButtonClick(_event) {
-        // TODO: lock end turn button until finished
-        this.serverInferImage()
-
         const canvasDataUrl = this.drawingBoard.getCanvasImageDataUrl()
         await this.drawingBoard.updatePreview()
         const imageDataUrl = this.drawingBoard.getPreviewImageDataUrl()
@@ -157,7 +134,6 @@ export class GameBase {
             "playerId": this.playerId,
             "canvas": canvasDataUrl,
             "preview": imageDataUrl,
-            //replay data
         })
     }
 

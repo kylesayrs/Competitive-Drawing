@@ -9,15 +9,6 @@ export class OnlineGame extends GameBase {
         this.playerTargetIndex = null
         this.myTurn = false
 
-        // Hook with drawing board
-        /*
-        this.drawingBoard.afterMouseEnd = async () => {
-            if (this.myTurn) {
-                this.serverInferImage()
-            }
-        }
-        */
-
         // Initialize components
         this.drawingBoard.enabled = false
         this.distanceIndicator.emptyDistance()

@@ -10,7 +10,6 @@ from competitive_drawing import Settings
 from .game import GameType, Game, Player, create_game
 from .sockets import emit_end_game
 from .model_service import server_infer, server_update
-from .utils import data_url_to_image
 
 
 class GameManager:
@@ -117,29 +116,37 @@ class GameManager:
         game = self.game_by_room_id[room_id]
 
         if game is None:
-            print(f"WARNING: Could not find game associated with room id {room_id}")
-            return
+            raise ValueError(
+                f"WARNING: Could not find game associated with room id {room_id}"
+            )
         
         if player_id_cache is None:
-            print(f"WARNING: Unknown player with id {player_id_cache} tried to end turn")
-            return
+            raise ValueError(
+                f"WARNING: Unknown player with id {player_id_cache} tried to end "
+                "turn"
+            )
         
         if canvas_data_url is None:
-            print(f"WARNING: Player with id {player_id_cache} tried to end turn without an image")
-            return
+            raise ValueError(
+                f"WARNING: Player with id {player_id_cache} tried to end turn "
+                "without an image"
+            )
         
         if canvas_preview_data_url is None:
-            print(f"WARNING: Player with id {player_id_cache} tried to end turn without a preview image")
-            return
+            raise ValueError(
+                f"WARNING: Player with id {player_id_cache} tried to end turn "
+                "without a preview image"
+            )
                 
         if player_id_cache != game.turn.id:
-            print(f"WARNING: Received wrong player id for end turn ({player_id_cache} != {game.turn.id})")
-            return
+            raise ValueError(
+                "WARNING: Received wrong player id for end turn "
+                f"({player_id_cache} != {game.turn.id})"
+            )
         
         # save image
         # TODO: image for future data mining
-        canvas_image = data_url_to_image(canvas_data_url)
-        game.next_turn(canvas_image)
+        game.next_turn(canvas_data_url, canvas_preview_data_url)
 
         if game.can_end_game:
             self.end_game(game, canvas_preview_data_url)
@@ -151,22 +158,7 @@ class GameManager:
         canvas_preview_data_url: Optional[str] = None,
         force_loser: Optional[Player] = None
     ):
-        # TODO: move to game function
-        assert canvas_preview_data_url is not None or force_loser is not None
-        if canvas_preview_data_url:
-            # do another inference for redundancy
-            model_outputs = server_infer(game.label_pair, canvas_preview_data_url)
-
-            # emit winner
-            winner_index = int(model_outputs[1] > model_outputs[0])
-            winner_target = game.label_pair[winner_index]
-            emit_end_game(winner_target, game.room_id)
-
-        else:
-            winner = game.get_other_player(force_loser)
-            emit_end_game(winner.target, game.room_id)
-
-        # delete game
+        game.end_game(canvas_preview_data_url, force_loser)
         self._del_game(game)
 
 

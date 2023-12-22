@@ -8,8 +8,9 @@ from PIL import Image
 
 from competitive_drawing import Settings
 from ..game import GameType, Player
-from ..utils import get_available_label_pairs, get_onnx_url, label_pair_to_str
-from ..sockets import emit_start_game, emit_start_turn, emit_assign_player
+from ..utils import get_available_label_pairs, get_onnx_url, label_pair_to_str, data_url_to_image
+from ..sockets import emit_start_game, emit_start_turn, emit_assign_player, emit_end_game
+from ..model_service import server_infer
 
 SETTINGS = Settings()
 
@@ -21,12 +22,13 @@ class Game(ABC):
     room_id: str
 
     # game state
-    canvas_image: Image
+    canvas_image: Image  # used for resuming after a disconnect
     players: List[Player]
     started: bool
     _player_turn_index: int
     total_num_turns: int
     turns_left: int
+    model_outputs: Tuple[float, float]
 
     def __init__(
         self,
@@ -44,6 +46,7 @@ class Game(ABC):
         self.started = False
         self.total_num_turns = SETTINGS.total_num_turns
         self.turns_left = self.total_num_turns
+        self.model_outputs = [0.0, 0.0]  # fake score to make the game seem even at the beginning
 
 
     @property
@@ -84,13 +87,15 @@ class Game(ABC):
         return new_player
 
 
-    def next_turn(self, canvas_image: numpy.ndarray):
-        self.canvas_image = canvas_image
+    def next_turn(self, canvas_data_url: str, preview_data_url: str):
+        self.canvas_image = data_url_to_image(canvas_data_url)
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
         self.turns_left -= 1
 
+        self.model_outputs = server_infer(self.label_pair, preview_data_url)
+
         if not self.can_end_game:
-            emit_start_turn(self, self.room_id)
+            emit_start_turn(self, self.room_id)        
 
 
     def canvas_image_to_serial(self) -> List[List[int]]:
@@ -128,9 +133,24 @@ class Game(ABC):
         emit_start_game(self, self.room_id)
         emit_assign_player(found_player.id, new_sid)
         emit_start_turn(self, self.room_id)
+    
+
+    def end_game(self, preview_data_url: str, force_loser: Player):
+        if force_loser is not None:
+            winner = self._get_other_player(force_loser)
+            emit_end_game(winner.target, self.room_id)
+            
+        else:
+            # do another inference for redundancy
+            self.model_outputs = server_infer(self.label_pair, preview_data_url)
+
+            # emit winner
+            winner_index = numpy.argmax(self.model_outputs)
+            winner_target = self.label_pair[winner_index]
+            emit_end_game(winner_target, self.room_id)
 
 
-    def get_other_player(self, player: Player) -> Player:
+    def _get_other_player(self, player: Player) -> Player:
         """
         Used for determining winner when player leaves
 

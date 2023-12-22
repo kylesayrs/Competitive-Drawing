@@ -15,7 +15,8 @@ def emit_start_turn(game: "Game", room_id: str):
         "turn": game.turn.id,
         "target": game.turn.target,
         "turnsLeft": game.turns_left,
-    }, to=room_id)
+        "modelOutputs": game.model_outputs
+    }, to=game.room_id)
 
 
 def emit_start_game(game: "Game", room_id: str):
@@ -31,8 +32,10 @@ def emit_start_game(game: "Game", room_id: str):
             for player in game.players
         },
         "totalNumTurns": game.total_num_turns,
-    }, to=room_id)
+    }, to=game.room_id)
 
 
 def emit_end_game(winner_target: str, room_id: str):
-    emit("end_game", {"winnerTarget": winner_target}, to=room_id)
+    emit("end_game", {
+        "winnerTarget": winner_target
+    }, to=room_id)
