@@ -37,8 +37,11 @@ def create_app():
     return app, socketio
 
 
+# export
+app, socketio = create_app()
+
+
 def start_app():
-    app, socketio = create_app()
     socketio.run(
         app,
         host=SETTINGS.web_app_host,

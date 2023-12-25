@@ -3,7 +3,7 @@ from typing import Dict, List
 from setuptools import setup, find_packages
 
 _deps = [
-    "Flask[async]",
+    "Flask",
     "Flask-SocketIO",
     "Flask-Cors",
     "grad-cam",

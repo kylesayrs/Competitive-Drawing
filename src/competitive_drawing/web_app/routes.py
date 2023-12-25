@@ -8,6 +8,7 @@ from competitive_drawing import Settings
 from .game import GameType
 from .GameManager import GameManager
 from .utils import GAME_CONFIG
+from .sockets import emit_ai_stroke
 
 SETTINGS = Settings()
 
@@ -69,9 +70,8 @@ def make_routes_blueprint(games_manager: GameManager) -> Blueprint:
     @routes.route("/ai_stroke", methods=["POST"])
     def ai_stroke():
         # TODO: assert it's coming from model service
-        emit("ai_stroke", {
-            "strokeSamples": request.json["strokeSamples"]
-        }, namespace="/", to=request.json["roomId"])
+        emit_ai_stroke(request.json["strokeSamples"], request.json["roomId"])
+        
         return "", 200
 
 
