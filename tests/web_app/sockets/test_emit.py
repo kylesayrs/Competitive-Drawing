@@ -116,7 +116,10 @@ def test_emit_start_turn(game_type):
     [
         (GameType.LOCAL, False),
         (GameType.ONLINE, False),
-        (GameType.SINGLE_PLAYER, False)
+        (GameType.SINGLE_PLAYER, False),
+        (GameType.LOCAL, True),
+        (GameType.ONLINE, True),
+        (GameType.SINGLE_PLAYER, True),
     ],
 )
 def test_emit_start_game(game_type, to_player_one):
@@ -158,7 +161,7 @@ def test_emit_start_game(game_type, to_player_one):
         client_join_room(client_b, game.room_id)
 
     # emit start turn
-    emit_start_game(game)
+    emit_start_game(game, sid=client_a_sid if to_player_one else None)
 
     # check received
     if not two_player_game:
@@ -179,11 +182,12 @@ def test_emit_start_game(game_type, to_player_one):
             '"namespace": "/"}]'
         )
             
-        client_b_data = client_b.get_received()
-        del client_b_data[0]["args"][0]["onnxUrl"]  # don't check onnxUrl
-        assert json.dumps(client_b_data) == (
-            '[{"name": "start_game", "args": [{"canvas": [], "targets": {"player_a": '
-            f'"{player_a.target}", "player_b": "{player_b.target}"}}, '
-            '"targetIndices": {"player_a": 0, "player_b": 1}, "totalNumTurns": 10}], '
-            '"namespace": "/"}]'
-        )
+        if not to_player_one:
+            client_b_data = client_b.get_received()
+            del client_b_data[0]["args"][0]["onnxUrl"]  # don't check onnxUrl
+            assert json.dumps(client_b_data) == (
+                '[{"name": "start_game", "args": [{"canvas": [], "targets": {"player_a": '
+                f'"{player_a.target}", "player_b": "{player_b.target}"}}, '
+                '"targetIndices": {"player_a": 0, "player_b": 1}, "totalNumTurns": 10}], '
+                '"namespace": "/"}]'
+            )
