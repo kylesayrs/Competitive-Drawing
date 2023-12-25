@@ -8,7 +8,9 @@ from competitive_drawing.web_app.game import create_game, GameType, Player
 from competitive_drawing.web_app.sockets import (
     emit_assign_player,
     emit_start_turn,
-    emit_start_game
+    emit_start_game,
+    emit_end_game,
+    emit_ai_stroke,
 )
 
 
@@ -191,3 +193,38 @@ def test_emit_start_game(game_type, to_player_one):
                 '"targetIndices": {"player_a": 0, "player_b": 1}, "totalNumTurns": 10}], '
                 '"namespace": "/"}]'
             )
+
+
+@pytest.mark.parametrize(
+    "game_type,player_one_wins",
+    [
+        (GameType.LOCAL),
+        (GameType.ONLINE),
+        (GameType.SINGLE_PLAYER),
+        (GameType.LOCAL),
+        (GameType.ONLINE),
+        (GameType.SINGLE_PLAYER),
+    ],
+)
+def test_emit_end_game(game_type):
+    game = create_game(game_type)
+    two_player_game = game_type in [GameType.ONLINE]
+    game.canvas_image = []  # don't check canvas image
+
+    # client_a connect
+    client_a = SocketIOTestClient(app, socketio)
+    client_a.connect()
+    assert client_a.is_connected()
+    
+    # join game room
+    client_join_room(client_a, game.room_id)
+
+    # send message
+    emit_end_game(game, "winner_target")
+
+    # check recieve
+    assert (
+        json.dumps(client_a.get_received()) ==
+        '[{"name": "end_game", "args": [{"winnerTarget": "winner_target", '
+        '"modelOutputs": [0.0, 0.0]}], "namespace": "/"}]'
+    )
