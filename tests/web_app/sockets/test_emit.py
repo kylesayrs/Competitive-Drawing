@@ -196,7 +196,7 @@ def test_emit_start_game(game_type, to_player_one):
 
 
 @pytest.mark.parametrize(
-    "game_type,player_one_wins",
+    "game_type",
     [
         (GameType.LOCAL),
         (GameType.ONLINE),
@@ -227,4 +227,32 @@ def test_emit_end_game(game_type):
         json.dumps(client_a.get_received()) ==
         '[{"name": "end_game", "args": [{"winnerTarget": "winner_target", '
         '"modelOutputs": [0.0, 0.0]}], "namespace": "/"}]'
+    )
+
+
+@pytest.mark.parametrize(
+    "ai_stroke",
+    [
+        [[]],
+        [[0, 0], [1, 1]],
+    ],
+)
+def test_emit_end_game(ai_stroke):
+    game = create_game(GameType.SINGLE_PLAYER)
+
+    # client_a connect
+    client_a = SocketIOTestClient(app, socketio)
+    client_a.connect()
+    assert client_a.is_connected()
+    
+    # join game room
+    client_join_room(client_a, game.room_id)
+
+    # send message
+    emit_ai_stroke(ai_stroke, game.room_id)
+
+    # check recieve
+    assert (
+        json.dumps(client_a.get_received()) ==
+        f'[{{"name": "ai_stroke", "args": [{{"strokeSamples": {ai_stroke}}}], "namespace": "/"}}]'
     )
