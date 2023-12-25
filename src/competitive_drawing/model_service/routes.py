@@ -34,7 +34,10 @@ def make_routes_blueprint(model_manager: ModelManager):
             inferencer = model_manager.get_inferencer(request.json["label_pair"])
         except Exception as exception:
             print(exception)
-            return str(exception), 409
+            
+            # assume there was a disconnection
+            model_manager.start_inferencer(request.json["label_pair"])
+            inferencer = model_manager.get_inferencer(request.json["label_pair"])
 
         # TODO: Cheat detection
 

@@ -2,8 +2,6 @@ from typing import TYPE_CHECKING, Optional, List
 if TYPE_CHECKING:
     from ..game import Game
 
-from flask_socketio import emit
-
 
 def emit_assign_player(player_id: str, sid: str):
     from competitive_drawing.web_app import socketio  # avoid circular import

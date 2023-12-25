@@ -34,14 +34,22 @@ class ModelManager():
         # scale up
         for label_pair_str, num_games in label_pair_games.items():
             if num_games > 0 and label_pair_str not in self.inferencers:
-                self.inferencers[label_pair_str] = Inferencer(load_model(label_pair_str))
+                self.start_inferencer(label_pair_str)
 
         # scale down
         inferencer_items = list(self.inferencers.items())  # cache to avoid iterable resizing
         for label_pair_str, inferencer in inferencer_items:
             if label_pair_str not in label_pair_games or label_pair_games[label_pair_str] <= 0:
-                del self.inferencers[label_pair_str]
-                del inferencer # redundancy
+                self.stop_inferencer(label_pair_str)
+
+
+    def start_inferencer(self, label_pair_str: str):
+        self.inferencers[label_pair_str] = Inferencer(load_model(label_pair_str))
+
+
+    def stop_inferencer(self, label_pair_str: str):
+        del self.inferencers[label_pair_str]
+        del inferencer # redundancy
 
 
     def get_inferencer(self, label_pair: Tuple[str, str]):
