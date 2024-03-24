@@ -80,5 +80,13 @@ The second is that the curve's arc length must not exceed a maximum length. As m
 
 Both of these constraints are non-differentiable, so I enforce them after each optimization step. In the future I hope to find an algorithm that can find any portion of the curve that is not on the canvas and will adjust the curve accordingly, not just the endpoints.
 
+### Related Repos ###
+These repos are used for research and other side tasks
+* [Differentiable-Graphics](https://github.com/kylesayrs/Differentiable-Graphics)
+* [SketchGeneration](https://github.com/kylesayrs/SketchGeneration)
+* [SketchCNN-AE](https://github.com/kylesayrs/SketchCNN-AE)
+* [GMMPytorch](https://github.com/kylesayrs/GMMPytorch)
+* [GMMScratch](https://github.com/kylesayrs/GMMScratch)
+
 ### Todo Board ###
 https://kahl.notion.site/90a75c8cbbbe4eb1924d24e61818d2d2?v=9aeff125dd33457da8f046c1715c206a
