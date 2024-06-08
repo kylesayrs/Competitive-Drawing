@@ -11,12 +11,6 @@ SETTINGS = Settings()
 
 
 class ModelManager():
-    """
-    Manages model inference such that . Handles the loading of model weights 
-
-    1. if a game is running, the model should be loaded
-
-    """
     def __init__(self):
         self.inferencers: Dict[str, torch.module.nn] = {}  # maps label pairs to inferencers
 
@@ -49,7 +43,6 @@ class ModelManager():
 
     def stop_inferencer(self, label_pair_str: str):
         del self.inferencers[label_pair_str]
-        del inferencer # redundancy
 
 
     def get_inferencer(self, label_pair: Tuple[str, str]):
