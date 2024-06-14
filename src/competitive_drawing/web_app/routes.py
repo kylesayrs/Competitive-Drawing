@@ -1,16 +1,9 @@
-from typing import Dict, Any
-
-import requests
 from flask import Blueprint, render_template, redirect, request, Response
-from flask_socketio import emit
 
-from competitive_drawing import Settings
 from .game import GameType
 from .GameManager import GameManager
 from .utils import GAME_CONFIG
 from .sockets import emit_ai_stroke
-
-SETTINGS = Settings()
 
 
 def make_routes_blueprint(games_manager: GameManager) -> Blueprint:

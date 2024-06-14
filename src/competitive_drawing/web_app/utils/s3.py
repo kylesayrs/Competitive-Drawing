@@ -1,14 +1,14 @@
 from typing import Tuple
 
 import boto3
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 
 S3_CLIENT = boto3.client("s3")
 
 
 def get_available_label_pairs():
-    bucket = Settings().s3_models_bucket
-    root_folder = Settings().s3_models_root_folder
+    bucket = SETTINGS.s3_models_bucket
+    root_folder = SETTINGS.s3_models_root_folder
 
     bucket_objects = S3_CLIENT.list_objects(Bucket=bucket)
     if not "Contents" in bucket_objects:
@@ -30,7 +30,7 @@ def get_available_label_pairs():
 def get_s3_dir(label_pair: Tuple[str, str]):
     label_pair_str = "-".join(sorted(list(label_pair)))
 
-    return "/".join([Settings().s3_models_root_folder, label_pair_str])
+    return "/".join([SETTINGS.s3_models_root_folder, label_pair_str])
 
 
 def get_onnx_url(label_pair: Tuple[str, str]):
@@ -40,10 +40,10 @@ def get_onnx_url(label_pair: Tuple[str, str]):
     response = S3_CLIENT.generate_presigned_url(
         "get_object",
         Params={
-            "Bucket": Settings().s3_models_bucket,
+            "Bucket": SETTINGS.s3_models_bucket,
             "Key": key,
         },
-        ExpiresIn=Settings().s3_model_duration
+        ExpiresIn=SETTINGS.s3_model_duration
     )
 
     return response

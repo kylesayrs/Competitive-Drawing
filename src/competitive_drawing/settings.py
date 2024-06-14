@@ -1,8 +1,9 @@
-from typing import Optional, Any
-from pydantic import BaseModel, Field
+from threading import Lock
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
     """
     Global settings for running the web app and model service
     """
@@ -11,13 +12,13 @@ class Settings(BaseModel):
     web_app_host: str = Field(default="localhost")
     web_app_port: int = Field(default=5001)
     web_app_secret_key: str = Field(default="somesecrets")
-    model_service_base: str = Field(default="http://localhost:5002")
+    ms_base: str = Field(default="http://localhost:5002")
 
     # model service
-    model_service_host: str = Field(default="localhost")
-    model_service_port: int = Field(default=5002)
-    model_service_secret_key: str = Field(default="somesecrets")
-    web_service_base: str = Field(default="http://localhost:5001")
+    ms_host: str = Field(default="localhost")
+    ms_port: int = Field(default=5002)
+    ms_secret_key: str = Field(default="somesecrets")
+    ws_base: str = Field(default="http://localhost:5001")
     device: str = Field(default="cpu")
 
     # game settings
@@ -63,10 +64,9 @@ class Settings(BaseModel):
         )
     )
 
-    # singleton implementation
-    _instance = None
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(Settings, cls).__new__(cls, *args, **kwargs)
+    # make model immutable
+    class Config:
+        frozen = True
 
-        return cls._instance
+
+SETTINGS = Settings()

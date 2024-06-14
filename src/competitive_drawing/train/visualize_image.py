@@ -4,7 +4,7 @@ import cv2
 import numpy
 import argparse
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from competitive_drawing.train.utils import load_data
 
 parser = argparse.ArgumentParser()
@@ -12,8 +12,6 @@ parser.add_argument("root_dir")
 parser.add_argument("out_path")
 parser.add_argument("--filter", type=str, default=None)
 parser.add_argument("--index", type=int, default=None)
-
-SETTINGS = Settings()
 
 
 def get_image_shape():

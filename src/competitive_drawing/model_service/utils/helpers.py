@@ -7,10 +7,8 @@ from io import BytesIO
 from PIL import Image, ImageOps
 from torchvision.transforms.functional import to_tensor
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from competitive_drawing.train.classifier import Classifier
-
-SETTINGS = Settings()
 
 
 def get_classifier_model():

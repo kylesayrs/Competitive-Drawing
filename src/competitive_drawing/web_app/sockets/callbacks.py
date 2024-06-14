@@ -5,7 +5,7 @@ from flask_socketio import join_room, leave_room
 
 import time
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 if TYPE_CHECKING:
     from ..game import GameManager
 
@@ -49,7 +49,7 @@ def make_socket_callbacks(socketio, game_manager: "GameManager"):
         # takes the code to get to here. In this case, the client will be met with
         # a message asking to refresh, at which point it can try again
         player.sid = None
-        time.sleep(Settings().client_disconnect_grace_period)
+        time.sleep(SETTINGS.client_disconnect_grace_period)
         if player.sid is not None:
             print(f"Reconnected: {request.sid}")
             return

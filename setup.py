@@ -14,6 +14,8 @@ _deps = [
     "tqdm",
     "boto3",
     "simple-websocket",
+    "pydantic==2.7.4",
+    "pydantic_settings==2.3.3"
 ]
 
 _dev_deps = [

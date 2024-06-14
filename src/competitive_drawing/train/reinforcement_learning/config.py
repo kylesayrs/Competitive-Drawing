@@ -1,9 +1,7 @@
 from typing import Tuple
 from pydantic import BaseModel, Field
 
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 class EnvironmentConfig(BaseModel):

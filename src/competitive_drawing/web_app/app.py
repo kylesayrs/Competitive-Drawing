@@ -1,6 +1,5 @@
 # general
 import os
-import json
 
 # flask
 from flask import Flask
@@ -10,9 +9,7 @@ from flask_socketio import SocketIO
 from .routes import make_routes_blueprint
 from .sockets import make_socket_callbacks
 from .GameManager import GameManager
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 def create_app():

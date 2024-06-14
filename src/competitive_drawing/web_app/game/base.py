@@ -6,13 +6,11 @@ import random
 import numpy
 from PIL import Image
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from ..game import GameType, Player
 from ..utils import get_available_label_pairs, get_onnx_url, label_pair_to_str, data_url_to_image
 from ..sockets import emit_start_game, emit_start_turn, emit_assign_player, emit_end_game
 from ..model_service import server_infer
-
-SETTINGS = Settings()
 
 
 class Game(ABC):

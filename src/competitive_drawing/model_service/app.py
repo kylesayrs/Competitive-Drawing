@@ -9,15 +9,13 @@ from flask_cors import CORS
 # implementations
 from .routes import make_routes_blueprint
 from .manager import ModelManager
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 def create_app() -> Flask:
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config["SECRET_KEY"] = SETTINGS.model_service_secret_key
+    app.config["SECRET_KEY"] = SETTINGS.ms_secret_key
 
     # allow web app origin requests
     web_app_origin = f"{SETTINGS.web_app_host}:{SETTINGS.web_app_port}"
@@ -39,8 +37,8 @@ def create_app() -> Flask:
 def start_app():
     app = create_app()
     app.run(
-        host=SETTINGS.model_service_host,
-        port=SETTINGS.model_service_port,
+        host=SETTINGS.ms_host,
+        port=SETTINGS.ms_port,
         debug=True
     )
 

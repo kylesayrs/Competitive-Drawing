@@ -3,9 +3,7 @@ from pydantic import BaseModel, Field
 
 import torch
 
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 class EnvironmentConfig(BaseModel):

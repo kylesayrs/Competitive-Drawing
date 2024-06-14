@@ -3,11 +3,9 @@ from typing import Dict, Tuple
 import copy
 import torch
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from .Inferencer import Inferencer
 from .utils import load_model, label_pair_to_str
-
-SETTINGS = Settings()
 
 
 class ModelManager():

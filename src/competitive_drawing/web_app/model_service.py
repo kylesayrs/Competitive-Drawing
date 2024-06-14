@@ -3,11 +3,8 @@ from typing import Tuple, Dict
 import json
 import requests
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from .utils import GAME_CONFIG
-
-SETTINGS = Settings()
-HEADERS = {"Content-Type": "application/json"}
 
 
 def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tuple[float, float]:
@@ -19,8 +16,8 @@ def server_infer(label_pair: Tuple[str, str], preview_image_data_url: str) -> Tu
     :return: model outputs
     """
     response = requests.post(
-        f"{SETTINGS.model_service_base}/infer",
-        headers=HEADERS,
+        f"{SETTINGS.ms_base}/infer",
+        headers={"Content-Type": "application/json"},
         data=json.dumps({
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
@@ -49,8 +46,8 @@ def server_infer_ai(
     room_id: str
 ):
     response = requests.post(
-        f"{SETTINGS.model_service_base}/infer_stroke",
-        headers=HEADERS,
+        f"{SETTINGS.ms_base}/infer_stroke",
+        headers={"Content-Type": "application/json"},
         data=json.dumps({
             "gameConfig": GAME_CONFIG,
             "label_pair": label_pair,
@@ -66,8 +63,8 @@ def server_infer_ai(
 
 def server_update(num_games_by_label_pair_str: Dict[str, int]):
     response = requests.post(
-        f"{SETTINGS.model_service_base}/games",
-        headers=HEADERS,
+        f"{SETTINGS.ms_base}/games",
+        headers={"Content-Type": "application/json"},
         data=json.dumps({
             "label_pair_games": num_games_by_label_pair_str
         }),

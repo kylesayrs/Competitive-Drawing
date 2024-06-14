@@ -2,10 +2,8 @@ import boto3
 import torch
 from io import BytesIO
 
-from competitive_drawing import Settings
+from competitive_drawing import SETTINGS
 from .helpers import get_classifier_model
-
-SETTINGS = Settings()
 
 
 def load_model(label_pair_str: str) -> torch.nn.Module:

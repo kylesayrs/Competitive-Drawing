@@ -5,9 +5,7 @@ import base64
 from PIL import Image
 from io import BytesIO
 
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 def label_pair_to_str(label_pair: Tuple[str, str]) -> str:

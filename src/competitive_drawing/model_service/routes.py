@@ -7,9 +7,7 @@ from threading import Thread
 from .manager import ModelManager
 from .utils import imageDataUrlToImage
 
-from competitive_drawing import Settings
-
-SETTINGS = Settings()
+from competitive_drawing import SETTINGS
 
 
 def make_routes_blueprint(model_manager: ModelManager):
@@ -81,7 +79,7 @@ def make_routes_blueprint(model_manager: ModelManager):
             stroke_samples = inferencer.infer_stroke(*args)
 
             requests.post(
-                f"{SETTINGS.web_service_base}/ai_stroke",
+                f"{SETTINGS.ws_base}/ai_stroke",
                 headers={"Content-type": "application/json"},
                 data=json.dumps({
                     "strokeSamples": stroke_samples,
