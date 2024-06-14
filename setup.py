@@ -22,6 +22,7 @@ _dev_deps = [
     "wandb",
     "sparseml",
     "cairocffi",
+    "pytest"
 ]
     
 
