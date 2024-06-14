@@ -24,7 +24,6 @@ _dev_deps = [
     "cairocffi",
     "pytest"
 ]
-    
 
 def _setup_extras() -> Dict[str, List[str]]:
     return {
