@@ -4,9 +4,7 @@ from pydantic import BaseModel, Field
 
 class SearchParameters(BaseModel):
     """
-    Data class which specifies parameters for searching strokes 
-
-    :param BaseModel: _description_
+    Data class which specifies parameters for searching strokes
     """
     grid_shape: Tuple[int, int] = Field(default=(3, 3))
     num_keypoints: int = Field(default=4)
