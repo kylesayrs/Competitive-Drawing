@@ -1,4 +1,4 @@
-package com.ksayers;
+package com.ksayers.loadBalancer;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
