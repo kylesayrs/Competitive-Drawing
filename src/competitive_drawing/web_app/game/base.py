@@ -90,7 +90,7 @@ class Game(ABC):
         self._player_turn_index = (self._player_turn_index + 1) % len(self.players)
         self.turns_left -= 1
 
-        self.model_outputs = server_infer(self.label_pair, preview_data_url)
+        self.model_outputs = server_infer(self.room_id, self.label_pair, preview_data_url)
 
         if not self.can_end_game:
             emit_start_turn(self)        
@@ -140,7 +140,7 @@ class Game(ABC):
             
         else:
             # do another inference for redundancy
-            self.model_outputs = server_infer(self.label_pair, preview_data_url)
+            self.model_outputs = server_infer(self.room_id, self.label_pair, preview_data_url)
 
             # emit winner
             winner_index = numpy.argmax(self.model_outputs)

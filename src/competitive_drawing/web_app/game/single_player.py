@@ -32,8 +32,8 @@ class SinglePlayerGame(Game):
 
         if self._player_turn_index == 1: # now AI player's turn
             server_infer_ai(
+                self.room_id,
                 self.label_pair,
                 preview_data_url,
-                1,
-                self.room_id
+                1
             )
