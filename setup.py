@@ -2,20 +2,21 @@ from typing import Dict, List
 
 from setuptools import setup, find_packages
 
+# TODO: loosen these versions
 _deps = [
-    "Flask",
-    "Flask-SocketIO",
-    "Flask-Cors",
-    "grad-cam",
+    "Flask==3.0.3",
+    "Flask-SocketIO==5.3.2",
+    "Flask-Cors==3.0.10",
+    "grad-cam==1.4.6",
     "numpy",
     "onnx",
     "Pillow",
     "torch",
     "tqdm",
-    "boto3",
-    "simple-websocket",
+    "boto3==1.26.43",
+    "simple-websocket==0.9.0",
     "pydantic==2.7.4",
-    "pydantic_settings==2.3.3"
+    "pydantic_settings==2.3.3",
 ]
 
 _dev_deps = [
