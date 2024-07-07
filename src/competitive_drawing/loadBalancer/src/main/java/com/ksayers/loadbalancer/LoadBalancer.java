@@ -75,6 +75,11 @@ public class LoadBalancer
         private void handleUnregister(HttpExchange httpExchange) throws IOException {
             InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
             strategy.removeServer(serverAddress);
+
+            OutputStream outputStream = httpExchange.getResponseBody();
+            httpExchange.sendResponseHeaders(200, 0);
+            outputStream.flush();
+            outputStream.close();
         }
 
         private void handleRequest(HttpExchange httpExchange) throws IOException {
