@@ -13,6 +13,12 @@
       <artifactId>junit</artifactId>
       <version>3.8.1</version>
       <scope>test</scope>
+      <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+    </dependency>
+    <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.16.1</version>
     </dependency>
   </dependencies>
 </project>
