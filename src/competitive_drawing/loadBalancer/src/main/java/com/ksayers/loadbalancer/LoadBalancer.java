@@ -1,25 +1,21 @@
 package com.ksayers.loadbalancer;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Logger;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-import org.apache.commons.io.IOUtils;
-
 
 public class LoadBalancer 
 {
+    static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
+
     InetSocketAddress address = new InetSocketAddress("localhost", 8000);
     HttpServer server;
     Strategy strategy;
@@ -57,11 +53,15 @@ public class LoadBalancer
             Headers headers = httpExchange.getRequestHeaders();
             String roomId = headers.getFirst("Room-Id");
             if (roomId == null) {
+                logger.warning(String.format("Request does not have Room-Id header"));
                 return;
             }
 
             // select server
             InetSocketAddress address = strategy.selectServer(roomId);
+            
+            logger.info(String.format("Assigning %s to %s", roomId, address));
+            /*
 
             // send proxy
             try {
@@ -111,6 +111,7 @@ public class LoadBalancer
             }
             
             // forward request to server
+             */
         }
     }
     
