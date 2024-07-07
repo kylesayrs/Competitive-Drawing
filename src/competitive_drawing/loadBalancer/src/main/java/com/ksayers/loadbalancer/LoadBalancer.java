@@ -1,6 +1,7 @@
 package com.ksayers.loadbalancer;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -12,43 +13,71 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 
-public class LoadBalancer 
+public class LoadBalancer
 {
     static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
 
-    InetSocketAddress address = new InetSocketAddress("localhost", 8000);
-    HttpServer server;
-    Strategy strategy;
-    ThreadPoolExecutor serverThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    private final InetSocketAddress address = new InetSocketAddress("localhost", 8000);
+    private final HttpServer server = HttpServer.create(address, 5);
+    private final LeastConnectionsStrategy strategy = new LeastConnectionsStrategy();
+    private final ThreadPoolExecutor serverThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
-    public LoadBalancer(Strategy _strategy) throws IOException {
-        strategy = _strategy;
-        server = HttpServer.create(address, 5);
+    public LoadBalancer() throws IOException {
         server.setExecutor(serverThreadPool);
-        server.createContext("/register", new RegisterHandler());
-        server.createContext("/unregister", new UnregisterHandler());
-        server.createContext("/", new RequestHandler());
+        server.createContext("/", new RoutingHandler());
     }
 
-    private class RegisterHandler implements HttpHandler {
+    public void start() {
+        server.start();
+        System.out.println(String.format("Listening on %s", address));
+    }
+
+    private class RoutingHandler implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) {
+        public void handle(HttpExchange httpExchange) throws IOException {
+            String path = httpExchange.getRequestURI().getPath();
+
+            switch (path) {
+                case "/register":
+                    handleRegister(httpExchange);
+                    break;
+            
+                case "/unregister":
+                    handleUnregister(httpExchange);
+                    break;
+
+                case "/favicon.ico":
+                    OutputStream outputStream = httpExchange.getResponseBody();
+                    httpExchange.sendResponseHeaders(200, 0);
+                    outputStream.flush();
+                    outputStream.close();
+                    break;
+            
+                default:
+                    handleRequest(httpExchange);
+                    break;
+            }
+        }
+
+        private void handleRegister(HttpExchange httpExchange) throws IOException {
+            logger.warning(String.format("attempting to register"));
+
             InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
             strategy.addServer(serverAddress);
-        }
-    }
 
-    private class UnregisterHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange httpExchange) {
+            OutputStream outputStream = httpExchange.getResponseBody();
+            httpExchange.sendResponseHeaders(200, 0);
+            outputStream.flush();
+            outputStream.close();
+            logger.warning(String.format("registered?"));
+        }
+
+        private void handleUnregister(HttpExchange httpExchange) throws IOException {
             InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
             strategy.removeServer(serverAddress);
         }
-    }
 
-    private class RequestHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange httpExchange) {
+        private void handleRequest(HttpExchange httpExchange) throws IOException {
             // extract room id
             Headers headers = httpExchange.getRequestHeaders();
             String roomId = headers.getFirst("Room-Id");
@@ -61,66 +90,11 @@ public class LoadBalancer
             InetSocketAddress address = strategy.selectServer(roomId);
             
             logger.info(String.format("Assigning %s to %s", roomId, address));
-            /*
-
-            // send proxy
-            try {
-                URL url = new URI(String.format(
-                    "http://%s:%s/%s",
-                    address.getHostName(),
-                    address.getPort(),
-                    httpExchange.getRequestURI()
-                )).toURL();
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setConnectTimeout(1000);
-                connection.setRequestMethod(httpExchange.getRequestMethod());
-                connection.setDoOutput(true);
-                
-                // copy data
-                OutputStream outputStream = connection.getOutputStream();
-                IOUtils.copy(httpExchange.getRequestBody(), outputStream);
-                outputStream.flush();
-                outputStream.close();
-
-                connection.getInputStream();
-                
-                // check response code
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    System.out.println(String.format("Successfully sent %s message to %s at %s", path, nodeId, url));
-                } else {
-                    System.err.println(String.format("Failed to send %s message node %s at %s", path, nodeId, url));
-                    return new Pair<Integer,String>(responseCode, null);
-                }
-
-                // get response body
-                InputStream inputStream = connection.getInputStream();
-                byte[] responseBodyBytes = inputStream.readAllBytes();
-                String responseBody = new String(responseBodyBytes);
-
-                httpExchange.response
-                
-                connection.disconnect();
-
-                return new Pair<Integer,String>(responseCode, responseBody);
-
-            } catch (Exception exception) {
-                System.err.println(String.format("Failed to send %s message node %s", path, nodeId));
-
-                return new Pair<Integer,String>(null, null);
-            }
-            
-            // forward request to server
-             */
         }
     }
     
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
-        InetSocketAddress a = new InetSocketAddress("localhost", 8000);
-        InetSocketAddress b = new InetSocketAddress("localhost", 8000);
-
-        System.out.println(a.hashCode() == b.hashCode());
+    public static void main( String[] args ) throws Exception {
+        LoadBalancer loadBalancer = new LoadBalancer();
+        loadBalancer.start();
     }
 }
