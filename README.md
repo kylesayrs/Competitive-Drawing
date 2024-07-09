@@ -47,7 +47,7 @@ I want to build an AI that, given a base image, produces changes to that image t
 My approach is to learn a curve which resembles an actual human pen stroke while still increasing the AI's score. While this method will not produce scores that are higher than adversarial noise, it will produce a AI opponent that is both challenging and fun to play against.
 
 ### Bézier Curve Differentiation ###
-Curves, unlike individual pixels values, are not obviously differentiable. To make curves differentiable, we can take advantage of an existing graphics technique called anti-aliasing which adds blur around a line. This technique produces grey pixel values which are much more differentiable than binary pixel values.
+Curves, unlike individual pixels values, are not obviously differentiable. To make curves differentiable with respect to the raster images that they produce, we can take advantage of an existing graphics technique called anti-aliasing which adds blur around a line. This technique produces grey pixel values which are much more differentiable than binary pixel values.
 
 In order to implement anti-aliasing of a vector curve, we must compute the shortest distance of each pixel to the curve in order to determine its brightness value. In the special case of a straight line, there is a closed form solution that involves projecting the point onto the line and computing the distance from that projection point to our original point.
 
