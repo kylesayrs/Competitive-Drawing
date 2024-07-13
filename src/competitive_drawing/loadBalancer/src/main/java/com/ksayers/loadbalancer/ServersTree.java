@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.TreeMap;
 
 public class ServersTree {
-    TreeMap<Integer, HashSet<Server>> numConnectionsToServers = new TreeMap<Integer, HashSet<Server>>();
+    TreeMap<Integer, HashSet<Server>> numConnectionsToServers = new TreeMap<>();
 
     public void remove(Server server) {
         // remove server from set
@@ -25,7 +25,7 @@ public class ServersTree {
         // insert server into set
         HashSet<Server> serversWithSameNumConnections = numConnectionsToServers.get(numConnections);
         if (serversWithSameNumConnections == null) {
-            serversWithSameNumConnections = new HashSet<Server>();
+            serversWithSameNumConnections = new HashSet<>();
         }
         serversWithSameNumConnections.add(server);
 

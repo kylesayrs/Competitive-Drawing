@@ -9,11 +9,12 @@ import java.util.logging.Logger;
 public class LeastConnectionsStrategy implements Strategy {
     static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
 
-    HashMap<InetSocketAddress, Server> addressToServer = new HashMap<InetSocketAddress, Server>();
-    HashMap<String, Server> roomIdToServer = new HashMap<String, Server>();
+    HashMap<InetSocketAddress, Server> addressToServer = new HashMap<>();
+    HashMap<String, Server> roomIdToServer = new HashMap<>();
     ServersTree serversTree = new ServersTree();
 
 
+    @Override
     public void addServer(InetSocketAddress address) {
         // create new server
         Server newServer = new Server(address);
@@ -26,6 +27,7 @@ public class LeastConnectionsStrategy implements Strategy {
         serversTree.put(newServer);
     }
 
+    @Override
     public void removeServer(InetSocketAddress address) {
         Server server = addressToServer.get(address);
 
@@ -41,6 +43,7 @@ public class LeastConnectionsStrategy implements Strategy {
         serversTree.remove(server);
     }
 
+    @Override
     public void endSession(String roomId) {
         Server server = roomIdToServer.get(roomId);
         
@@ -54,6 +57,7 @@ public class LeastConnectionsStrategy implements Strategy {
     }
 
 
+    @Override
     public InetSocketAddress selectServer(String roomId) {
         Server server = roomIdToServer.get(roomId);
         if (server != null) {
@@ -61,7 +65,6 @@ public class LeastConnectionsStrategy implements Strategy {
         }
 
         if (serversTree.isEmpty()) {
-            // TODO: raise error
             logger.warning(String.format("Could not assign roomId %s, no servers are available", roomId));
             return null;
         }
