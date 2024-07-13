@@ -2,11 +2,16 @@ package com.ksayers.loadbalancer;
 
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 public class ServersTree {
-    TreeMap<Integer, HashSet<Server>> numConnectionsToServers = new TreeMap<>();
+    static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
+
+    private final TreeMap<Integer, HashSet<Server>> numConnectionsToServers = new TreeMap<>();
 
     public void remove(Server server) {
+        logger.info("remove");
+
         // remove server from set
         Integer numConnections = server.roomIds.size();
         HashSet<Server> serversWithSameNumConnections = numConnectionsToServers.get(numConnections);
@@ -16,21 +21,33 @@ public class ServersTree {
         if (serversWithSameNumConnections.size() <= 0) {
             numConnectionsToServers.remove(numConnections);
         }
+
+        logger.info(String.format("%s", numConnectionsToServers));
     }
 
-
     public void put(Server server) {
+        logger.info("put");
         Integer numConnections = server.roomIds.size();
 
         // insert server into set
         HashSet<Server> serversWithSameNumConnections = numConnectionsToServers.get(numConnections);
         if (serversWithSameNumConnections == null) {
+            // insert server into set
             serversWithSameNumConnections = new HashSet<>();
-        }
-        serversWithSameNumConnections.add(server);
+            serversWithSameNumConnections.add(server);
 
-        // insert set into tree
-        numConnectionsToServers.replace(numConnections, serversWithSameNumConnections);
+            // insert set into tree
+            numConnectionsToServers.put(numConnections, serversWithSameNumConnections);
+        } else {
+            // insert server into set
+            serversWithSameNumConnections.add(server);
+            
+            // insert set into tree
+            numConnectionsToServers.replace(numConnections, serversWithSameNumConnections);
+        }
+
+
+        logger.info(String.format("%s", numConnectionsToServers));
     }
 
     public boolean isEmpty() {
