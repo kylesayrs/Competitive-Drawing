@@ -15,7 +15,7 @@ import com.sun.net.httpserver.HttpServer;
 
 public class LoadBalancer
 {
-    static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
+    static final Logger logger = Logger.getLogger(LoadBalancer.class.getName());
 
     private final InetSocketAddress address = new InetSocketAddress("localhost", 8000);
     private final HttpServer server = HttpServer.create(address, 5);

@@ -6,7 +6,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 public class ServersTree {
-    static final Logger logger = Logger.getLogger(LeastConnectionsStrategy.class.getName());
+    static final Logger logger = Logger.getLogger(ServersTree.class.getName());
 
     private final TreeMap<Integer, HashSet<Server>> numConnectionsToServers = new TreeMap<>();
 

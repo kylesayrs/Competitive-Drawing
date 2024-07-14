@@ -13,7 +13,6 @@ public class LeastConnectionsStrategy implements Strategy {
     HashMap<String, Server> roomIdToServer = new HashMap<>();
     ServersTree serversTree = new ServersTree();
 
-
     @Override
     public void addServer(InetSocketAddress address) {
         // create new server
