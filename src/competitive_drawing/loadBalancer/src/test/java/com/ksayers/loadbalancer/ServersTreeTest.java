@@ -8,11 +8,11 @@ public class ServersTreeTest
     extends TestCase
 {
     public ServersTreeTest(String testName) {
-        super( testName );
+        super(testName);
     }
 
     public static Test suite() {
-        return new TestSuite( ServersTreeTest.class );
+        return new TestSuite(ServersTreeTest.class);
     }
 
     public void testInitialization() {
