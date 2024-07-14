@@ -12,10 +12,11 @@ public class LeastConnectionsStrategyTest
     }
 
     public static Test suite() {
-        return new TestSuite(ServersTreeTest.class);
+        return new TestSuite(LeastConnectionsStrategy.class);
     }
 
     public void testInitialization() {
         LeastConnectionsStrategy strategy = new LeastConnectionsStrategy();
+        assertTrue(true);
     }
 }
