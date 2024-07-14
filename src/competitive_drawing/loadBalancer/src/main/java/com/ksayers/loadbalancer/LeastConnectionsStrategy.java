@@ -24,41 +24,59 @@ public class LeastConnectionsStrategy implements Strategy {
         addressToServer.put(newServer.address, newServer);
 
         // insert into tree
-        serversTree.put(newServer);
+        serversTree.put(newServer.numConnections(), newServer);
     }
 
     @Override
     public void removeServer(InetSocketAddress address) {
         Server server = addressToServer.get(address);
+        if (server == null) {
+            logger.info("attempted to remove nonexistent server");
+            return;
+        }
 
         // remove room id mappings
         for (String roomId : server.roomIds) {
-            roomIdToServer.remove(roomId);
+            if (roomIdToServer.remove(roomId) == null) {
+                logger.info("attempted to remove nonexistent server");
+            }
         }
 
         // remove from address lookup
-        addressToServer.remove(server.address);
+        if (addressToServer.remove(server.address) == null) {
+            logger.info("attempted to remove nonexistent server");
+        }
 
         // remove from tree
-        serversTree.remove(server);
+        try {
+            serversTree.remove(server);
+        } catch (Exception exception) {
+            logger.info("attempted to remove nonexistent server");
+        }
     }
 
     @Override
     public void endSession(String roomId) {
         Server server = roomIdToServer.get(roomId);
+        if (server == null) {
+            return;
+        }
         
         // remove from lookup
-        roomIdToServer.remove(roomId);
+        if (roomIdToServer.remove(roomId) == null) {
+            logger.info("attempted to end unknown session");
+        }
 
         // remove server from tree
         serversTree.remove(server);
         server.roomIds.remove(roomId);
-        serversTree.put(server);
+        serversTree.put(server.numConnections(), server);
     }
 
 
     @Override
     public InetSocketAddress selectServer(String roomId) {
+        // check lookup
         Server server = roomIdToServer.get(roomId);
         if (server != null) {
             return server.address;
@@ -81,7 +99,7 @@ public class LeastConnectionsStrategy implements Strategy {
         // update tree
         serversTree.remove(server);
         server.roomIds.add(roomId);
-        serversTree.put(server);
+        serversTree.put(server.numConnections(), server);
 
         return server.address;
     }

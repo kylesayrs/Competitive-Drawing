@@ -38,48 +38,41 @@ public class LoadBalancer
             String path = httpExchange.getRequestURI().getPath();
 
             switch (path) {
-                case "/register":
-                    handleRegister(httpExchange);
-                    break;
+                case "/register" -> handleRegister(httpExchange);
             
-                case "/unregister":
-                    handleUnregister(httpExchange);
-                    break;
+                case "/unregister" -> handleUnregister(httpExchange);
 
-                case "/favicon.ico":
-                    OutputStream outputStream = httpExchange.getResponseBody();
-                    httpExchange.sendResponseHeaders(200, 0);
-                    outputStream.flush();
-                    outputStream.close();
-                    break;
+                case "/favicon.ico" -> {
+                    try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                        httpExchange.sendResponseHeaders(200, 0);
+                        outputStream.flush();
+                    }
+                }
+
             
-                default:
-                    handleRequest(httpExchange);
-                    break;
+                default -> handleRequest(httpExchange);
             }
         }
 
         private void handleRegister(HttpExchange httpExchange) throws IOException {
-            logger.warning(String.format("attempting to register"));
-
             InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
             strategy.addServer(serverAddress);
 
-            OutputStream outputStream = httpExchange.getResponseBody();
-            httpExchange.sendResponseHeaders(200, 0);
-            outputStream.flush();
-            outputStream.close();
-            logger.warning(String.format("registered?"));
+            try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                httpExchange.sendResponseHeaders(200, 0);
+                outputStream.flush();
+            }
         }
 
         private void handleUnregister(HttpExchange httpExchange) throws IOException {
             InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
             strategy.removeServer(serverAddress);
 
-            OutputStream outputStream = httpExchange.getResponseBody();
-            httpExchange.sendResponseHeaders(200, 0);
-            outputStream.flush();
-            outputStream.close();
+            try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                httpExchange.sendResponseHeaders(200, 0);
+                outputStream.flush();
+                outputStream.close();
+            }
         }
 
         private void handleRequest(HttpExchange httpExchange) throws IOException {
