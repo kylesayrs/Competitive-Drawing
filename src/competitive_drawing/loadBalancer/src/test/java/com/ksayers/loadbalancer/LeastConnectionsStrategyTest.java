@@ -1,5 +1,7 @@
 package com.ksayers.loadbalancer;
 
+import java.net.InetSocketAddress;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -12,11 +14,14 @@ public class LeastConnectionsStrategyTest
     }
 
     public static Test suite() {
-        return new TestSuite(LeastConnectionsStrategy.class);
+        return new TestSuite(LeastConnectionsStrategyTest.class);
     }
 
     public void testInitialization() {
         LeastConnectionsStrategy strategy = new LeastConnectionsStrategy();
-        assertTrue(true);
+        
+        InetSocketAddress address1 = new InetSocketAddress("localhost", 8000);
+
+        strategy.addServer(address1);
     }
 }

@@ -3,8 +3,8 @@ package com.ksayers.loadbalancer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Logger;
 
 import com.sun.net.httpserver.Headers;
@@ -20,10 +20,10 @@ public class LoadBalancer
     private final InetSocketAddress address = new InetSocketAddress("localhost", 8000);
     private final HttpServer server = HttpServer.create(address, 5);
     private final LeastConnectionsStrategy strategy = new LeastConnectionsStrategy();
-    private final ThreadPoolExecutor serverThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    private final ExecutorService serverThread = Executors.newSingleThreadExecutor();
 
     public LoadBalancer() throws IOException {
-        server.setExecutor(serverThreadPool);
+        server.setExecutor(serverThread);
         server.createContext("/", new RoutingHandler());
     }
 
