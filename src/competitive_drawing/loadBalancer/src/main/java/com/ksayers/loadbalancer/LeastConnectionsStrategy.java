@@ -3,6 +3,7 @@ package com.ksayers.loadbalancer;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 
@@ -14,56 +15,57 @@ public class LeastConnectionsStrategy implements Strategy {
     ServersTree serversTree = new ServersTree();
 
     @Override
-    public void addServer(InetSocketAddress address) {
+    public boolean addServer(InetSocketAddress address) {
+        if (addressToServer.containsKey(address)) {
+            return false;
+        }
+
         // create new server
         Server newServer = new Server(address);
-        addressToServer.put(address, newServer);
 
         // add to address lookup
-        addressToServer.put(newServer.address, newServer);
+        addressToServer.put(address, newServer);
 
         // insert into tree
         serversTree.put(newServer.numConnections(), newServer);
+
+        return true;
     }
 
     @Override
-    public void removeServer(InetSocketAddress address) {
+    public boolean removeServer(InetSocketAddress address) {
         Server server = addressToServer.get(address);
         if (server == null) {
-            logger.info("attempted to remove nonexistent server");
-            return;
+            return false;
         }
 
         // remove room id mappings
         for (String roomId : server.roomIds) {
             if (roomIdToServer.remove(roomId) == null) {
-                logger.info("attempted to remove nonexistent server");
+                logger.warning("Attempted to remove room but no such room was found");
             }
         }
 
         // remove from address lookup
         if (addressToServer.remove(server.address) == null) {
-            logger.info("attempted to remove nonexistent server");
+            throw new NoSuchElementException("Address not found in address server table");
         }
 
         // remove from tree
-        try {
-            serversTree.remove(server);
-        } catch (Exception exception) {
-            logger.info("attempted to remove nonexistent server");
-        }
+        serversTree.remove(server);
+        return true;
     }
 
     @Override
-    public void endSession(String roomId) {
+    public boolean endSession(String roomId) {
         Server server = roomIdToServer.get(roomId);
         if (server == null) {
-            return;
+            return false;
         }
         
         // remove from lookup
         if (roomIdToServer.remove(roomId) == null) {
-            logger.info("attempted to end unknown session");
+            throw new NoSuchElementException("Session not found in ");
         }
 
         // remove server from tree
