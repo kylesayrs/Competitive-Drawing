@@ -72,6 +72,8 @@ public class LeastConnectionsStrategy implements Strategy {
         serversTree.remove(server);
         server.roomIds.remove(roomId);
         serversTree.put(server.numConnections(), server);
+
+        return true;
     }
 
 
