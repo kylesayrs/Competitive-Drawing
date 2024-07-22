@@ -23,5 +23,8 @@ public class LeastConnectionsStrategyTest
         InetSocketAddress address1 = new InetSocketAddress("localhost", 8000);
 
         strategy.addServer(address1);
+        strategy.addServer(address1);
+        strategy.addServer(address1);
+        strategy.addServer(address1);
     }
 }
