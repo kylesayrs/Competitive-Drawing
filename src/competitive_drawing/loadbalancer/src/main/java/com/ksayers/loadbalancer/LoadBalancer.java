@@ -5,13 +5,13 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-
 
 public class LoadBalancer
 {
@@ -21,6 +21,7 @@ public class LoadBalancer
     private final HttpServer server = HttpServer.create(address, 5);
     private final LeastConnectionsStrategy strategy = new LeastConnectionsStrategy();
     private final ExecutorService serverThread = Executors.newSingleThreadExecutor();
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     public LoadBalancer() throws IOException {
         server.setExecutor(serverThread);
@@ -55,39 +56,54 @@ public class LoadBalancer
         }
 
         private void handleRegister(HttpExchange httpExchange) throws IOException {
-            InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
-            strategy.addServer(serverAddress);
+            readWriteLock.writeLock().lock();
+            try {
+                InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
+                strategy.addServer(serverAddress);
 
-            try (OutputStream outputStream = httpExchange.getResponseBody()) {
-                httpExchange.sendResponseHeaders(200, 0);
-                outputStream.flush();
+                try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                    httpExchange.sendResponseHeaders(200, 0);
+                    outputStream.flush();
+                }
+            } finally {
+                readWriteLock.writeLock().unlock();
             }
         }
 
         private void handleUnregister(HttpExchange httpExchange) throws IOException {
-            InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
-            strategy.removeServer(serverAddress);
+            readWriteLock.writeLock().lock();
+            try {
+                InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8001);
+                strategy.removeServer(serverAddress);
 
-            try (OutputStream outputStream = httpExchange.getResponseBody()) {
-                httpExchange.sendResponseHeaders(200, 0);
-                outputStream.flush();
-                outputStream.close();
+                try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                    httpExchange.sendResponseHeaders(200, 0);
+                    outputStream.flush();
+                    outputStream.close();
+                }
+            } finally {
+                readWriteLock.writeLock().unlock();
             }
         }
 
         private void handleRequest(HttpExchange httpExchange) throws IOException {
-            // extract room id
-            Headers headers = httpExchange.getRequestHeaders();
-            String roomId = headers.getFirst("Room-Id");
-            if (roomId == null) {
-                logger.warning(String.format("Request does not have Room-Id header"));
-                return;
-            }
+            readWriteLock.readLock().lock();
+            try {
+                // extract room id
+                Headers headers = httpExchange.getRequestHeaders();
+                String roomId = headers.getFirst("Room-Id");
+                if (roomId == null) {
+                    logger.warning(String.format("Request does not have Room-Id header"));
+                    return;
+                }
 
-            // select server
-            InetSocketAddress address = strategy.selectServer(roomId);
-            
-            logger.info(String.format("Assigning %s to %s", roomId, address));
+                // select server
+                InetSocketAddress address = strategy.selectServer(roomId);
+                
+                logger.info(String.format("Assigning %s to %s", roomId, address));
+            } finally {
+                readWriteLock.readLock().unlock();
+            }
         }
     }
     
