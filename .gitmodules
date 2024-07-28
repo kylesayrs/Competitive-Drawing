@@ -1,3 +1,0 @@
-[submodule "ReadWriteLock"]
-	path = src/competitive_drawing/load_balancer/ReadWriteLock
-	url = https://github.com/kylesayrs/ReadWriteLock
