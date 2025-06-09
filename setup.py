@@ -17,11 +17,12 @@ _deps = [
     "simple-websocket==0.9.0",
     "pydantic==2.7.4",
     "pydantic_settings==2.3.3",
+    "requests",
+    "wandb",
+    "timm",
 ]
 
 _dev_deps = [
-    "wandb",
-    "sparseml",
     "cairocffi",
     "pytest"
 ]
