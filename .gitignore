@@ -1,7 +1,10 @@
 # vscode
 .vscode/
 
-# environment secrets
+# environment
+env/
+
+# competitive drawing environment secrets
 .env
 
 # python
