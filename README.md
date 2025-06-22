@@ -1,7 +1,7 @@
 # What if Drawing was a Competition?
 Competitive Drawing is a game where players compete to draw two different prompts on the same shared canvas. The winner is determined by a neural network trained on Google's [Quickdraw Dataset](https://quickdraw.withgoogle.com/data).
 
-You can now visit a demo of this game at [https://competitivedrawing.com](https://competitivedrawing.com).
+You can now visit a demo of this game at [competitivedrawing.com](https://competitivedrawing.com).
 
 <p align="center">
 <img src="repo_assets/cactus_candle.gif" alt="Competitive Drawing Logo"/>
