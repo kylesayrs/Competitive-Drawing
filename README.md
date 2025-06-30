@@ -90,5 +90,5 @@ These repos are used for research and other side tasks
 * [GMMPytorch](https://github.com/kylesayrs/GMMPytorch)
 * [GMMScratch](https://github.com/kylesayrs/GMMScratch)
 
-### Todo Board ###
+## Development Board ##
 https://kahl.notion.site/90a75c8cbbbe4eb1924d24e61818d2d2?v=9aeff125dd33457da8f046c1715c206a
