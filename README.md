@@ -57,7 +57,7 @@ In order to implement anti-aliasing of a vector curve, we must compute the short
 <img src="https://www.chilimath.com/wp-content/uploads/2021/04/perpendicular-distance-between-point-and-line.png" alt="Distance From Point to Line" href="https://www.chilimath.com/lessons/advanced-algebra/distance-between-point-and-line-formula/"/>
 </p>
 
-In the case of Bezier curves of degree greater than 3 however, no closed form solution for projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and compute the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
+In the case of Bezier curves of degree greater than or equal 3, however, no closed form solution for the projection exists. This is noted by [Tzu-Mao et al.](https://people.csail.mit.edu/tzumao/diffvg/) The authors instead stochastically sample points along the line and compute the minimum distances from any of the sample points to our original point. To make this method more robust for my purposes, I instead sample points uniformly along the curve.
 
 Again, there is no closed form solution to uniformly sample distances along a Bézier curve, so I use a linear approximation with a couple points.
 
