@@ -1,5 +1,9 @@
-# vscode
+# dev environment
 .vscode/
+.DS_Store
+
+# dataset files
+*.ndjson
 
 # environment
 env/
