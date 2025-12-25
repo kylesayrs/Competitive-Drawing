@@ -45,7 +45,7 @@ class VecToRaster:
         image_len = sum([len(stroke[0]) for stroke in vector_image])
 
         # apply partial truncation
-        partial_frac = rand(0, 1) if augment else 1.0
+        partial_frac = 1.0#rand(0, 1) if augment else 1.0
         partial_len = image_len * partial_frac
 
         # scale points
@@ -88,7 +88,8 @@ class VecToRaster:
 
         buffer = self.surface.get_data()
         data = torch.asarray(buffer, dtype=torch.uint8)
-        image = data.reshape(self.surface.get_height(), self.surface.get_width())
+        shape = self.surface.get_height(), self.surface.get_width()
+        image = data.reshape(shape) / 255
         return image, partial_frac
 
 def rand(a, b):

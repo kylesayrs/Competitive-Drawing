@@ -2,8 +2,8 @@ import torch
 
 
 class Classifier(torch.nn.Module):
-    def __init__(self, num_classes: int = 2, temperature: float = 0.05):
-        super(Classifier, self).__init__()
+    def __init__(self, num_classes: int = 2, temperature: float = 1.0):
+        super().__init__()
         self.num_classes = num_classes
         self.temperature = torch.nn.Parameter(torch.tensor(temperature), requires_grad=False)
 
@@ -28,7 +28,7 @@ class Classifier(torch.nn.Module):
 
         self.fc = torch.nn.Linear(256, self.num_classes)
 
-        self.softmax = torch.nn.Softmax(dim=1)
+        self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor]:
         # input.shape = (..., 28, 28)
@@ -37,9 +37,9 @@ class Classifier(torch.nn.Module):
         logits = self.fc(x)
 
         # logit norm to reduce overconfidence and increase generalization
-        norms = torch.norm(logits, p=2, dim=-1, keepdim=True) + 1e-7
-        logits_normed = torch.div(logits, norms)
-        scores = self.softmax(logits_normed / self.temperature)
+        # norms = torch.norm(logits, p=2, dim=-1, keepdim=True) + 1e-7
+        # logits_normed = torch.div(logits, norms)
+        scores = self.softmax(logits / self.temperature)
 
         #return logits, confs
-        return logits_normed, scores
+        return logits, scores
