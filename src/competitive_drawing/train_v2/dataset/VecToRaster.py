@@ -1,6 +1,7 @@
 import torch
 import random
 import cairocffi as cairo
+from itertools import accumulate
 
 
 class VecToRaster:
@@ -32,20 +33,29 @@ class VecToRaster:
         self.min_scale = min_scale
         self.max_scale = max_scale
 
-    def __call__(self, vector_image: list[list[list[int]]]) -> torch.Tensor:
+    def __call__(
+        self,
+        vector_image: list[list[list[int]]],
+        augment: bool = False,
+    ) -> tuple[torch.Tensor, float]:
         # vector_image: list of strokes
         # stroke: xs, ys
         x_max = max([max(stroke[0]) for stroke in vector_image])
         y_max = max([max(stroke[1]) for stroke in vector_image])
+        image_len = sum([len(stroke[0]) for stroke in vector_image])
+
+        # apply partial truncation
+        partial_frac = rand(0, 1) if augment else 1.0
+        partial_len = image_len * partial_frac
 
         # scale points
-        scale = rand(self.min_scale, self.max_scale)
+        scale = rand(self.min_scale, self.max_scale) if augment else 1.0
         x_max *= scale
         y_max *= scale
 
         # random padding
-        x_pad = rand(0, self.original_side - x_max)
-        y_pad = rand(0, self.original_side - y_max)   
+        x_pad = rand(0, self.original_side - x_max) if augment else 0
+        y_pad = rand(0, self.original_side - y_max) if augment else 0
 
         # apply scale and padding
         vector_image = [
@@ -60,18 +70,26 @@ class VecToRaster:
         self.ctx.set_source_rgba(0, 0, 0, 0)
         self.ctx.paint()
 
-        # draw strokes, this is the most cpu-intensive part
+        # draw strokes
+        num_points = 0
         self.ctx.set_source_rgba(0, 0, 0, 1)
         for xv, yv in vector_image:
             self.ctx.move_to(xv[0], yv[0])
             for x, y in zip(xv, yv):
                 self.ctx.line_to(x, y)
+
+                num_points += 1
+                if num_points >= partial_len:
+                    break
+
             self.ctx.stroke()
+            if num_points >= partial_len:
+                break
 
         buffer = self.surface.get_data()
         data = torch.asarray(buffer, dtype=torch.uint8)
         image = data.reshape(self.surface.get_height(), self.surface.get_width())
-        return image
+        return image, partial_frac
 
 def rand(a, b):
     return (b - a) * random.random() + a

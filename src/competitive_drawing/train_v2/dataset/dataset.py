@@ -10,16 +10,16 @@ class QuickDrawDataset(torch.utils.data.Dataset):
         self,
         *file_paths: list[str],
         side: int = 28,
-        line_diameter: float = (1 / 16),
-        padding: int = (1 / 16),
+        line_diameter: float = (1 / 32),
+        padding: int = (1 / 32),
         min_scale: float = 0.5,
         max_scale: float = 1.0,
         use_unrecognized: bool = False,
-        train: bool = True
+        augment: bool = True
     ):
         self.images = []
         self.labels = []
-        self.train = train
+        self.augment = augment
 
         for index, file_path in enumerate(file_paths):
             images = load_vectors_from_file(file_path, use_unrecognized=use_unrecognized)
@@ -33,7 +33,7 @@ class QuickDrawDataset(torch.utils.data.Dataset):
             min_scale=min_scale,
             max_scale=max_scale,
         )
-        self.train_transform = transforms.Compose([
+        self.augmentations = transforms.Compose([
             transforms.RandomRotation(15),
             transforms.RandomHorizontalFlip(),
             transforms.RandomAffine(5, shear=5),
@@ -43,18 +43,18 @@ class QuickDrawDataset(torch.utils.data.Dataset):
         assert len(self.images) == len(self.labels)
         return len(self.images)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, float, int]:
         # get image
         image = self.images[idx]
-        image = self.vec_to_raster(image)
+        image, partial_frac = self.vec_to_raster(image, augment=self.augment)
         image = image.unsqueeze(0)  # add batch dim
-        if self.train:
-            image = self.train_transform(image)
+        if self.augment:
+            image = self.augmentations(image)
 
         # get label
         label = self.labels[idx]
 
-        return image, label
+        return image, partial_frac, label
 
 
 def load_vectors_from_file(file_path: str, use_unrecognized: bool) -> list[list[list[int]]]:
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     dataset = QuickDrawDataset(
         "src/competitive_drawing/train_v2/camera.ndjson",
         "src/competitive_drawing/train_v2/coffee_cup.ndjson",
-        train=True,
+        augment=True,
     )
 
     image, label = dataset[8]
