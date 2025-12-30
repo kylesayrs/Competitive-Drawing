@@ -51,6 +51,7 @@ class QuickDrawDataset(torch.utils.data.Dataset):
 
         # get label
         label = torch.zeros((self.num_classes, ))
+        assert partial_frac == 1.0
         label[self.labels[idx]] = partial_frac
 
         return image, label

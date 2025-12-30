@@ -29,14 +29,14 @@ def train_model(
     min_scale: float = 0.5,
     max_scale: float = 1.0,
     # model
-    dtype: torch.dtype = torch.bfloat16,
+    dtype: torch.dtype = torch.float32,
     # training
     num_epochs: int = 6,
     batch_size: int = 128,
     test_batch_size: int = 128,
     test_size: float = 0.2,
-    lr: float = 0.005,
-    optimizer: str = "SGD",
+    lr: float = 0.01,
+    optimizer: str = "Adam",
     momentum: float = 0.9,
     # productionized training
     model_name: Optional[str] = None,
@@ -89,7 +89,8 @@ def train_model(
             optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         else:
             raise ValueError(f"Unknown optimizer {optimizer}")
-        criterion = torch.nn.MSELoss().to(device=DEVICE, dtype=dtype)
+        #criterion = torch.nn.MSELoss().to(device=DEVICE, dtype=dtype)
+        criterion = torch.nn.CrossEntropyLoss().to(device=DEVICE, dtype=dtype)
 
     # train
     epoch_test_accs = []
@@ -107,25 +108,24 @@ def train_model(
 
             # forward + backward + optimize
             logits, scores = model(images)
-            print(scores[0])
-            loss = criterion(scores, labels)
+            loss = criterion(logits, labels)
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
             if i % logging_rate == logging_rate - 1:
-                train_accuracy = accuracy_score(
-                    torch.argmax(labels, axis=-1), torch.argmax(scores, axis=-1))
-
                 with torch.no_grad():
                     test_images, test_labels = next(iter(test_loader))
                     test_images = test_images.to(device=DEVICE, dtype=dtype)
                     test_labels = test_labels.to(device=DEVICE, dtype=dtype)
                     test_logits, test_scores = model(test_images)
+                    test_loss = criterion(test_logits, test_labels)
+
+                    train_accuracy = accuracy_score(
+                        torch.argmax(labels, axis=-1), torch.argmax(scores, axis=-1))
                     test_accuracy = accuracy_score(
                         torch.argmax(test_labels, axis=-1), torch.argmax(test_scores, axis=-1))
-                    test_loss = criterion(test_logits, test_labels)
 
                 print(
                     f"[{epoch + 1}, {i + 1:5d}] "
@@ -163,4 +163,4 @@ def train_model(
 
 
 if __name__ == "__main__":
-    train_model(["camera", "coffee_cup"], "src/competitive_drawing/train_v2", wandb_mode="offline")
+    train_model(["camera", "wheel"], "src/competitive_drawing/train_v2", wandb_mode="disabled")

@@ -36,10 +36,12 @@ class Classifier(torch.nn.Module):
         x = x.view(x.shape[0], -1)
         logits = self.fc(x)
 
-        # logit norm to reduce overconfidence and increase generalization
-        # norms = torch.norm(logits, p=2, dim=-1, keepdim=True) + 1e-7
-        # logits_normed = torch.div(logits, norms)
         scores = self.softmax(logits / self.temperature)
 
+        # logit norm to reduce overconfidence and increase generalization
+        norms = torch.norm(logits, p=2, dim=-1, keepdim=True) + 1e-7
+        logits = torch.div(logits, norms)
+        
         #return logits, confs
+        #torch.nn.functional.sigmoid(logits)
         return logits, scores
